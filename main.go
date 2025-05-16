@@ -1,7 +1,7 @@
 package main
 
 import "fmt"
-import getXpBudget "./utils"
+import "github.com/Burtcam/encounter-builder-backend/utils"
 
 // struct encounter {
 // 	difficulty string
