@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log/slog"
-	"os"
 	"github.com/Burtcam/encounter-builder-backend/logger"
 	"github.com/Burtcam/encounter-builder-backend/utils"
 )
@@ -16,15 +15,15 @@ import (
 
 
 func main() {
-	logger.Info("Backend Initializing",
+	logger.Log.Info("Backend Initializing",
 		slog.String("version", "1.0.0"),
 		slog.String("env", "development"),
 	)
 
-	xpBudget, err := utils.GetXpBudget("Trivial", 4)
+	xpBudget, err := utils.GetXpBudget("trivial", 4)
 	if err != nil {
-		logger.Error("Error occurred in someFunction", slog.String("error", err.Error()))
+		logger.Log.Error("Error occurred in someFunction", slog.String("error", err.Error()))
 	} else {
-		logger.Info(fmt.Sprintf(fmt.Sprintf("xpBudget succesfully calculated as: %d", xpBudget)))
+		logger.Log.Info(fmt.Sprintf(fmt.Sprintf("xpBudget succesfully calculated as: %d", xpBudget)))
 	}
 }
