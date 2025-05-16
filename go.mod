@@ -1,4 +1,2 @@
 module github.com/Burtcam/encounter-builder-backend
-
-go 1.18
-
+go 1.24.3
