@@ -1,8 +1,15 @@
 package main
 
 import "fmt"
-import "github.com/burtcam2003/encounter-builder-backend/utils"
+import getXpBudget "./utils"
+
+// struct encounter {
+// 	difficulty string
+// 	pSize      int
+// 	level      int
+// }
 
 func main() {
-	fmt.Println("Hello, World!")
+	difficulty := getXpBudget("Trivial", 4, 1)
+	fmt.Println(difficulty)
 }

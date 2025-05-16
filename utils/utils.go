@@ -2,6 +2,6 @@ package utils
 
 import "fmt"
 
-func getXpBudget(string difficulty, int pSize, int level) int {
-	fmt.Println("Hello, World!")
+func (string difficulty, int pSize, int level) int {
+	return 1
 }
