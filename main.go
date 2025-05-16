@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-
+	"github.com/Burtcam/encounter-builder-backend/logger"
 	"github.com/Burtcam/encounter-builder-backend/utils"
 )
 
@@ -14,12 +14,6 @@ import (
 // 	level      int
 // }
 
-var logger *slog.Logger
-
-func init() {
-    // Initialize the global logger using a JSON handler.
-    logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
-}
 
 func main() {
 	logger.Info("Backend Initializing",

@@ -1,5 +1,7 @@
 package utils
-import ("errors"
+import (
+	"errors"
+	"github.com/Burtcam/encounter-builder-backend/logger"
 	)
 
 func GetXpBudget(difficulty string, pSize int) (int, error) {

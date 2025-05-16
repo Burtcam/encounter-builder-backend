@@ -6,9 +6,9 @@ import (
 )
 
 // Log is a publicly accessible logger instance.
-var Log *slog.Logger
+var logger *slog.Logger
 
 func init() {
     // Initialize the logger with a JSON handler.
-    Log = slog.New(slog.NewJSONHandler(os.Stdout, nil))
+    logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 }
