@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"github.com/Burtcam/encounter-builder-backend/logger"
 	"github.com/Burtcam/encounter-builder-backend/utils"
+	"github.com/Burtcam/encounter-builder-backend/config"
 )
 
 // struct encounter {
@@ -15,6 +16,7 @@ import (
 
 
 func main() {
+	cfg := config.Load()
 	logger.Log.Info("Backend Initializing",
 		slog.String("version", "1.0.0"),
 		slog.String("env", "development"),
@@ -24,6 +26,12 @@ func main() {
 	if err != nil {
 		logger.Log.Error("Error occurred in someFunction", slog.String("error", err.Error()))
 	} else {
-		logger.Log.Info(fmt.Sprintf(fmt.Sprintf("xpBudget succesfully calculated as: %d", xpBudget)))
+		logger.Log.Info((fmt.Sprintf("xpBudget succesfully calculated as: %d", xpBudget)))
+	}
+	// setup the sync cron for the db. 
+	err = utils.ManageDBSync(cfg)
+	if err != nil {
+		logger.Log.Error(err)
 	}
 }
+
