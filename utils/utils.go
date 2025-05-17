@@ -9,6 +9,11 @@ import (
 	"github.com/robfig/cron/v3"
 	"github.com/Burtcam/encounter-builder-backend/config"
 	"io"
+	"archive/tar"
+	"compress/gzip"
+	"path/filepath"
+	"strings"
+	"encoding/json"
 	)
 
 func GetXpBudget(difficulty string, pSize int) (int, error) {
@@ -67,7 +72,7 @@ func GetRepoArchive(cfg config.Config) (error){
     }
     defer resp.Body.Close()
     // Handle the response (assume we want to save it)
-    outFile, err := os.Create("repo_archive.tar")
+    outFile, err := os.Create("repo_archive.tar.gz")
     if err != nil {
         return fmt.Errorf("error creating file: %w", err)
     }
@@ -82,14 +87,134 @@ func GetRepoArchive(cfg config.Config) (error){
     fmt.Println("Repository archive downloaded successfully!")
     return nil
 }
+func extractTarball(tarFile string, destDir string) error {
+    // Open the tar file
+    file, err := os.Open(tarFile)
+    if err != nil {
+        return fmt.Errorf("failed to open tar file: %w", err)
+    }
+    defer file.Close()
+
+	gzipReader, err := gzip.NewReader(file)
+	if err != nil {
+		return err
+	}
+
+	defer gzipReader.Close()
+
+
+
+    // Create a tar reader
+    tarReader := tar.NewReader(gzipReader)
+
+    // Read each file inside the tar archive
+    for {
+        header, err := tarReader.Next()
+        if err == io.EOF {
+            break // End of archive
+        }
+        if err != nil {
+            logger.Log.Error("error reading tar file: %w", err.Error())
+			return err
+        }
+
+        // Determine the file path
+        filePath := destDir + "/" + header.Name
+
+        switch header.Typeflag {
+        case tar.TypeDir:
+            // Create directories
+            if err := os.MkdirAll(filePath, os.FileMode(header.Mode)); err != nil {
+				// logger.Log.Error(("error creating directory: %w", err.Error()))
+                return err
+            }
+        case tar.TypeReg:
+            // Extract regular files
+            outFile, err := os.Create(filePath)
+            if err != nil {
+				// logger.Log.Error(("error creating file: %w", err.Error()))
+                return err
+            }
+            defer outFile.Close()
+
+            // Copy the file contents from the archive
+            if _, err := io.Copy(outFile, tarReader); err != nil {
+                return fmt.Errorf("error writing file: %w", err)
+            }
+        }
+    }
+    return nil
+}
+
+func GetListofJSON(dir string) ([]string, error) {
+    var fileList []string
+
+    // Walk through the directory
+    err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+        if err != nil {
+            return err
+        }
+
+        // Check if the file has a .json extension
+        if !info.IsDir() && strings.HasSuffix(info.Name(), ".json") {
+            fileList = append(fileList, path)
+        }
+
+        return nil
+    })
+
+    return fileList, err
+}
+
+func LoadEachJSON(path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil{
+		logger.Log.Error(err.Error())
+		return err
+	}
+	var payload map[string]interface{}
+    err = json.Unmarshal(data, &payload)
+    if err != nil {
+        logger.Log.Error("Error during Unmarshal(): ", err)
+    }
+	if payload["type"] == "npc"{ 
+		jsonData, err := json.Marshal(payload)
+    	if err != nil {
+        	logger.Log.Error("Error encoding JSON:", err)
+    	}
+		logger.Log.Info(string(jsonData))
+		os.Exit(1)
+	}
+	return nil
+}
+
+
 func KickOffSync(cfg config.Config) error {
+	logger.Log.Debug("About to go get the archive")
 	err := GetRepoArchive(cfg)
 	if err != nil {
 		logger.Log.Error("Sync failed at archive download")
 	}
-	// else {
-		
-	// }
+	err = extractTarball("repo_archive.tar.gz", "files")
+	if err != nil {
+		logger.Log.Error("Failed to unpack tarball")
+		logger.Log.Error(err.Error())
+	}
+	fileList, err := GetListofJSON("./files")
+	if err != nil {
+		logger.Log.Error("Failed to get the list of files to process")
+		logger.Log.Error(err.Error())
+	}
+	logger.Log.Info(fmt.Sprintf("%v", fileList))
+	// 
+
+	for _, value := range fileList {
+		err = LoadEachJSON(value)
+		if err != nil {
+			logger.Log.Error(err.Error())
+		}
+
+	}
 	return nil
 }
 func ManageDBSync(cfg config.Config) error {
@@ -107,7 +232,7 @@ func ManageDBSync(cfg config.Config) error {
     }
 
     c.Start()
-    fmt.Println("Scheduled job to run every Tuesday at 3 AM PST")
-    select {} // Keep the program running
-	return nil
+    fmt.Println("Scheduled job to run every Tuesday at 3 AM PST") 
+	{}
+	return nil// Keep the program running
 }

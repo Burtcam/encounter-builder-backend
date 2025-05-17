@@ -28,10 +28,16 @@ func main() {
 	} else {
 		logger.Log.Info((fmt.Sprintf("xpBudget succesfully calculated as: %d", xpBudget)))
 	}
-	// setup the sync cron for the db. 
-	err = utils.ManageDBSync(cfg)
+	//setup the sync cron for the db. 
+	go utils.ManageDBSync(*cfg)
 	if err != nil {
-		logger.Log.Error(err)
+		logger.Log.Error(err.Error())
 	}
+	//TODO Remove this else everytime the ap starts it'll rebuild the db. 
+	err = utils.KickOffSync(*cfg)
+	if err != nil {
+		logger.Log.Error(err.Error())
+	}
+
 }
 
