@@ -183,6 +183,11 @@ func LoadEachJSON(path string) error {
         	logger.Log.Error("Error encoding JSON:", err)
     	}
 		logger.Log.Info(string(jsonData))
+		// WRite it out to a json 
+		err = os.WriteFile("example-monster.json", jsonData, 0644)
+		if err != nil {
+			logger.Log.Error("Error writting JSON:", err)
+		}
 		os.Exit(1)
 	}
 	return nil
