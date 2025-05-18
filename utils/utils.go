@@ -1,20 +1,22 @@
 package utils
+
 import (
-	"errors"
-	"github.com/Burtcam/encounter-builder-backend/logger"
-	"fmt"
-	"net/http"
-	"os"
-	"time"
-	"github.com/robfig/cron/v3"
-	"github.com/Burtcam/encounter-builder-backend/config"
-	"io"
 	"archive/tar"
 	"compress/gzip"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
-	"encoding/json"
-	)
+	"time"
+
+	"github.com/Burtcam/encounter-builder-backend/config"
+	"github.com/Burtcam/encounter-builder-backend/logger"
+	"github.com/robfig/cron/v3"
+)
 
 func GetXpBudget(difficulty string, pSize int) (int, error) {
 	difficultyMap := make(map[string]int)
@@ -49,51 +51,51 @@ func GetXpBudget(difficulty string, pSize int) (int, error) {
 			budget := value - (levelAdjustment[difficulty] * (4 - pSize))
 			return budget, nil
 		}
-	} else{
+	} else {
 		return 0, errors.New("Failed likely due to the difficulty input being incorrect and not in the map")
 	}
 	return 0, errors.New("unspecfied Error")
 }
-func GetRepoArchive(cfg config.Config) (error){
+func GetRepoArchive(cfg config.Config) error {
 	client := &http.Client{}
-	// call to the repoUrl and get the archive downloaded. 
+	// call to the repoUrl and get the archive downloaded.
 	req, err := http.NewRequest("GET", cfg.REPO_URL, nil)
-    if err != nil {
-        return fmt.Errorf("error creating request: %w", err)
-    }
- 	req.Header.Set("User-Agent", "MyGoClient/1.0")
-    req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cfg.GH_TOKEN))
-    req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+	if err != nil {
+		return fmt.Errorf("error creating request: %w", err)
+	}
+	req.Header.Set("User-Agent", "MyGoClient/1.0")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cfg.GH_TOKEN))
+	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
 
-	    // Execute the request
-    resp, err := client.Do(req)
-    if err != nil {
-        return err
-    }
-    defer resp.Body.Close()
-    // Handle the response (assume we want to save it)
-    outFile, err := os.Create("repo_archive.tar.gz")
-    if err != nil {
-        return fmt.Errorf("error creating file: %w", err)
-    }
-    defer outFile.Close()
+	// Execute the request
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	// Handle the response (assume we want to save it)
+	outFile, err := os.Create("repo_archive.tar.gz")
+	if err != nil {
+		return fmt.Errorf("error creating file: %w", err)
+	}
+	defer outFile.Close()
 
-    // Copy response body to the file
-    _, err = io.Copy(outFile, resp.Body)
-    if err != nil {
-        return fmt.Errorf("error saving archive: %w", err)
-    }
+	// Copy response body to the file
+	_, err = io.Copy(outFile, resp.Body)
+	if err != nil {
+		return fmt.Errorf("error saving archive: %w", err)
+	}
 
-    fmt.Println("Repository archive downloaded successfully!")
-    return nil
+	fmt.Println("Repository archive downloaded successfully!")
+	return nil
 }
 func extractTarball(tarFile string, destDir string) error {
-    // Open the tar file
-    file, err := os.Open(tarFile)
-    if err != nil {
-        return fmt.Errorf("failed to open tar file: %w", err)
-    }
-    defer file.Close()
+	// Open the tar file
+	file, err := os.Open(tarFile)
+	if err != nil {
+		return fmt.Errorf("failed to open tar file: %w", err)
+	}
+	defer file.Close()
 
 	gzipReader, err := gzip.NewReader(file)
 	if err != nil {
@@ -102,97 +104,98 @@ func extractTarball(tarFile string, destDir string) error {
 
 	defer gzipReader.Close()
 
+	// Create a tar reader
+	tarReader := tar.NewReader(gzipReader)
 
-
-    // Create a tar reader
-    tarReader := tar.NewReader(gzipReader)
-
-    // Read each file inside the tar archive
-    for {
-        header, err := tarReader.Next()
-        if err == io.EOF {
-            break // End of archive
-        }
-        if err != nil {
-            logger.Log.Error("error reading tar file: %w", err.Error())
-			return err
-        }
-
-        // Determine the file path
-        filePath := destDir + "/" + header.Name
-
-        switch header.Typeflag {
-        case tar.TypeDir:
-            // Create directories
-            if err := os.MkdirAll(filePath, os.FileMode(header.Mode)); err != nil {
-				// logger.Log.Error(("error creating directory: %w", err.Error()))
-                return err
-            }
-        case tar.TypeReg:
-            // Extract regular files
-            outFile, err := os.Create(filePath)
-            if err != nil {
-				// logger.Log.Error(("error creating file: %w", err.Error()))
-                return err
-            }
-            defer outFile.Close()
-
-            // Copy the file contents from the archive
-            if _, err := io.Copy(outFile, tarReader); err != nil {
-                return fmt.Errorf("error writing file: %w", err)
-            }
-        }
-    }
-    return nil
-}
-
-func GetListofJSON(dir string) ([]string, error) {
-    var fileList []string
-
-    // Walk through the directory
-    err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-        if err != nil {
-            return err
-        }
-
-        // Check if the file has a .json extension
-        if !info.IsDir() && strings.HasSuffix(info.Name(), ".json") {
-            fileList = append(fileList, path)
-        }
-
-        return nil
-    })
-
-    return fileList, err
-}
-
-func LoadEachJSON(path string) error {
-	data, err := os.ReadFile(path)
-	if err != nil{
-		logger.Log.Error(err.Error())
-		return err
-	}
-	var payload map[string]interface{}
-    err = json.Unmarshal(data, &payload)
-    if err != nil {
-        logger.Log.Error("Error during Unmarshal(): ", err)
-    }
-	if payload["type"] == "npc"{ 
-		jsonData, err := json.Marshal(payload)
-    	if err != nil {
-        	logger.Log.Error("Error encoding JSON:", err)
-    	}
-		logger.Log.Info(string(jsonData))
-		// WRite it out to a json 
-		err = os.WriteFile("example-monster.json", jsonData, 0644)
-		if err != nil {
-			logger.Log.Error("Error writting JSON:", err)
+	// Read each file inside the tar archive
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break // End of archive
 		}
-		os.Exit(1)
+		if err != nil {
+			logger.Log.Error("error reading tar file: %w", err.Error())
+			return err
+		}
+
+		// Determine the file path
+		filePath := destDir + "/" + header.Name
+
+		switch header.Typeflag {
+		case tar.TypeDir:
+			// Create directories
+			if err := os.MkdirAll(filePath, os.FileMode(header.Mode)); err != nil {
+				// logger.Log.Error(("error creating directory: %w", err.Error()))
+				return err
+			}
+		case tar.TypeReg:
+			// Extract regular files
+			outFile, err := os.Create(filePath)
+			if err != nil {
+				// logger.Log.Error(("error creating file: %w", err.Error()))
+				return err
+			}
+			defer outFile.Close()
+
+			// Copy the file contents from the archive
+			if _, err := io.Copy(outFile, tarReader); err != nil {
+				return fmt.Errorf("error writing file: %w", err)
+			}
+		}
 	}
 	return nil
 }
 
+func GetListofJSON(dir string) ([]string, error) {
+	var fileList []string
+
+	// Walk through the directory
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Check if the file has a .json extension
+		if !info.IsDir() && strings.HasSuffix(info.Name(), ".json") {
+			fileList = append(fileList, path)
+		}
+
+		return nil
+	})
+
+	return fileList, err
+}
+
+func LoadEachJSON(path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		logger.Log.Error(err.Error())
+		return err
+	}
+	var payload map[string]interface{}
+	err = json.Unmarshal(data, &payload)
+	if err != nil {
+		logger.Log.Error("Error during Unmarshal(): ", err)
+	}
+	if payload["type"] == "npc" {
+		jsonData, err := json.Marshal(payload)
+		if err != nil {
+			logger.Log.Error("Error encoding JSON:", err)
+		}
+		logger.Log.Info(string(jsonData))
+		err = parseJSON(jsonData)
+		if err != nil {
+			logger.Log.Error(fmt.Sprintf("Error Parsing file %s", path))
+		}
+		// WRite it out to a json
+		// err = os.WriteFile("example-monster.json", jsonData, 0644)
+		// if err != nil {
+		// 	logger.Log.Error("Error writting JSON:", err)
+		// }
+		os.Exit(1)
+	}
+	return nil
+}
 
 func KickOffSync(cfg config.Config) error {
 	logger.Log.Debug("About to go get the archive")
@@ -211,7 +214,7 @@ func KickOffSync(cfg config.Config) error {
 		logger.Log.Error(err.Error())
 	}
 	logger.Log.Info(fmt.Sprintf("%v", fileList))
-	// 
+	//
 
 	for _, value := range fileList {
 		err = LoadEachJSON(value)
@@ -223,21 +226,22 @@ func KickOffSync(cfg config.Config) error {
 	return nil
 }
 func ManageDBSync(cfg config.Config) error {
-	// Go routine to wait until a certain unix time (3AM PST by default but managed by config) then go get the new tarball every week and sync it to the db 
+	// Go routine to wait until a certain unix time (3AM PST by default but managed by config) then go get the new tarball every week and sync it to the db
 	loc, err := time.LoadLocation("America/Los_Angeles")
-    if err != nil {
-        return fmt.Errorf("invalid timezone: %w", err)
-    }
+	if err != nil {
+		return fmt.Errorf("invalid timezone: %w", err)
+	}
 
-    // Define cron syntax: Run at 3 AM PST every Tuesday
-    c := cron.New(cron.WithLocation(loc))
-    _, err = c.AddFunc("0 3 * * 2", func() { KickOffSync(cfg) }) // "2" represents Tuesday in cron syntax
-    if err != nil {
-        return err
-    }
+	// Define cron syntax: Run at 3 AM PST every Tuesday
+	c := cron.New(cron.WithLocation(loc))
+	_, err = c.AddFunc("0 3 * * 2", func() { KickOffSync(cfg) }) // "2" represents Tuesday in cron syntax
+	if err != nil {
+		return err
+	}
 
-    c.Start()
-    fmt.Println("Scheduled job to run every Tuesday at 3 AM PST") 
-	{}
-	return nil// Keep the program running
+	c.Start()
+	fmt.Println("Scheduled job to run every Tuesday at 3 AM PST")
+	{
+	}
+	return nil // Keep the program running
 }
