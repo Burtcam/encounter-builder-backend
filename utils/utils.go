@@ -189,7 +189,6 @@ func LoadEachJSON(path string) error {
 		// if err != nil {
 		// 	logger.Log.Error("Error writting JSON:", err)
 		// }
-		os.Exit(1)
 	}
 
 	return nil

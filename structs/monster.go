@@ -11,17 +11,21 @@ type Monster struct {
 	Immunities   []string
 	Weaknesses   []string
 	Resistances  []string
-	Perception   string
+	Perception   Perception
 	Languages    []string
 	Senses       []Sense
 	Skills       []Skill
-	Passives     []Passive
+	Passives     []Passive //items.system.type =="actions" && items.
 	Movements    []Movement
 	Reactions    []Reaction
 	Melees       []Attack
 	Ranged       []Attack
 	SpellCasting []SpellCasting
 	Specials     []Special
+}
+type Perception struct {
+	Mod    string
+	Detail string
 }
 type HP struct {
 	Detail string
@@ -37,8 +41,14 @@ type Traits struct {
 	TraitList []string
 }
 type Skill struct {
-	Name  string
-	Value int
+	Name     string
+	Value    int
+	Specials []SkillSpecial
+}
+type SkillSpecial struct {
+	Value      int
+	Label      string
+	Predicates []string
 }
 type Attributes struct {
 	Str string
@@ -95,13 +105,36 @@ type Attack struct {
 	Type        string
 }
 
+type SpellCasting struct {
+	InnateSpellCasting      []InnateSpellCasting
+	PreparedSpellCasting    []PreparedSpellCasting
+	SpontaneousSpellCasting []SpontaneousSpellCasting
+}
+
 // Arcane Innate Spells DC 30; 2nd darkness (at will)
 // type: Innate, tradition: arcane, dc: 30, spelluses: [spellUse {name: Darkness, Level 2, description: xjklj, Targets: Nil, School, }]
-type SpellCasting struct {
+type InnateSpellCasting struct {
 	DC        int
 	Tradition string
 	SpellUses []SpellUse
-	Type      string
+	Mod       string
+}
+type PreparedSpellCasting struct {
+	DC        int
+	Tradition string
+	Slots     []Spell
+	Mod       string
+}
+type SpontaneousSpellCasting struct {
+	DC        int
+	Tradition string
+	SpellList []Spell
+	Slots     []slot
+	Mod       string
+}
+type slot struct {
+	Level  string
+	Number string
 }
 type Spell struct {
 	Name           string
