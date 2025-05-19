@@ -3,9 +3,10 @@ package main
 import (
 	"fmt"
 	"log/slog"
+
+	"github.com/Burtcam/encounter-builder-backend/config"
 	"github.com/Burtcam/encounter-builder-backend/logger"
 	"github.com/Burtcam/encounter-builder-backend/utils"
-	"github.com/Burtcam/encounter-builder-backend/config"
 )
 
 // struct encounter {
@@ -13,7 +14,6 @@ import (
 // 	pSize      int
 // 	level      int
 // }
-
 
 func main() {
 	cfg := config.Load()
@@ -28,16 +28,15 @@ func main() {
 	} else {
 		logger.Log.Info((fmt.Sprintf("xpBudget succesfully calculated as: %d", xpBudget)))
 	}
-	//setup the sync cron for the db. 
+	//setup the sync cron for the db.
 	go utils.ManageDBSync(*cfg)
 	if err != nil {
 		logger.Log.Error(err.Error())
 	}
-	//TODO Remove this else everytime the ap starts it'll rebuild the db. 
+	//TODO Remove this else everytime the ap starts it'll rebuild the db.
 	err = utils.KickOffSync(*cfg)
 	if err != nil {
 		logger.Log.Error(err.Error())
 	}
 
 }
-

@@ -3,7 +3,6 @@ package utils
 import (
 	"archive/tar"
 	"compress/gzip"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -16,6 +15,7 @@ import (
 	"github.com/Burtcam/encounter-builder-backend/config"
 	"github.com/Burtcam/encounter-builder-backend/logger"
 	"github.com/robfig/cron/v3"
+	"github.com/tidwall/gjson"
 )
 
 func GetXpBudget(difficulty string, pSize int) (int, error) {
@@ -114,7 +114,7 @@ func extractTarball(tarFile string, destDir string) error {
 			break // End of archive
 		}
 		if err != nil {
-			logger.Log.Error("error reading tar file: %w", err.Error())
+			logger.Log.Error("error reading tar file: %w", err)
 			return err
 		}
 
@@ -167,23 +167,20 @@ func GetListofJSON(dir string) ([]string, error) {
 }
 
 func LoadEachJSON(path string) error {
+	fmt.Println("Path is :", path)
 	data, err := os.ReadFile(path)
 	if err != nil {
 		logger.Log.Error(err.Error())
 		return err
 	}
-	var payload map[string]interface{}
-	err = json.Unmarshal(data, &payload)
-	if err != nil {
-		logger.Log.Error("Error during Unmarshal(): ", err)
-	}
-	if payload["type"] == "npc" {
-		jsonData, err := json.Marshal(payload)
-		if err != nil {
-			logger.Log.Error("Error encoding JSON:", err)
-		}
-		logger.Log.Info(string(jsonData))
-		err = parseJSON(jsonData)
+	// var payload map[string]interface{}
+	// err = json.Unmarshal(data, &payload)
+	// if err != nil {
+	// 	logger.Log.Error("Error during Unmarshal(): %s", path, err)
+	// }
+	if gjson.Get(string(data), "type").String() == "npc" {
+		fmt.Println("Found a monster")
+		err = parseJSON(data)
 		if err != nil {
 			logger.Log.Error(fmt.Sprintf("Error Parsing file %s", path))
 		}
@@ -194,6 +191,7 @@ func LoadEachJSON(path string) error {
 		// }
 		os.Exit(1)
 	}
+
 	return nil
 }
 
