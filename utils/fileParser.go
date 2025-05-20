@@ -10,31 +10,36 @@ import (
 	"github.com/tidwall/gjson"
 )
 
+// []structs.Action, []structs.FreeAction, []structs.Attack, []structs.Attack, []structs.Reaction, []structs.Passive, []structs.SpellCasting,
 func ParseItems(data []byte) error {
 	rawItems := gjson.Get(string(data), "items")
 	// for each item in the block, "items.system"
 	// check systems.item.type and the three types (action, melee, ranged, spell, spellcastingEntry)
+	// if it's a spell, ignore for now but create a map to look it up later?
+	// if it's a action, encode it into the proper struct (passive, reaction, free, action)
+	// for each, make a slice of type each (so []Action, []Reaction, []Passive, []FreeAction)
+	// return those slices.
 	rawItems.ForEach(func(key, value gjson.Result) bool {
 		switch value.Get("type").String() {
 		case "action":
 			fmt.Println("Found an Action")
-			fmt.Println(gjson.Get(string(data), "system.actionType.value").String())
-			os.Exit(1)
-			switch gjson.Get(string(data), "system.actionType.value").String() {
+			switch value.Get("system").Get("actionType").Get("value").String() {
 			case "passive":
 				fmt.Println("Found a passive")
 			case "action":
 				fmt.Println("found a subaction")
 			case "free":
 				fmt.Println("Found a free action")
+			case "reaction":
+				fmt.Println("Found a reaction")
 			default:
-				fmt.Println("Uncategorized! : ", value.Get("type"))
+				fmt.Println("Uncategorized! : ", value.Get("system").Get("actionType").Get("value"))
 				f, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 				if err != nil {
 					log.Fatal(err)
 				}
 				defer f.Close() // Ensure the file is closed when we're done.
-				logLine := fmt.Sprintf("Uncategorized Item Found, %s in the file %s \n", value.Get("type"), gjson.Get(string(data), "name"))
+				logLine := fmt.Sprintf("Uncategorized Item Found, %s in the file %s \n", value.Get("system").Get("actionType").Get("value"), gjson.Get(string(data), "name"))
 				// Write a string to the file.
 				if _, err := f.WriteString(logLine); err != nil {
 					log.Fatal(err)
@@ -44,10 +49,30 @@ func ParseItems(data []byte) error {
 			//split into passives, free, action ("system.actionType.Value" == passive)
 		case "spellcastingEntry":
 			fmt.Println("Found a spellcasting entry")
+		// return a []Attack each one has a system.weaponType which will be ranged or melee
 		case "melee":
 			fmt.Println("Found a melee")
-		case "ranged":
-			fmt.Println("Found a Ranged")
+			if value.Get("system").Get("weaponType").Get("value").String() == "ranged" {
+				fmt.Println("Found a ranged Attack")
+			} else if value.Get("system").Get("weaponType").Get("value").String() == "melee" {
+				fmt.Println("Found a ranged Attack")
+			} else if !value.Get("system").Get("weaponType").Get("value").Exists() {
+				fmt.Println("Found an annoying quirk.. Categorize it as a fist (melee type), range 5ft etc")
+			} else {
+				fmt.Println("Some other shit!")
+				fmt.Println("Uncategorized! : ", value.Get("type"))
+				f, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+				if err != nil {
+					log.Fatal(err)
+				}
+				defer f.Close() // Ensure the file is closed when we're done.
+				logLine := fmt.Sprintf("Uncategorized attack Found, %s in the file %s \n", value.Get("system").Get("weaponType").Get("value").String(), gjson.Get(string(data), "name"))
+				// Write a string to the file.
+				if _, err := f.WriteString(logLine); err != nil {
+					log.Fatal(err)
+				}
+
+			}
 		case "spell":
 			fmt.Println("found a Spell")
 		case "lore":

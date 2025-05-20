@@ -15,13 +15,14 @@ type Monster struct {
 	Languages    []string
 	Senses       []Sense
 	Skills       []Skill
-	Passives     []Passive //items.system.type =="actions" && items.
 	Movements    []Movement
+	Actions      []Action
+	FreeActions  []FreeAction
 	Reactions    []Reaction
+	Passives     []Passive //items.system.type =="actions" && items.
 	Melees       []Attack
 	Ranged       []Attack
 	SpellCasting []SpellCasting
-	Specials     []Special
 }
 type Perception struct {
 	Mod    string
@@ -68,22 +69,34 @@ type Saves struct {
 	Exception  string // overall exceptions
 }
 type Passive struct {
-	Name   string
-	Text   string
-	Traits []string
-	Range  string
-	Damage string
-	DC     string
+	Name     string
+	Text     string
+	Traits   []string
+	Range    string
+	Damage   string
+	DC       string
+	Category string
 }
 type Reaction struct {
-	Name   string
-	Text   string
-	Traits []string
-	Range  string
-	Damage string
-	DC     string
+	Name     string
+	Text     string
+	Traits   []string
+	Range    string
+	Damage   string
+	DC       string
+	Category string
 }
-type Special struct {
+type Action struct {
+	Name      string
+	Text      string
+	Traits    []string
+	Range     string
+	Damage    string
+	Actions   string
+	DC        string
+	Frequency string
+}
+type FreeAction struct {
 	Name      string
 	Text      string
 	Traits    []string
@@ -100,9 +113,13 @@ type Movement struct {
 }
 type Attack struct {
 	AcountCount int
+	Type        string
 	ToHit       string
 	Damage      string
-	Type        string
+	DamageType  string
+	Range       string
+	Traits      []string
+	Effects     []string
 }
 
 type SpellCasting struct {
