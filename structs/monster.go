@@ -22,7 +22,8 @@ type Monster struct {
 	Passives     []Passive //items.system.type =="actions" && items.
 	Melees       []Attack
 	Ranged       []Attack
-	SpellCasting []SpellCasting
+	SpellCasting SpellCasting
+	FocusPoints  int
 }
 type Perception struct {
 	Mod    string
@@ -72,39 +73,31 @@ type Passive struct {
 	Name     string
 	Text     string
 	Traits   []string
-	Range    string
-	Damage   string
 	DC       string
 	Category string
+	Rarity   string
 }
 type Reaction struct {
 	Name     string
 	Text     string
 	Traits   []string
-	Range    string
-	Damage   string
-	DC       string
+	Rarity   string
 	Category string
 }
 type Action struct {
-	Name      string
-	Text      string
-	Traits    []string
-	Range     string
-	Damage    string
-	Actions   string
-	DC        string
-	Frequency string
+	Name     string
+	Text     string
+	Traits   []string
+	Actions  string
+	Category string
+	Rarity   string
 }
 type FreeAction struct {
-	Name      string
-	Text      string
-	Traits    []string
-	Range     string
-	Damage    string
-	Actions   string
-	DC        string
-	Frequency string
+	Name     string
+	Text     string
+	Traits   []string
+	Category string
+	Rarity   string
 }
 type Movement struct {
 	Type  string
@@ -112,48 +105,74 @@ type Movement struct {
 	Notes string
 }
 type Attack struct {
-	AcountCount int
-	Type        string
-	ToHit       string
-	Damage      string
-	DamageType  string
-	Range       string
-	Traits      []string
-	Effects     []string
+	Type         string
+	ToHitBonus   string
+	DamageBlocks []DamageBlock
+	Range        string
+	Traits       []string
+	Effects      []DamageEffects
+}
+type DamageBlock struct {
+	DamageRoll string
+	DamageType string
+}
+type DamageEffects struct {
+	CustomString string
+	Value        []string
 }
 
 type SpellCasting struct {
 	InnateSpellCasting      []InnateSpellCasting
 	PreparedSpellCasting    []PreparedSpellCasting
 	SpontaneousSpellCasting []SpontaneousSpellCasting
+	FocusSpellCasting       []FocusSpellCasting
+}
+
+type FocusSpellCasting struct {
+	DC             int
+	Mod            string
+	Tradition      string
+	ID             string
+	Name           string
+	FocusSpellList []Spell
 }
 
 // Arcane Innate Spells DC 30; 2nd darkness (at will)
 // type: Innate, tradition: arcane, dc: 30, spelluses: [spellUse {name: Darkness, Level 2, description: xjklj, Targets: Nil, School, }]
 type InnateSpellCasting struct {
-	DC        int
-	Tradition string
-	SpellUses []SpellUse
-	Mod       string
+	DC          int
+	Tradition   string
+	SpellUses   []SpellUse
+	Mod         string
+	ID          string
+	Description string
 }
 type PreparedSpellCasting struct {
-	DC        int
-	Tradition string
-	Slots     []Spell
-	Mod       string
+	DC          int
+	Tradition   string
+	Slots       []PreparedSlot
+	Mod         string
+	ID          string
+	Description string
 }
 type SpontaneousSpellCasting struct {
 	DC        int
+	ID        string
 	Tradition string
 	SpellList []Spell
-	Slots     []slot
+	Slots     []Slot
 	Mod       string
 }
-type slot struct {
-	Level  string
-	Number string
+type Slot struct {
+	Level string
+	Casts string
+}
+type PreparedSlot struct {
+	Level   string
+	SpellID string
 }
 type Spell struct {
+	ID             string
 	Name           string
 	Level          string
 	Description    string
@@ -169,6 +188,7 @@ type Spell struct {
 }
 type SpellUse struct {
 	Spell Spell
+	Level int
 	Uses  string
 }
 type SpellArea struct {
