@@ -73,40 +73,123 @@ func ParseSpontaneousSpellCasting(jsonData string) structs.SpontaneousSpellCasti
 	return entry
 }
 
-func ParseDamageBlocks(jsonData, string) ([]structs.DamageBlock, error){
+func ParseDamageBlocks(jsonData gjson.Result) []structs.DamageBlock {
 	// for each item in DamageRolls, create a DamageBlock and add it to the slice
 	var DamageBlocks []structs.DamageBlock
 	// Get the JSON array stored in "damageRolls"
-	damageRolls, err := gjson.Get(jsonData, "system.damageRolls")
+	damageRolls := jsonData.Get("system").Get("damageRolls").String()
 	// Iterate over each element in the damageRolls array
-	err = damageRolls.ForEach(func(key, value gjson.Result) bool {
+	damageRolls.ForEach(func(key, value gjson.Result) bool {
 		damageBlock := structs.DamageBlock{
-			Damage: value.Get(key).Get("damage").String(),
-			DamageType: value.Get(key).Get("damageType").String(),
+			DamageRoll: value.Get(key.String()).Get("damage").String(),
+			DamageType: value.Get(key.String()).Get("damageType").String(),
 		}
 		DamageBlocks = append(DamageBlocks, damageBlock)
 		return true
 	})
-	return DamageBlocks, err
+	return DamageBlocks
 }
 
-func ParseWeapon(jsonData string) (structs.Attack,error) {
+func ParseWeapon(value gjson.Result) (structs.Attack, error) {
 
-	if (!value.Get("system").Get("weaponType").Get("value").Exists()) {
+	if !(value.Get("system").Get("weaponType").Get("value").Exists()) {
 		TypeDefinition := "melee"
 	} else {
 		TypeDefinition := value.Get("system").Get("weaponType").Get("value").String()
 	}
 	damageBlocks, err := ParseDamageBlocks(jsonData)
 
-attackInScope := structs.Attack {
-	Type: TypeDefinition,
-	ToHitBonus: gjson.Get("system").Get("bonus").Get("value"),
-	DamageBlocks: damageBlocks,
-	Traits: ingestJSONList(jsonData, "system.traits.value"),
-	Effects: ingestJSONList(jsonData, "system.effects.value"),
-}
+	attackInScope := structs.Attack{
+		Type:         TypeDefinition,
+		ToHitBonus:   gjson.Get("system").Get("bonus").Get("value"),
+		DamageBlocks: damageBlocks,
+		Traits:       ingestJSONList(jsonData, "system.traits.value"),
+		Effects:      ingestJSONList(jsonData, "system.effects.value"),
+	}
 	return attackInScope, nil
+}
+
+// CompareSpellCastingIDs loops over each slice in SpellCasting and checks if
+// any item's ID matches the provided spellCastingLocation.
+func CompareSpellCastingIDs(spellCasting structs.SpellCasting, spell structs.Spell, value gjson.Result) {
+	// Check InnateSpellCasting
+
+	locationID := value.Get("system").Get("location").Get("value").String()
+
+	for _, item := range spellCasting.InnateSpellCasting {
+		if item.ID == locationID {
+			fmt.Printf("Match found in InnateSpellCasting: %s\n", item.ID)
+		}
+	}
+
+	// Check PreparedSpellCasting
+	for _, item := range spellCasting.PreparedSpellCasting {
+		if item.ID == locationID {
+			fmt.Printf("Match found in PreparedSpellCasting: %s\n", item.ID)
+		}
+	}
+
+	// Check SpontaneousSpellCasting
+	for _, item := range spellCasting.SpontaneousSpellCasting {
+		if item.ID == locationID {
+			fmt.Printf("Match found in SpontaneousSpellCasting: %s\n", item.ID)
+		}
+	}
+
+	// Check FocusSpellCasting
+	for _, item := range spellCasting.FocusSpellCasting {
+		if item.ID == locationID {
+			fmt.Printf("Match found in FocusSpellCasting: %s\n", item.ID)
+		}
+	}
+}
+
+func HandleSpell(spellCastingBlocks *structs.SpellCasting, value gjson.Result) (structs.SpellCasting, error) {
+	// Check if the referenced spellcasting exists in the spellcasting blocks. If it does, add to the spell to the right spot,
+	// ELSE create the spellcasting block, add it to the spellcasting THEN add the found spell.
+	var Sustained bool
+	var defenseSaveType bool
+	if value.Get("system").Get("duration").Get("sustained").String() == "false" {
+		Sustained = false
+	} else {
+		Sustained = true
+	}
+	if value.Get("system").Get("defense").Get("save").Get("basic") == "true" {
+		defenseSaveType = true
+	} else if value.Get("system").Get("defense").Get("save").Get("basic") == "false" {
+		defenseSaveType = false
+	} else {
+		defenseSaveType = nil
+	}
+	Traits := extractListOfObjectsValues(value.String(), "system.traits.value")
+
+	spell := structs.Spell{
+		ID:          value.Get("_id").String(),
+		Name:        value.Get("name").String(),
+		Level:       value.Get("system").Get("level").Get("value").String(),
+		Description: value.Get("system").Get("description").Get("value").String(),
+		Range:       value.Get("system").Get("range").Get("value").String(),
+		Area: structs.SpellArea{
+			Type:   value.Get("system").Get("area").Get("type").String(),
+			Value:  value.Get("system").Get("area").Get("value").String(),
+			Detail: value.Get("system").Get("area").Get("details").String(),
+		},
+		Duration: structs.DurationBlock{
+			Sustained: Sustained,
+			Duration:  value.Get("system").Get("duration").Get("value").String(),
+		},
+		Targets: value.Get("system").Get("target").Get("value").String(),
+		Traits:  Traits,
+		Defense: structs.DefenseBlock{
+			Save:  value.Get("system").Get("defense").Get("save").Get("statistic").String(),
+			Basic: defenseSaveType,
+		},
+		CastTime:       value.Get("system").Get("time").Get("value").String(),
+		CastComponents: value.Get("system").Get("cost").Get("value").String(),
+		Rarity:         value.Get("system").Get("traits").Get("rarity").String(),
+	}
+	spellCastingLocation := value.Get("system").Get("location").Get("value")
+	// find which spellcasting block it belongs in.
 }
 
 // []structs.Action, []structs.FreeAction, []structs.Attack, []structs.Attack, []structs.Reaction, []structs.Passive, []structs.SpellCasting,
@@ -214,12 +297,13 @@ func ParseItems(data []byte) ([]structs.FreeAction,
 				fmt.Println("focus Handler Called")
 				// Create a spellcastingEntry of the type,
 				focus := structs.FocusSpellCasting{
-					ID:        value.Get("_id").String(),
-					Tradition: value.Get("system").Get("tradition").Get("value").String(),
-					DC:        int(value.Get("system").Get("spelldc").Get("dc").Int()),
-					Mod:       value.Get("system").Get("spelldc").Get("value").String(),
-					Description: value.Get("system").Get("description").Get("value").String()
+					ID:          value.Get("_id").String(),
+					Tradition:   value.Get("system").Get("tradition").Get("value").String(),
+					DC:          int(value.Get("system").Get("spelldc").Get("dc").Int()),
+					Mod:         value.Get("system").Get("spelldc").Get("value").String(),
+					Description: value.Get("system").Get("description").Get("value").String(),
 				}
+				SpellCastingBlocks.FocusSpellCasting = append(SpellCastingBlocks.FocusSpellCasting, focus)
 
 			} else if value.Get("system").Get("prepared").Get("value").String() == "items" {
 				fmt.Println("Spell Item Handler Called")
@@ -241,7 +325,7 @@ func ParseItems(data []byte) ([]structs.FreeAction,
 		// return a []Attack each one has a system.weaponType which will be ranged or melee
 		case "melee":
 			fmt.Println("Found a melee")
-			weapon ,err :=ParseWeapon(value.String())
+			weapon, err := ParseWeapon(value.String())
 			if err != nil {
 				fmt.Println("Some other shit!")
 				fmt.Println("Uncategorized! : ", value.Get("type"))
@@ -260,7 +344,7 @@ func ParseItems(data []byte) ([]structs.FreeAction,
 		case "spell":
 			fmt.Println("found a Spell")
 			// Check if the referenced spellcasting struct exists yet, if it does, add it to that, (location.value) and (location.uses)
-			SpellCastingBlocks, err := HandleSpell(&SpellCastingBlocks, value) 
+			SpellCastingBlocks, err := HandleSpell(&SpellCastingBlocks, value)
 			if err != nil {
 				fmt.Println("Failed to handle spell")
 			}

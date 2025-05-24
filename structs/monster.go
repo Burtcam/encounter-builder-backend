@@ -135,6 +135,7 @@ type FocusSpellCasting struct {
 	ID             string
 	Name           string
 	FocusSpellList []Spell
+	Description    string
 }
 
 // Arcane Innate Spells DC 30; 2nd darkness (at will)
@@ -170,6 +171,7 @@ type Slot struct {
 type PreparedSlot struct {
 	Level   string
 	SpellID string
+	Spell   Spell
 }
 type Spell struct {
 	ID             string
@@ -178,22 +180,31 @@ type Spell struct {
 	Description    string
 	Range          string
 	Area           SpellArea
-	Duration       string
+	Duration       DurationBlock
 	Targets        string
 	Traits         []string
-	Defense        string
+	Defense        DefenseBlock
 	CastTime       string
-	CastComponents []string
-	Heightened     string
+	CastComponents string
+	Rarity         string
+}
+type DefenseBlock struct {
+	Save  string
+	Basic bool
 }
 type SpellUse struct {
 	Spell Spell
 	Level int
 	Uses  string
 }
+type DurationBlock struct {
+	Sustained bool
+	Duration  string
+}
 type SpellArea struct {
-	Type  string
-	Value string
+	Type   string
+	Value  string
+	Detail string
 }
 type Sense struct {
 	Name   string //darkvision, smell, etc
