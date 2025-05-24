@@ -23,174 +23,6 @@ import (
 //		return nil
 //	}
 //
-// ParseSlots extracts slot data from JSON and returns a slice of Slot structs.
-// ParsePreparedSpellCasting extracts spell slots from JSON into PreparedSpellCasting struct
-func ParsePreparedSpellCasting(jsonData string) structs.PreparedSpellCasting {
-	// Initialize the result struct
-	var spellCasting structs.PreparedSpellCasting
-
-	// Extract high-level attributes
-	spellCasting.DC = int(gjson.Get(jsonData, "system.spelldc.dc").Int())
-	spellCasting.Mod = gjson.Get(jsonData, "system.spelldc.value").String()
-	spellCasting.Tradition = gjson.Get(jsonData, "system.tradition.value").String()
-	spellCasting.ID = gjson.Get(jsonData, "_id").String()
-	spellCasting.Description = gjson.Get(jsonData, "system.description.value").String()
-
-	// Extract spell slots dynamically
-	gjson.Get(jsonData, "slots").ForEach(func(slotName, slotData gjson.Result) bool {
-		// Iterate over prepared spells in each slot
-		slotData.Get("prepared").ForEach(func(_, spell gjson.Result) bool {
-			spellCasting.Slots = append(spellCasting.Slots, structs.PreparedSlot{
-				Level:   slotName.String(), // Slot name represents the spell level (e.g., "slot0", "slot1")
-				SpellID: spell.Get("id").String(),
-			})
-			return true
-		})
-		return true
-	})
-
-	return spellCasting
-}
-
-// ParseSpontaneousSpellCasting extracts relevant data into SpontaneousSpellCasting struct
-func ParseSpontaneousSpellCasting(jsonData string) structs.SpontaneousSpellCasting {
-	var entry structs.SpontaneousSpellCasting
-	// Extract top-level attributes
-	entry.ID = gjson.Get(jsonData, "_id").String()
-	entry.Tradition = gjson.Get(jsonData, "system.tradition.value").String()
-	entry.DC = int(gjson.Get(jsonData, "system.spelldc.dc").Int())
-	entry.Mod = gjson.Get(jsonData, "system.spelldc.value").String()
-
-	// Extract slot data dynamically
-	gjson.Get(jsonData, "system.slots").ForEach(func(slotName, slotData gjson.Result) bool {
-		entry.Slots = append(entry.Slots, structs.Slot{
-			Level: slotName.String(),
-			Casts: slotData.Get("value").String(), // Converting max casts to string
-		})
-		return true
-	})
-
-	return entry
-}
-
-func ParseDamageBlocks(jsonData gjson.Result) []structs.DamageBlock {
-	// for each item in DamageRolls, create a DamageBlock and add it to the slice
-	var DamageBlocks []structs.DamageBlock
-	// Get the JSON array stored in "damageRolls"
-	damageRolls := jsonData.Get("system").Get("damageRolls").String()
-	// Iterate over each element in the damageRolls array
-	damageRolls.ForEach(func(key, value gjson.Result) bool {
-		damageBlock := structs.DamageBlock{
-			DamageRoll: value.Get(key.String()).Get("damage").String(),
-			DamageType: value.Get(key.String()).Get("damageType").String(),
-		}
-		DamageBlocks = append(DamageBlocks, damageBlock)
-		return true
-	})
-	return DamageBlocks
-}
-
-func ParseWeapon(value gjson.Result) (structs.Attack, error) {
-
-	if !(value.Get("system").Get("weaponType").Get("value").Exists()) {
-		TypeDefinition := "melee"
-	} else {
-		TypeDefinition := value.Get("system").Get("weaponType").Get("value").String()
-	}
-	damageBlocks, err := ParseDamageBlocks(jsonData)
-
-	attackInScope := structs.Attack{
-		Type:         TypeDefinition,
-		ToHitBonus:   gjson.Get("system").Get("bonus").Get("value"),
-		DamageBlocks: damageBlocks,
-		Traits:       ingestJSONList(jsonData, "system.traits.value"),
-		Effects:      ingestJSONList(jsonData, "system.effects.value"),
-	}
-	return attackInScope, nil
-}
-
-// CompareSpellCastingIDs loops over each slice in SpellCasting and checks if
-// any item's ID matches the provided spellCastingLocation.
-func CompareSpellCastingIDs(spellCasting structs.SpellCasting, spell structs.Spell, value gjson.Result) {
-	// Check InnateSpellCasting
-
-	locationID := value.Get("system").Get("location").Get("value").String()
-
-	for _, item := range spellCasting.InnateSpellCasting {
-		if item.ID == locationID {
-			fmt.Printf("Match found in InnateSpellCasting: %s\n", item.ID)
-		}
-	}
-
-	// Check PreparedSpellCasting
-	for _, item := range spellCasting.PreparedSpellCasting {
-		if item.ID == locationID {
-			fmt.Printf("Match found in PreparedSpellCasting: %s\n", item.ID)
-		}
-	}
-
-	// Check SpontaneousSpellCasting
-	for _, item := range spellCasting.SpontaneousSpellCasting {
-		if item.ID == locationID {
-			fmt.Printf("Match found in SpontaneousSpellCasting: %s\n", item.ID)
-		}
-	}
-
-	// Check FocusSpellCasting
-	for _, item := range spellCasting.FocusSpellCasting {
-		if item.ID == locationID {
-			fmt.Printf("Match found in FocusSpellCasting: %s\n", item.ID)
-		}
-	}
-}
-
-func HandleSpell(spellCastingBlocks *structs.SpellCasting, value gjson.Result) (structs.SpellCasting, error) {
-	// Check if the referenced spellcasting exists in the spellcasting blocks. If it does, add to the spell to the right spot,
-	// ELSE create the spellcasting block, add it to the spellcasting THEN add the found spell.
-	var Sustained bool
-	var defenseSaveType bool
-	if value.Get("system").Get("duration").Get("sustained").String() == "false" {
-		Sustained = false
-	} else {
-		Sustained = true
-	}
-	if value.Get("system").Get("defense").Get("save").Get("basic") == "true" {
-		defenseSaveType = true
-	} else if value.Get("system").Get("defense").Get("save").Get("basic") == "false" {
-		defenseSaveType = false
-	} else {
-		defenseSaveType = nil
-	}
-	Traits := extractListOfObjectsValues(value.String(), "system.traits.value")
-
-	spell := structs.Spell{
-		ID:          value.Get("_id").String(),
-		Name:        value.Get("name").String(),
-		Level:       value.Get("system").Get("level").Get("value").String(),
-		Description: value.Get("system").Get("description").Get("value").String(),
-		Range:       value.Get("system").Get("range").Get("value").String(),
-		Area: structs.SpellArea{
-			Type:   value.Get("system").Get("area").Get("type").String(),
-			Value:  value.Get("system").Get("area").Get("value").String(),
-			Detail: value.Get("system").Get("area").Get("details").String(),
-		},
-		Duration: structs.DurationBlock{
-			Sustained: Sustained,
-			Duration:  value.Get("system").Get("duration").Get("value").String(),
-		},
-		Targets: value.Get("system").Get("target").Get("value").String(),
-		Traits:  Traits,
-		Defense: structs.DefenseBlock{
-			Save:  value.Get("system").Get("defense").Get("save").Get("statistic").String(),
-			Basic: defenseSaveType,
-		},
-		CastTime:       value.Get("system").Get("time").Get("value").String(),
-		CastComponents: value.Get("system").Get("cost").Get("value").String(),
-		Rarity:         value.Get("system").Get("traits").Get("rarity").String(),
-	}
-	spellCastingLocation := value.Get("system").Get("location").Get("value")
-	// find which spellcasting block it belongs in.
-}
 
 // []structs.Action, []structs.FreeAction, []structs.Attack, []structs.Attack, []structs.Reaction, []structs.Passive, []structs.SpellCasting,
 func ParseItems(data []byte) ([]structs.FreeAction,
@@ -325,29 +157,29 @@ func ParseItems(data []byte) ([]structs.FreeAction,
 		// return a []Attack each one has a system.weaponType which will be ranged or melee
 		case "melee":
 			fmt.Println("Found a melee")
-			weapon, err := ParseWeapon(value.String())
-			if err != nil {
-				fmt.Println("Some other shit!")
-				fmt.Println("Uncategorized! : ", value.Get("type"))
-				f, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-				if err != nil {
-					log.Fatal(err)
-				}
-				defer f.Close() // Ensure the file is closed when we're done.
-				logLine := fmt.Sprintf("Uncategorized attack Found, %s in the file %s \n", value.Get("system").Get("weaponType").Get("value").String(), gjson.Get(string(data), "name"))
-				// Write a string to the file.
-				if _, err := f.WriteString(logLine); err != nil {
-					log.Fatal(err)
-				}
-			}
+			// weapon, err := ParseWeapon(value.String())
+			// if err != nil {
+			// 	fmt.Println("Some other shit!")
+			// 	fmt.Println("Uncategorized! : ", value.Get("type"))
+			// 	f, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+			// 	if err != nil {
+			// 		log.Fatal(err)
+			// 	}
+			// 	defer f.Close() // Ensure the file is closed when we're done.
+			// 	logLine := fmt.Sprintf("Uncategorized attack Found, %s in the file %s \n", value.Get("system").Get("weaponType").Get("value").String(), gjson.Get(string(data), "name"))
+			// 	// Write a string to the file.
+			// 	if _, err := f.WriteString(logLine); err != nil {
+			// 		log.Fatal(err)
+			// 	}
+			// }
 
 		case "spell":
 			fmt.Println("found a Spell")
-			// Check if the referenced spellcasting struct exists yet, if it does, add it to that, (location.value) and (location.uses)
-			SpellCastingBlocks, err := HandleSpell(&SpellCastingBlocks, value)
-			if err != nil {
-				fmt.Println("Failed to handle spell")
-			}
+			// // Check if the referenced spellcasting struct exists yet, if it does, add it to that, (location.value) and (location.uses)
+			// SpellCastingBlocks, err := HandleSpell(&SpellCastingBlocks, value)
+			// if err != nil {
+			// 	fmt.Println("Failed to handle spell")
+			// }
 			// If it hasn't THEN loop over the item list till we find it and create it.
 		case "lore":
 			fmt.Println("Found a Lore")
@@ -385,105 +217,6 @@ func ParseItems(data []byte) ([]structs.FreeAction,
 		return true // Continue iterating
 	})
 	return FreeActionList, actionList, ReactionList, passiveList, SpellCastingBlocks, nil
-}
-
-func ingestJSONList(jsonData []byte, listString string) []string {
-	result := gjson.Get(string(jsonData), listString).Array()
-
-	// Convert []gjson.Result to []string
-	var values []string
-	for _, v := range result {
-		values = append(values, v.String())
-	}
-	return values
-}
-
-// written for immunities, but can be used for any list of objects
-func extractListOfObjectsValues(jsonData string, path string) []string {
-	var types []string
-
-	// Get the JSON array stored in "immunities"
-	immunities := gjson.Get(jsonData, path)
-	// Iterate over each element in the immunities array
-	immunities.ForEach(func(key, value gjson.Result) bool {
-		// For each object, get the "type" field
-		typ := value.Get("type").String()
-		types = append(types, typ)
-		return true // Continue iterating
-	})
-
-	return types
-}
-
-// TODO Left off here
-func CreateSenseList(jsonData []byte, path string) []structs.Sense {
-	var senses []structs.Sense
-
-	// Get the JSON array stored in "senses"
-	sensesData := gjson.Get(string(jsonData), path)
-	// Iterate over each element in the senses array
-	sensesData.ForEach(func(key, value gjson.Result) bool {
-		senses = append(senses, structs.Sense{
-			Name:   value.Get("type").String(),
-			Range:  value.Get("range").String(),
-			Detail: value.Get("details").String(),
-			Acuity: value.Get("acuity").String(),
-		})
-		return true // Continue iterating
-	})
-
-	return senses
-}
-
-func ExtractSkills(jsonData string) []structs.Skill {
-	var skills []structs.Skill
-
-	// Get the "skills" object from the JSON.
-	skillsJSON := gjson.Get(jsonData, "system.skills")
-
-	// Iterate over each key-value pair in the "skills" object.
-	skillsJSON.ForEach(func(key, value gjson.Result) bool {
-		// key.String() is the skill name.
-		// value is an object containing "base" and optionally "special".
-		baseValue := int(value.Get("base").Int())
-		var specials []structs.SkillSpecial
-
-		// Check if a "special" field exists.
-		specialArray := value.Get("special")
-		if specialArray.Exists() {
-			// Iterate over each special item.
-			specialArray.ForEach(func(_, specialItem gjson.Result) bool {
-				specValue := int(specialItem.Get("base").Int())
-				specLabel := specialItem.Get("label").String()
-
-				// Extract "predicate" array.
-				var predicates []string
-				predicateArray := specialItem.Get("predicate")
-				predicateArray.ForEach(func(_, pred gjson.Result) bool {
-					predicates = append(predicates, pred.String())
-					return true // continue iteration
-				})
-
-				// Create a SkillSpecial instance and add to the slice.
-				specials = append(specials, structs.SkillSpecial{
-					Value:      specValue,
-					Label:      specLabel,
-					Predicates: predicates,
-				})
-				return true // continue iteration
-			})
-		}
-
-		// Append the skill to the final slice.
-		skills = append(skills, structs.Skill{
-			Name:     key.String(),
-			Value:    baseValue,
-			Specials: specials,
-		})
-		return true // continue iterating over skills
-	})
-
-	return skills
 }
 
 func parseJSON(data []byte) error {

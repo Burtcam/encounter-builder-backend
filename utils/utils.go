@@ -114,7 +114,7 @@ func extractTarball(tarFile string, destDir string) error {
 			break // End of archive
 		}
 		if err != nil {
-			logger.Log.Error("error reading tar file: %w", err)
+			// logger.Log.Error("error reading tar file: %w", err.Error())
 			return err
 		}
 
