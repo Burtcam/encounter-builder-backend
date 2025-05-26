@@ -174,20 +174,23 @@ type PreparedSlot struct {
 	Spell   Spell
 }
 type Spell struct {
-	ID             string
-	Name           string
-	Level          string
-	Description    string
-	Range          string
-	Area           SpellArea
-	Duration       DurationBlock
-	Targets        string
-	Traits         []string
-	Defense        DefenseBlock
-	CastTime       string
-	CastComponents string
-	Rarity         string
+	ID                          string
+	Name                        string
+	CastLevel                   string
+	Description                 string
+	Range                       string
+	Area                        SpellArea
+	Duration                    DurationBlock
+	Targets                     string
+	Traits                      []string
+	Defense                     DefenseBlock
+	CastTime                    string
+	CastComponents              string
+	Rarity                      string
+	AtWill                      bool
+	SpellCastingBlockLocationID string
 }
+
 type DefenseBlock struct {
 	Save  string
 	Basic bool

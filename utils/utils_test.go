@@ -1200,3 +1200,577 @@ func TestParseAction(t *testing.T) {
 		}
 	}
 }
+
+func TestIngestSpontaneousSpell(t *testing.T) {
+	jsonData := `{
+            "_id": "N5cIxpCa1E4SqZi7",
+            "_stats": {
+                "compendiumSource": "Compendium.pf2e.spells-srd.Item.9AAkVUCwF6WVNNY2"
+            },
+            "img": "icons/magic/lightning/bolt-strike-sparks-blue.webp",
+            "name": "Lightning Bolt",
+            "sort": 900000,
+            "system": {
+                "area": {
+                    "type": "line",
+                    "value": 120
+                },
+                "cost": {
+                    "value": ""
+                },
+                "counteraction": false,
+                "damage": {
+                    "0": {
+                        "applyMod": false,
+                        "category": null,
+                        "formula": "4d12",
+                        "kinds": [
+                            "damage"
+                        ],
+                        "materials": [],
+                        "type": "electricity"
+                    }
+                },
+                "defense": {
+                    "save": {
+                        "basic": true,
+                        "statistic": "reflex"
+                    }
+                },
+                "description": {
+                    "value": "<p>A bolt of lightning strikes outward from your hand, dealing 4d12 electricity damage.</p>\n<hr />\n<p><strong>Heightened (+1)</strong> The damage increases by 1d12.</p>"
+                },
+                "duration": {
+                    "sustained": false,
+                    "value": ""
+                },
+                "heightening": {
+                    "damage": {
+                        "0": "1d12"
+                    },
+                    "interval": 1,
+                    "type": "interval"
+                },
+                "level": {
+                    "value": 3
+                },
+                "location": {
+                    "heightenedLevel": 5,
+                    "value": "6PZisICkQg9iEoQs"
+                },
+                "publication": {
+                    "license": "OGL",
+                    "remaster": false,
+                    "title": "Pathfinder Core Rulebook"
+                },
+                "range": {
+                    "value": ""
+                },
+                "requirements": "",
+                "rules": [],
+                "slug": "lightning-bolt",
+                "target": {
+                    "value": ""
+                },
+                "time": {
+                    "value": "2"
+                },
+                "traits": {
+                    "rarity": "common",
+                    "traditions": [
+                        "arcane",
+                        "primal"
+                    ],
+                    "value": [
+                        "concentrate",
+                        "electricity",
+                        "manipulate"
+                    ]
+                }
+            },
+            "type": "spell"
+        },`
+	// Level 5 spontaneous spell, (slots exist in the spellcsting Entry. We just have to tie it to the entry via location.value)
+}
+
+func TestIngestRitualInnateSpell(t *testing.T) {
+	jsonData = `{
+            "_id": "fts4AdQANVel1VuJ",
+            "_stats": {
+                "compendiumSource": "Compendium.pf2e.spells-srd.Item.tsKnoBuBbKMXkiz5"
+            },
+            "img": "icons/sundries/scrolls/scroll-writing-tan-grey.webp",
+            "name": "Abyssal Pact",
+            "sort": 200000,
+            "system": {
+                "area": null,
+                "cost": {
+                    "value": ""
+                },
+                "counteraction": false,
+                "damage": {},
+                "defense": null,
+                "description": {
+                    "value": "<p>You call in a favor from another demon whose level is no more than double <em>Abyssal pact's</em> spell rank, two demons whose levels are each at least 2 less than double the spell rank, or three demons whose levels are each at least 3 less than double the spell rank.</p>\n<hr />\n<p><strong>Critical Success</strong> You conjure the demon or demons. They are eager to pursue the task, so they don't ask for a favor.</p>\n<p><strong>Success</strong> You conjure the demon or demons. They are not eager to pursue the task, so they require a favor in return.</p>\n<p><strong>Failure</strong> You don't conjure any demons.</p>\n<p><strong>Critical Failure</strong> The demon or demons are angry that you disturbed them. They appear before you, but they immediately attack you.</p>"
+                },
+                "duration": {
+                    "sustained": false,
+                    "value": ""
+                },
+                "level": {
+                    "value": 1
+                },
+                "location": {
+                    "value": null
+                },
+                "publication": {
+                    "license": "OGL",
+                    "remaster": false,
+                    "title": "Pathfinder Bestiary"
+                },
+                "range": {
+                    "value": ""
+                },
+                "requirements": "",
+                "ritual": {
+                    "primary": {
+                        "check": "Religion (expert; you must be a demon)"
+                    },
+                    "secondary": {
+                        "casters": 0,
+                        "checks": ""
+                    }
+                },
+                "rules": [],
+                "slug": "abyssal-pact",
+                "target": {
+                    "value": ""
+                },
+                "time": {
+                    "value": "1 day"
+                },
+                "traits": {
+                    "rarity": "uncommon",
+                    "traditions": [],
+                    "value": []
+                }
+            },
+            "type": "spell"
+        },`
+
+	// location == Null on rituals? Need a different mechanism for those.
+
+}
+
+func TestIngestPreparedSpell(t *testing.T) {
+	jsonData := `{
+            "_id": "cgw07bSj0UprtiUE",
+            "_stats": {
+                "compendiumSource": "Compendium.pf2e.spells-srd.Item.gISYsBFby1TiXfBt"
+            },
+            "img": "icons/magic/acid/projectile-smoke-glowing.webp",
+            "name": "Acid Splash",
+            "sort": 2200000,
+            "system": {
+                "area": null,
+                "cost": {
+                    "value": ""
+                },
+                "counteraction": false,
+                "damage": {
+                    "0": {
+                        "applyMod": false,
+                        "category": null,
+                        "formula": "1d6",
+                        "kinds": [
+                            "damage"
+                        ],
+                        "materials": [],
+                        "type": "acid"
+                    },
+                    "gcovwqxwitqchoin": {
+                        "applyMod": false,
+                        "category": "splash",
+                        "formula": "1",
+                        "kinds": [
+                            "damage"
+                        ],
+                        "materials": [],
+                        "type": "acid"
+                    }
+                },
+                "defense": null,
+                "description": {
+                    "value": "<p>You splash a glob of acid that splatters your target and nearby creatures. Make a spell attack. If you hit, you deal 1d6 acid damage plus 1 splash acid damage. On a critical success, the target also takes @Damage[(ceil(@item.level/2))[persistent,acid]] damage.</p><hr /><p><strong>Heightened (3rd)</strong> The initial damage increases to 2d6, and the persistent damage increases to 2.</p>\n<p><strong>Heightened (5th)</strong> The initial damage increases to 3d6, the persistent damage increases to 3, and the splash damage increases to 2.</p>\n<p><strong>Heightened (7th)</strong> The initial damage increases to 4d6, the persistent damage increases to 4, and the splash damage increases to 3.</p>\n<p><strong>Heightened (9th)</strong> The initial damage increases to 5d6, the persistent damage increases to 5, and the splash damage increases to 4.</p>"
+                },
+                "duration": {
+                    "sustained": false,
+                    "value": ""
+                },
+                "heightening": {
+                    "levels": {
+                        "3": {
+                            "damage": {
+                                "0": {
+                                    "applyMod": false,
+                                    "category": null,
+                                    "formula": "2d6",
+                                    "materials": [],
+                                    "type": "acid"
+                                },
+                                "gcovwqxwitqchoin": {
+                                    "applyMod": false,
+                                    "category": "splash",
+                                    "formula": "1",
+                                    "materials": [],
+                                    "type": "acid"
+                                }
+                            }
+                        },
+                        "5": {
+                            "damage": {
+                                "0": {
+                                    "applyMod": false,
+                                    "category": null,
+                                    "formula": "3d6",
+                                    "materials": [],
+                                    "type": "acid"
+                                },
+                                "gcovwqxwitqchoin": {
+                                    "applyMod": false,
+                                    "category": "splash",
+                                    "formula": "2",
+                                    "materials": [],
+                                    "type": "acid"
+                                }
+                            }
+                        },
+                        "7": {
+                            "damage": {
+                                "0": {
+                                    "applyMod": false,
+                                    "category": null,
+                                    "formula": "4d6",
+                                    "materials": [],
+                                    "type": "acid"
+                                },
+                                "gcovwqxwitqchoin": {
+                                    "applyMod": false,
+                                    "category": "splash",
+                                    "formula": "3",
+                                    "materials": [],
+                                    "type": "acid"
+                                }
+                            }
+                        },
+                        "9": {
+                            "damage": {
+                                "0": {
+                                    "applyMod": false,
+                                    "category": null,
+                                    "formula": "5d6",
+                                    "materials": [],
+                                    "type": "acid"
+                                },
+                                "gcovwqxwitqchoin": {
+                                    "applyMod": false,
+                                    "category": "splash",
+                                    "formula": "4",
+                                    "materials": [],
+                                    "type": "acid"
+                                }
+                            }
+                        }
+                    },
+                    "type": "fixed"
+                },
+                "level": {
+                    "value": 1
+                },
+                "location": {
+                    "value": "9h6KJeGxzm8rEPaD"
+                },
+                "publication": {
+                    "license": "OGL",
+                    "remaster": false,
+                    "title": "Pathfinder Core Rulebook"
+                },
+                "range": {
+                    "value": "30 feet"
+                },
+                "requirements": "",
+                "rules": [],
+                "slug": "acid-splash",
+                "target": {
+                    "value": "1 creature"
+                },
+                "time": {
+                    "value": "2"
+                },
+                "traits": {
+                    "rarity": "common",
+                    "traditions": [
+                        "arcane",
+                        "primal"
+                    ],
+                    "value": [
+                        "acid",
+                        "attack",
+                        "cantrip",
+                        "concentrate",
+                        "manipulate"
+                    ]
+                }
+            },
+            "type": "spell"
+        },`
+
+	//Level 1 prepared Primal Spell (forest-dragon-adult-spellcaster.json)
+	// location.value == spellcasting entry Level IS actually the slot it's prepped in.
+}
+
+func TestIngestInnateSpell(t *testing.T) {
+	jsonData := `{
+            "_id": "kBj0RqQnEELUYiNC",
+            "_stats": {
+                "compendiumSource": "Compendium.pf2e.spells-srd.Item.4koZzrnMXhhosn0D"
+            },
+            "img": "systems/pf2e/icons/spells/fear.webp",
+            "name": "Fear",
+            "sort": 300000,
+            "system": {
+                "area": null,
+                "cost": {
+                    "value": ""
+                },
+                "counteraction": false,
+                "damage": {},
+                "defense": {
+                    "save": {
+                        "basic": false,
+                        "statistic": "will"
+                    }
+                },
+                "description": {
+                    "value": "<p>You plant fear in the target; it must attempt a Will save.</p>\n<hr />\n<p><strong>Critical Success</strong> The target is unaffected.</p>\n<p><strong>Success</strong> The target is @UUID[Compendium.pf2e.conditionitems.Item.Frightened]{Frightened 1}.</p>\n<p><strong>Failure</strong> The target is @UUID[Compendium.pf2e.conditionitems.Item.Frightened]{Frightened 2}.</p>\n<p><strong>Critical Failure</strong> The target is @UUID[Compendium.pf2e.conditionitems.Item.Frightened]{Frightened 3} and @UUID[Compendium.pf2e.conditionitems.Item.Fleeing] for 1 round.</p>\n<hr />\n<p><strong>Heightened (3rd)</strong> You can target up to five creatures.</p>"
+                },
+                "duration": {
+                    "sustained": false,
+                    "value": "varies"
+                },
+                "heightening": {
+                    "levels": {
+                        "3": {
+                            "target": {
+                                "value": "5 creatures"
+                            }
+                        }
+                    },
+                    "type": "fixed"
+                },
+                "level": {
+                    "value": 1
+                },
+                "location": {
+                    "heightenedLevel": 2,
+                    "uses": {
+                        "max": 2,
+                        "value": 2
+                    },
+                    "value": "0jNl0jg5W1N5NrTS"
+                },
+                "publication": {
+                    "license": "OGL",
+                    "remaster": false,
+                    "title": "Pathfinder Core Rulebook"
+                },
+                "range": {
+                    "value": "30 feet"
+                },
+                "requirements": "",
+                "rules": [],
+                "slug": "fear",
+                "target": {
+                    "value": "1 creature"
+                },
+                "time": {
+                    "value": "2"
+                },
+                "traits": {
+                    "rarity": "common",
+                    "traditions": [
+                        "arcane",
+                        "divine",
+                        "occult",
+                        "primal"
+                    ],
+                    "value": [
+                        "concentrate",
+                        "emotion",
+                        "fear",
+                        "manipulate",
+                        "mental"
+                    ]
+                }
+            },
+            "type": "spell"
+        },`
+	//Location.value == spellcasting value
+	// Heightened Level == Level? what if it says level?
+	// Uses needs to be ingested into a use....
+	// If no use set then theres 1 use?
+}
+
+func IngestInnateSpell1Use(t *testing.T) {
+	jsonData := `{
+            "_id": "6Dv8wIStddSP0cLP",
+            "_stats": {
+                "compendiumSource": "Compendium.pf2e.spells-srd.Item.3x6eUCm17n6ROzUa"
+            },
+            "img": "icons/magic/holy/prayer-hands-glowing-yellow-white.webp",
+            "name": "Crisis of Faith",
+            "sort": 300000,
+            "system": {
+                "area": null,
+                "cost": {
+                    "value": ""
+                },
+                "counteraction": false,
+                "damage": {
+                    "0": {
+                        "category": null,
+                        "formula": "6d6",
+                        "kinds": [
+                            "damage"
+                        ],
+                        "materials": [],
+                        "type": "mental"
+                    }
+                },
+                "defense": {
+                    "save": {
+                        "basic": false,
+                        "statistic": "will"
+                    }
+                },
+                "description": {
+                    "value": "<p>You assault the target's faith, riddling the creature with doubt and mental turmoil that deal 6d6 mental damage, or 6d8 mental damage if it can cast divine spells. The effects are determined by its Will save.</p>\n<p>To many deities, casting this spell on a follower of your own deity without significant cause is anathema.</p>\n<hr />\n<p><strong>Critical Success</strong> The target is unaffected.</p>\n<p><strong>Success</strong> The target takes half damage.</p>\n<p><strong>Failure</strong> The target takes full damage; if the target can cast divine spells, it's @UUID[Compendium.pf2e.conditionitems.Item.Stupefied]{Stupefied 1} for 1 round.</p>\n<p><strong>Critical Failure</strong> The target takes double damage, is @UUID[Compendium.pf2e.conditionitems.Item.Stupefied]{Stupefied 1} for 1 round, and can't cast divine spells for 1 round.</p>\n<hr />\n<p><strong>Heightened (+1)</strong> The damage increases by 2d6 (or by 2d8 if the target is a divine spellcaster).</p>"
+                },
+                "duration": {
+                    "sustained": false,
+                    "value": ""
+                },
+                "heightening": {
+                    "damage": {
+                        "0": "2d6"
+                    },
+                    "interval": 1,
+                    "type": "interval"
+                },
+                "level": {
+                    "value": 3
+                },
+                "location": {
+                    "heightenedLevel": 4,
+                    "value": "p3v8D49u0adS76qw"
+                },
+                "publication": {
+                    "license": "OGL",
+                    "remaster": false,
+                    "title": "Pathfinder Core Rulebook"
+                },
+                "range": {
+                    "value": "30 feet"
+                },
+                "requirements": "",
+                "rules": [],
+                "slug": "crisis-of-faith",
+                "target": {
+                    "value": "1 creature"
+                },
+                "time": {
+                    "value": "2"
+                },
+                "traits": {
+                    "rarity": "common",
+                    "traditions": [
+                        "divine"
+                    ],
+                    "value": [
+                        "concentrate",
+                        "manipulate",
+                        "mental"
+                    ]
+                }
+            },
+            "type": "spell"
+        },`
+}
+
+func IngestAtWillInnateSpellUse(t *testing.T) {
+	jsonData := `        {
+            "_id": "ZSNdsMrtDj0biKjg",
+            "_stats": {
+                "compendiumSource": "Compendium.pf2e.spells-srd.Item.9HpwDN4MYQJnW0LG"
+            },
+            "img": "systems/pf2e/icons/spells/dispel-magic.webp",
+            "name": "Dispel Magic (At Will)",
+            "sort": 1200000,
+            "system": {
+                "area": null,
+                "cost": {
+                    "value": ""
+                },
+                "counteraction": true,
+                "damage": {},
+                "defense": null,
+                "description": {
+                    "value": "<p>You unravel the magic behind a spell or effect. Attempt a counteract check against the target. If you successfully counteract a magic item, the item becomes a mundane item of its type for 10 minutes. This doesn't change the item's non-magical properties. If the target is an artifact or similar item, you automatically fail.</p>"
+                },
+                "duration": {
+                    "sustained": false,
+                    "value": ""
+                },
+                "level": {
+                    "value": 2
+                },
+                "location": {
+                    "heightenedLevel": 8,
+                    "value": "IsRnnfl27oJF1UGY"
+                },
+                "publication": {
+                    "license": "ORC",
+                    "remaster": true,
+                    "title": "Pathfinder Player Core"
+                },
+                "range": {
+                    "value": "120 feet"
+                },
+                "requirements": "",
+                "rules": [],
+                "slug": "dispel-magic",
+                "target": {
+                    "value": "1 spell effect or unattended magic item"
+                },
+                "time": {
+                    "value": "2"
+                },
+                "traits": {
+                    "rarity": "common",
+                    "traditions": [
+                        "arcane",
+                        "divine",
+                        "occult",
+                        "primal"
+                    ],
+                    "value": [
+                        "concentrate",
+                        "manipulate"
+                    ]
+                }
+            },
+            "type": "spell"
+        },`
+}
+
+// parse "(at will)" out of name. If it's there, it's unlimited uses.
