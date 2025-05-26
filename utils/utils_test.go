@@ -191,7 +191,7 @@ func TestIngestJSONList(t *testing.T) {
 
 	expectedValues := []string{"value1", "value2", "value3"}
 
-	result := ingestJSONList([]byte(jsonData), "list")
+	result := ingestJSONList(jsonData, "list")
 
 	if len(result) != len(expectedValues) {
 		t.Fatalf("Expected %d values, got %d", len(expectedValues), len(result))
@@ -721,7 +721,23 @@ func TestParsePreparedSpellCasting(t *testing.T) {
 }
 
 func TestParseDamageBlocks(t *testing.T) {
-	jsonData := `"damageRolls": {
+	jsonData := `{
+            "_id": "7SJO477OusJy7wpB",
+            "img": "systems/pf2e/icons/default-icons/melee.svg",
+            "name": "Jaws",
+            "sort": 3200000,
+            "system": {
+                "attack": {
+                    "value": ""
+                },
+                "attackEffects": {
+                    "custom": "",
+                    "value": []
+                },
+                "bonus": {
+                    "value": 29
+                },
+                "damageRolls": {
                     "0": {
                         "damage": "3d10+13",
                         "damageType": "piercing"
@@ -730,7 +746,31 @@ func TestParseDamageBlocks(t *testing.T) {
                         "damage": "2d6",
                         "damageType": "poison"
                     }
-                }`
+                },
+                "description": {
+                    "value": ""
+                },
+                "publication": {
+                    "license": "OGL",
+                    "remaster": false,
+                    "title": ""
+                },
+                "rules": [],
+                "slug": null,
+                "traits": {
+                    "rarity": "common",
+                    "value": [
+                        "magical",
+                        "reach-15",
+                        "unarmed"
+                    ]
+                },
+                "weaponType": {
+                    "value": "melee"
+                }
+            },
+            "type": "melee"
+        },`
 	expected := []structs.DamageBlock{
 		{
 			DamageRoll: "3d10+13",
@@ -753,4 +793,270 @@ func TestParseDamageBlocks(t *testing.T) {
 			t.Errorf("Expected DamageType '%s' at index %d, got '%s'", block.DamageType, i, result[i].DamageType)
 		}
 	}
+}
+
+func TestParseDamageEffects(t *testing.T) {
+	jsonData := `{
+            "_id": "7SJO477OusJy7wpB",
+            "img": "systems/pf2e/icons/default-icons/melee.svg",
+            "name": "Jaws",
+            "sort": 3200000,
+            "system": {
+                "attack": {
+                    "value": ""
+                },
+                "attackEffects": {
+                    "custom": "hello",
+                    "value": ["stunned", "dazed", "slowed", "Confused"]
+                },
+                "damageRolls": {
+                    "0": {
+                        "damage": "3d10+13",
+                        "damageType": "piercing"
+                    },
+                    "e30481rbp6g1b2cgivij": {
+                        "damage": "2d6",
+                        "damageType": "poison"
+                    }
+                },
+                "description": {
+                    "value": ""
+                },
+                "publication": {
+                    "license": "OGL",
+                    "remaster": false,
+                    "title": ""
+                },
+                "rules": [],
+                "slug": null,
+                "traits": {
+                    "rarity": "common",
+                    "value": [
+                        "magical",
+                        "reach-15",
+                        "unarmed"
+                    ]
+                },
+                "weaponType": {
+                    "value": "melee"
+                }
+            },
+            "type": "melee"
+        },`
+	expected := structs.DamageEffect{
+		CustomString: "hello",
+		Value:        []string{"stunned", "dazed", "slowed", "Confused"},
+	}
+	result := ParseDamageEffects(jsonData)
+	if result.CustomString != expected.CustomString {
+		t.Errorf("Expected CustomString '%s', got '%s'", expected.CustomString, result.CustomString)
+	}
+	if len(result.Value) != len(expected.Value) {
+		t.Fatalf("Expected %d effects, got %d", len(expected.Value), len(result.Value))
+	}
+	for i, effect := range expected.Value {
+		if result.Value[i] != effect {
+			t.Errorf("Expected effect '%s' at index %d, got '%s'", effect, i, result.Value[i])
+		}
+	}
+}
+
+func TestParseWeapon(t *testing.T) {
+	jsonData := `{
+            "_id": "7SJO477OusJy7wpB",
+            "img": "systems/pf2e/icons/default-icons/melee.svg",
+            "name": "Jaws",
+            "sort": 3200000,
+            "system": {
+                "attack": {
+                    "value": ""
+                },
+                "attackEffects": {
+                    "custom": "",
+                    "value": []
+                },
+                "bonus": {
+                    "value": 29
+                },
+                "damageRolls": {
+                    "0": {
+                        "damage": "3d10+13",
+                        "damageType": "piercing"
+                    },
+                    "e30481rbp6g1b2cgivij": {
+                        "damage": "2d6",
+                        "damageType": "poison"
+                    }
+                },
+                "description": {
+                    "value": ""
+                },
+                "publication": {
+                    "license": "OGL",
+                    "remaster": false,
+                    "title": ""
+                },
+                "rules": [],
+                "slug": null,
+                "traits": {
+                    "rarity": "common",
+                    "value": [
+                        "magical",
+                        "reach-15",
+                        "unarmed"
+                    ]
+                },
+                "weaponType": {
+                    "value": "melee"
+                }
+            },
+            "type": "melee"
+        },`
+	expected := structs.Attack{
+		Type:       "melee",
+		Name:       "Jaws",
+		ToHitBonus: "29",
+		DamageBlocks: []structs.DamageBlock{
+			{
+				DamageRoll: "3d10+13",
+				DamageType: "piercing",
+			},
+			{
+				DamageRoll: "2d6",
+				DamageType: "poison",
+			},
+		},
+		Effects: structs.DamageEffect{
+			CustomString: "",
+			Value:        []string{},
+		},
+		Traits: []string{"magical", "reach-15", "unarmed"},
+	}
+	result := ParseWeapon(jsonData)
+	fmt.Println(result)
+	if result.Type != expected.Type {
+		t.Errorf("Expected Type '%s', got '%s'", expected.Type, result.Type)
+	}
+	if result.Name != expected.Name {
+		t.Errorf("Expected Name '%s', got '%s'", expected.Name, result.Name)
+	}
+	if result.ToHitBonus != expected.ToHitBonus {
+		t.Errorf("Expected ToHitBonus '%s', got '%s'", expected.ToHitBonus, result.ToHitBonus)
+	}
+	if len(result.DamageBlocks) != len(expected.DamageBlocks) {
+		t.Fatalf("Expected %d damage blocks, got %d", len(expected.DamageBlocks), len(result.DamageBlocks))
+	}
+	for i, block := range expected.DamageBlocks {
+		if result.DamageBlocks[i].DamageRoll != block.DamageRoll {
+			t.Errorf("Expected DamageRoll '%s' at index %d, got '%s'", block.DamageRoll, i, result.DamageBlocks[i].DamageRoll)
+		}
+		if result.DamageBlocks[i].DamageType != block.DamageType {
+			t.Errorf("Expected DamageType '%s' at index %d, got '%s'", block.DamageType, i, result.DamageBlocks[i].DamageType)
+		}
+	}
+	if result.Effects.CustomString != expected.Effects.CustomString {
+		t.Errorf("Expected Effects CustomString '%s', got '%s'", expected.Effects.CustomString, result.Effects.CustomString)
+	}
+	if len(result.Effects.Value) != len(expected.Effects.Value) {
+		t.Fatalf("Expected %d effects, got %d", len(expected.Effects.Value), len(result.Effects.Value))
+	}
+	if len(result.Traits) != len(expected.Traits) {
+		t.Fatalf("Expected %d traits, got %d", len(expected.Traits), len(result.Traits))
+	}
+	for i, trait := range expected.Traits {
+		if result.Traits[i] != trait {
+			t.Errorf("Expected Trait '%s' at index %d, got '%s'", trait, i, result.Traits[i])
+		}
+	}
+	for i, effect := range expected.Effects.Value {
+		if result.Effects.Value[i] != effect {
+			t.Errorf("Expected effect '%s' at index %d, got '%s'", effect, i, result.Effects.Value[i])
+		}
+	}
+	// Check for any additional fields in the result
+	if len(result.DamageBlocks) > len(expected.DamageBlocks) {
+		t.Errorf("Expected no additional damage blocks, got %d", len(result.DamageBlocks)-len(expected.DamageBlocks))
+	}
+	if len(result.DamageBlocks) < len(expected.DamageBlocks) {
+		t.Errorf("Expected no missing damage blocks, got %d", len(expected.DamageBlocks)-len(result.DamageBlocks))
+	}
+	if len(result.Effects.Value) > len(expected.Effects.Value) {
+		t.Errorf("Expected no additional effects, got %d", len(result.Effects.Value)-len(expected.Effects.Value))
+	}
+	if len(result.Effects.Value) < len(expected.Effects.Value) {
+		t.Errorf("Expected no missing effects, got %d", len(expected.Effects.Value)-len(result.Effects.Value))
+	}
+	if len(result.Traits) > len(expected.Traits) {
+		t.Errorf("Expected no additional traits, got %d", len(result.Traits)-len(expected.Traits))
+	}
+	if len(result.Traits) < len(expected.Traits) {
+		t.Errorf("Expected no missing traits, got %d", len(expected.Traits)-len(result.Traits))
+	}
+}
+
+func TestParseFreeAction(t *testing.T) {
+	jsonData := `{
+            "_id": "JPj4ayUtkVtkvYCy",
+            "img": "systems/pf2e/icons/actions/FreeAction.webp",
+            "name": "Consume Light",
+            "sort": 600000,
+            "system": {
+                "actionType": {
+                    "value": "free"
+                },
+                "actions": {
+                    "value": null
+                },
+                "category": "offensive",
+                "description": {
+                    "value": "<p><strong>Trigger</strong> The voidglutton casts @UUID[Compendium.pf2e.spells-srd.Item.Darkness]</p>\n<hr />\n<p><strong>Effect</strong> The voidglutton extinguishes its Glow as part of Casting the Spell. It becomes @UUID[Compendium.pf2e.conditionitems.Item.Invisible] as long as it remains in the area of darkness. If the voidglutton uses a hostile action, its invisibility ends as soon as the hostile action is completed.</p>"
+                },
+                "publication": {
+                    "license": "OGL",
+                    "remaster": false,
+                    "title": ""
+                },
+                "rules": [],
+                "slug": null,
+                "traits": {
+                    "rarity": "common",
+                    "value": [
+                        "darkness",
+                        "occult"
+                    ]
+                }
+            },
+            "type": "action"
+        },`
+	expected := structs.FreeAction{
+		Name: "Consume Light",
+		Text: stripHTMLUsingBluemonday("<p><strong>Trigger</strong> The voidglutton casts @UUID[Compendium.pf2e.spells-srd.Item.Darkness]</p>\n<hr />\n<p><strong>Effect</strong> The voidglutton extinguishes its Glow as part of Casting the Spell. It becomes @UUID[Compendium.pf2e.conditionitems.Item.Invisible] as long as it remains in the area of darkness. If the voidglutton uses a hostile action, its invisibility ends as soon as the hostile action is completed.</p>"),
+
+		Traits:   []string{"darkness", "occult"},
+		Category: "offensive",
+		Rarity:   "common",
+	}
+	result := ParseFreeAction(jsonData)
+	if result.Name != expected.Name {
+		t.Errorf("Expected Name '%s', got '%s'", expected.Name, result.Name)
+	}
+	if result.Text != expected.Text {
+		t.Errorf("Expected Text '%s', got '%s'", expected.Text, result.Text)
+	}
+	if result.Category != expected.Category {
+		t.Errorf("Expected Category '%s', got '%s'", expected.Category, result.Category)
+	}
+	if result.Rarity != expected.Rarity {
+		t.Errorf("Expected Rarity '%s', got '%s'", expected.Rarity, result.Rarity)
+	}
+	if len(result.Traits) != len(expected.Traits) {
+		t.Fatalf("Expected %d traits, got %d", len(expected.Traits), len(result.Traits))
+	}
+
+	for i, trait := range expected.Traits {
+		if result.Traits[i] != trait {
+			t.Errorf("Expected Trait '%s' at index %d, got '%s'", trait, i, result.Traits[i])
+		}
+	}
+
 }

@@ -180,15 +180,15 @@ func LoadEachJSON(path string) error {
 	// }
 	if gjson.Get(string(data), "type").String() == "npc" {
 		fmt.Println("Found a monster")
-		err = parseJSON(data)
-		if err != nil {
-			logger.Log.Error(fmt.Sprintf("Error Parsing file %s", path))
-		}
-		// WRite it out to a json
-		// err = os.WriteFile("example-monster.json", jsonData, 0644)
+		// err = parseJSON(data)
 		// if err != nil {
-		// 	logger.Log.Error("Error writting JSON:", err)
+		// 	logger.Log.Error(fmt.Sprintf("Error Parsing file %s", path))
 		// }
+		// // WRite it out to a json
+		// // err = os.WriteFile("example-monster.json", jsonData, 0644)
+		// // if err != nil {
+		// // 	logger.Log.Error("Error writting JSON:", err)
+		// // }
 	}
 
 	return nil

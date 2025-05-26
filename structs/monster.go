@@ -105,18 +105,18 @@ type Movement struct {
 	Notes string
 }
 type Attack struct {
+	Name         string
 	Type         string
 	ToHitBonus   string
 	DamageBlocks []DamageBlock
-	Range        string
 	Traits       []string
-	Effects      []DamageEffects
+	Effects      DamageEffect
 }
 type DamageBlock struct {
 	DamageRoll string
 	DamageType string
 }
-type DamageEffects struct {
+type DamageEffect struct {
 	CustomString string
 	Value        []string
 }

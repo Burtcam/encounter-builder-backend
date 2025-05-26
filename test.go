@@ -63,12 +63,12 @@ func LoadAJson(path string) error {
 	return nil
 }
 
-func main() {
-	// Sample JSON containing the skills block
-	// load a file
-	err := LoadAJson("/home/cburt/encounter-builder/encounter-builder-backend/files/foundryvtt-pf2e-3bcc5cf/packs/pathfinder-monster-core/fortune-dragon-adult.json")
-	if err != nil {
-		fmt.Println(err)
-	}
-	// Extract the skills.
-}
+// func main() {
+// 	// Sample JSON containing the skills block
+// 	// load a file
+// 	err := LoadAJson("/home/cburt/encounter-builder/encounter-builder-backend/files/foundryvtt-pf2e-3bcc5cf/packs/pathfinder-monster-core/fortune-dragon-adult.json")
+// 	if err != nil {
+// 		fmt.Println(err)
+// 	}
+// 	// Extract the skills.
+// }
