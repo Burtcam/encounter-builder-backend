@@ -120,6 +120,17 @@ func ParseFreeAction(jsonData string) structs.FreeAction {
 	return freeAction
 }
 
+func ParseReaction(jsonData string) structs.Reaction {
+	reaction := structs.Reaction{
+		Name:     gjson.Get(jsonData, "name").String(),
+		Text:     stripHTMLUsingBluemonday(gjson.Get(jsonData, "system.description.value").String()),
+		Traits:   ingestJSONList(jsonData, "system.traits.value"),
+		Category: gjson.Get(jsonData, "system.category").String(),
+		Rarity:   gjson.Get(jsonData, "system.traits.rarity").String(),
+	}
+	return reaction
+}
+
 // func CompareSpellCastingIDs(spellCasting structs.SpellCasting, spell structs.Spell, value gjson.Result) {
 // 	// Check InnateSpellCasting
 
@@ -306,4 +317,16 @@ func ParsePassives(value gjson.Result) structs.Passive {
 		Category: value.Get("system").Get("category").String(),
 	}
 	return passive
+}
+
+func ParseAction(jsonData string) structs.Action {
+	action := structs.Action{
+		Name:     gjson.Get(jsonData, ("name")).String(),
+		Text:     stripHTMLUsingBluemonday(gjson.Get(jsonData, "system.description.value").String()),
+		Traits:   ingestJSONList(jsonData, "system.traits.value"),
+		Category: gjson.Get(jsonData, "system.category").String(),
+		Actions:  gjson.Get(jsonData, "system.actions.value").String(),
+		Rarity:   gjson.Get(jsonData, "system.traits.rarity").String(),
+	}
+	return action
 }

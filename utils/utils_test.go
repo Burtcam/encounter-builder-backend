@@ -1060,3 +1060,143 @@ func TestParseFreeAction(t *testing.T) {
 	}
 
 }
+
+func TestParseReaction(t *testing.T) {
+	jsonData := ` {
+            "_id": "tHyoisfllt6q3L0n",
+            "img": "systems/pf2e/icons/actions/Reaction.webp",
+            "name": "Fed by Water",
+            "sort": 3800000,
+            "system": {
+                "actionType": {
+                    "value": "reaction"
+                },
+                "actions": {
+                    "value": null
+                },
+                "category": "defensive",
+                "description": {
+                    "value": "<p><strong>Frequency</strong> once per hour</p>\n<p><strong>Trigger</strong> The forest dragon is targeted with a water spell or effect</p>\n<hr />\n<p><strong>Effect</strong> The forest dragon gains [[/r 35 #Temporary Hit Points]]{35 temporary Hit Points}.</p>"
+                },
+                "frequency": {
+                    "max": 1,
+                    "per": "PT1H"
+                },
+                "publication": {
+                    "license": "OGL",
+                    "remaster": false,
+                    "title": ""
+                },
+                "rules": [],
+                "slug": null,
+                "traits": {
+                    "rarity": "common",
+                    "value": [
+                        "healing",
+                        "primal"
+                    ]
+                }
+            },
+            "type": "action"
+        },`
+	expected := structs.Reaction{
+		Name: "Fed by Water",
+		Text: stripHTMLUsingBluemonday("<p><strong>Frequency</strong> once per hour</p>\n<p><strong>Trigger</strong> The forest dragon is targeted with a water spell or effect</p>\n<hr />\n<p><strong>Effect</strong> The forest dragon gains [[/r 35 #Temporary Hit Points]]{35 temporary Hit Points}.</p>"),
+
+		Traits:   []string{"healing", "primal"},
+		Category: "defensive",
+		Rarity:   "common",
+	}
+	result := ParseReaction(jsonData)
+	if result.Name != expected.Name {
+		t.Errorf("Expected Name '%s', got '%s'", expected.Name, result.Name)
+	}
+	if result.Text != expected.Text {
+		t.Errorf("Expected Text '%s', got '%s'", expected.Text, result.Text)
+	}
+	if result.Category != expected.Category {
+		t.Errorf("Expected Category '%s', got '%s'", expected.Category, result.Category)
+	}
+	if result.Rarity != expected.Rarity {
+		t.Errorf("Expected Rarity '%s', got '%s'", expected.Rarity, result.Rarity)
+	}
+	if len(result.Traits) != len(expected.Traits) {
+		t.Fatalf("Expected %d traits, got %d", len(expected.Traits), len(result.Traits))
+	}
+
+	for i, trait := range expected.Traits {
+		if result.Traits[i] != trait {
+			t.Errorf("Expected Trait '%s' at index %d, got '%s'", trait, i, result.Traits[i])
+		}
+	}
+
+}
+
+func TestParseAction(t *testing.T) {
+	jsonData := ` {
+            "_id": "k2Num39uDHGiZwTm",
+            "img": "systems/pf2e/icons/actions/TwoActions.webp",
+            "name": "Breath Weapon",
+            "sort": 4000000,
+            "system": {
+                "actionType": {
+                    "value": "action"
+                },
+                "actions": {
+                    "value": 2
+                },
+                "category": "offensive",
+                "description": {
+                    "value": "<p>The dragon unleashes a swarm of insects that deals @Damage[14d6[piercing]|options:area-damage] damage in a @Template[cone|distance:40] (@Check[reflex|dc:34|basic|options:area-effect] save) before dispersing.</p>\n<p>A creature that critically fails is @UUID[Compendium.pf2e.conditionitems.Item.Stunned]{Stunned 2} from the insects' venom; this is a poison effect.</p>\n<p>The dragon can't use Breath Weapon again for [[/gmr 1d4 #Recharge Breath Weapon]]{1d4 rounds}.</p>"
+                },
+                "publication": {
+                    "license": "OGL",
+                    "remaster": false,
+                    "title": ""
+                },
+                "rules": [],
+                "slug": null,
+                "traits": {
+                    "rarity": "common",
+                    "value": [
+                        "primal"
+                    ]
+                }
+            },
+            "type": "action"
+        },`
+	expected := structs.Action{
+		Name:     "Breath Weapon",
+		Text:     stripHTMLUsingBluemonday("<p>The dragon unleashes a swarm of insects that deals @Damage[14d6[piercing]|options:area-damage] damage in a @Template[cone|distance:40] (@Check[reflex|dc:34|basic|options:area-effect] save) before dispersing.</p>\n<p>A creature that critically fails is @UUID[Compendium.pf2e.conditionitems.Item.Stunned]{Stunned 2} from the insects' venom; this is a poison effect.</p>\n<p>The dragon can't use Breath Weapon again for [[/gmr 1d4 #Recharge Breath Weapon]]{1d4 rounds}.</p>"),
+		Traits:   []string{"primal"},
+		Actions:  "2",
+		Category: "offensive",
+		Rarity:   "common",
+	}
+	result := ParseAction(jsonData)
+
+	if result.Name != expected.Name {
+		t.Errorf("Expected Name '%s', got '%s'", expected.Name, result.Name)
+	}
+	if result.Text != expected.Text {
+		t.Errorf("Expected Text '%s', got '%s'", expected.Text, result.Text)
+	}
+	if result.Category != expected.Category {
+		t.Errorf("Expected Category '%s', got '%s'", expected.Category, result.Category)
+	}
+	if result.Rarity != expected.Rarity {
+		t.Errorf("Expected Rarity '%s', got '%s'", expected.Rarity, result.Rarity)
+	}
+	if len(result.Traits) != len(expected.Traits) {
+		t.Fatalf("Expected %d traits, got %d", len(expected.Traits), len(result.Traits))
+	}
+	if expected.Actions != result.Actions {
+		t.Errorf("Expected %s Actions, got %s'", expected.Actions, result.Actions)
+	}
+
+	for i, trait := range expected.Traits {
+		if result.Traits[i] != trait {
+			t.Errorf("Expected Trait '%s' at index %d, got '%s'", trait, i, result.Traits[i])
+		}
+	}
+}
