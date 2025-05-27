@@ -337,7 +337,33 @@ func ParseSpell(jsonData string) structs.Spell {
 }
 
 func AssignSpell(spellList *[]structs.Spell, castingBlocks *structs.SpellCasting) {
+	//For each spell in spell list. Look in each list of castingblocks for the match
+	// castingblocks.PreparedSpellList[0].ID == spellList[i].SpellCastingBlockLocationID
+	for j := 0; j < len(*spellList); j++ {
+		for p := 0; p < len(castingBlocks.PreparedSpellCasting); p++ {
+			//Loop over and check if spell[]
+			if (*spellList)[j].SpellCastingBlockLocationID == castingBlocks.PreparedSpellCasting[p].ID {
+				for i := 0; i < len(castingBlocks.PreparedSpellCasting[p].Slots); i++ {
+					if castingBlocks.PreparedSpellCasting[p].Slots[i].SpellID == (*spellList)[j].ID {
+						castingBlocks.PreparedSpellCasting[p].Slots[i].Spell = (*spellList)[j]
+					}
+				}
+			}
+		}
+		for p := 0; p < len(castingBlocks.InnateSpellCasting); p++ {
+			if (*spellList)[j].SpellCastingBlockLocationID == castingBlocks.InnateSpellCasting[p].ID {
+				// create a spell use using spell. 
+				castingBlocks.InnateSpellCasting[p].SpellUses = append(castingBlocks.InnateSpellCasting[p].SpellUses, structs.SpellUse{
+					Spell: *(spellList[j]), 
+					Level: int(*spellList)[j].CastLevel), 
+					Uses: (*spellList)[j].Uses,
+				}) 
+			}
+			
 
+		}
+
+	}
 }
 
 // func CompareSpellCastingIDs(spellCasting structs.SpellCasting, spell structs.Spell, value gjson.Result) {
