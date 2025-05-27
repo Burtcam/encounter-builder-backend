@@ -719,6 +719,121 @@ func TestParsePreparedSpellCasting(t *testing.T) {
 		t.Errorf("Expected Slot SpellID '%s', got '%s'", expected.Slots[7].SpellID, result.Slots[7].SpellID)
 	}
 }
+func TestParseFocusSpellCasting(t *testing.T) {
+	jsonData := ` {
+            "_id": "EDPFYDhj0ZOTpRmX",
+            "img": "systems/pf2e/icons/default-icons/spellcastingEntry.svg",
+            "name": "Animal Order Spells",
+            "sort": 200000,
+            "system": {
+                "autoHeightenLevel": {
+                    "value": null
+                },
+                "description": {
+                    "value": ""
+                },
+                "prepared": {
+                    "flexible": false,
+                    "value": "focus"
+                },
+                "proficiency": {
+                    "value": 1
+                },
+                "publication": {
+                    "license": "OGL",
+                    "remaster": false,
+                    "title": ""
+                },
+                "rules": [],
+                "slots": {},
+                "slug": null,
+                "spelldc": {
+                    "dc": 24,
+                    "mod": 0,
+                    "value": 16
+                },
+                "tradition": {
+                    "value": "primal"
+                }
+            },
+            "type": "spellcastingEntry"
+        },`
+	expected := structs.FocusSpellCasting{
+		DC:             24,
+		Mod:            "16",
+		Tradition:      "primal",
+		ID:             "EDPFYDhj0ZOTpRmX",
+		FocusSpellList: []structs.Spell{},
+		Description:    stripHTMLUsingBluemonday(""),
+		Name:           "Animal Order Spells",
+		CastLevel:      "",
+	}
+	result := ParseFocusSpellCasting(jsonData)
+	if result.DC != expected.DC {
+		t.Errorf("Expected DC '%d', got '%d'", expected.DC, result.DC)
+	}
+	if result.Mod != expected.Mod {
+		t.Errorf("Expected Mod '%s', got '%s'", expected.Mod, result.Mod)
+	}
+	if result.Tradition != expected.Tradition {
+		t.Errorf("Expected Tradition %s, got %s", expected.Tradition, result.Tradition)
+	}
+	if result.ID != expected.ID {
+		t.Errorf("Expected ID %s, got %s", expected.ID, result.ID)
+	}
+	if result.Description != expected.Description {
+		t.Errorf("Expected Description %s, got %s", expected.Description, result.Description)
+	}
+	if result.Name != expected.Name {
+		t.Errorf("Expected Name '%s', got '%s'", expected.Name, result.Name)
+	}
+	if len(expected.FocusSpellList) != len(result.FocusSpellList) {
+		t.Errorf("Expected %d yet, got %d", len(expected.FocusSpellList), len(result.FocusSpellList))
+	}
+	if expected.CastLevel != result.CastLevel {
+		t.Errorf("Expected castLevel %s, got %s", expected.CastLevel, result.CastLevel)
+	}
+}
+func TestParseInnateSpellCasting(t *testing.T) {
+	jsonData := ` {
+            "_id": "yI8fil9Hp8Ob0BcY",
+            "img": "systems/pf2e/icons/default-icons/spellcastingEntry.svg",
+            "name": "Occult Innate Spells",
+            "sort": 100000,
+            "system": {
+                "autoHeightenLevel": {
+                    "value": null
+                },
+                "description": {
+                    "value": ""
+                },
+                "prepared": {
+                    "flexible": false,
+                    "value": "innate"
+                },
+                "proficiency": {
+                    "value": 0
+                },
+                "publication": {
+                    "license": "OGL",
+                    "remaster": false,
+                    "title": ""
+                },
+                "rules": [],
+                "slots": {},
+                "slug": null,
+                "spelldc": {
+                    "dc": 31,
+                    "mod": 0,
+                    "value": 21
+                },
+                "tradition": {
+                    "value": "occult"
+                }
+            },
+            "type": "spellcastingEntry"
+        },`
+}
 
 func TestParseDamageBlocks(t *testing.T) {
 	jsonData := `{
@@ -1290,11 +1405,129 @@ func TestIngestSpontaneousSpell(t *testing.T) {
             },
             "type": "spell"
         },`
+	// location == Null on rituals? Need a different mechanism for those.
+	expected := structs.Spell{
+		Name:           "Lightning Bolt",
+		ID:             "N5cIxpCa1E4SqZi7",
+		CastLevel:      "5",
+		SpellBaseLevel: "3",
+		Description:    stripHTMLUsingBluemonday("<p>A bolt of lightning strikes outward from your hand, dealing 4d12 electricity damage.</p>\n<hr />\n<p><strong>Heightened (+1)</strong> The damage increases by 1d12.</p>"),
+		Range:          "",
+		Duration: structs.DurationBlock{
+			Sustained: false,
+			Duration:  "",
+		},
+		Area: structs.SpellArea{
+			Type:   "line",
+			Value:  "120",
+			Detail: "",
+		},
+		Targets: "",
+		Traits:  []string{"concentrate", "electricity", "manipulate"},
+		Defense: structs.DefenseBlock{
+			Save:  "reflex",
+			Basic: true,
+		},
+		CastTime:                    "2",
+		CastRequirements:            "",
+		Rarity:                      "common",
+		AtWill:                      false,
+		SpellCastingBlockLocationID: "6PZisICkQg9iEoQs",
+		Uses:                        "1",
+		Ritual:                      false,
+		RitualData: structs.RitualData{
+			PrimaryCheck:     "",
+			SecondaryCasters: "",
+			SecondaryCheck:   "",
+		}}
+
+	result := ParseSpell(jsonData)
+
+	if result.Name != expected.Name {
+		t.Errorf("Expected Name '%s', got '%s'", expected.Name, result.Name)
+	}
+	if result.ID != expected.ID {
+		t.Errorf("Expected ID '%s', got '%s'", expected.ID, result.ID)
+	}
+	if result.CastLevel != expected.CastLevel {
+		t.Errorf("Expected ID '%s', got '%s'", expected.CastLevel, result.CastLevel)
+	}
+	if result.SpellBaseLevel != expected.SpellBaseLevel {
+		t.Errorf("Expected ID '%s', got '%s'", expected.SpellBaseLevel, result.SpellBaseLevel)
+	}
+	if result.SpellBaseLevel != expected.SpellBaseLevel {
+		t.Errorf("Expected ID '%s', got '%s'", expected.SpellBaseLevel, result.SpellBaseLevel)
+	}
+	if result.Description != expected.Description {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Description, result.Description)
+	}
+	if result.Range != expected.Range {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Range, result.Range)
+	}
+	if result.Duration.Duration != expected.Duration.Duration {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Duration.Duration, result.Duration.Duration)
+	}
+	if result.Duration.Sustained != expected.Duration.Sustained {
+		t.Errorf("Expected ID '%t', got '%t'", expected.Duration.Sustained, result.Duration.Sustained)
+	}
+	if result.Area.Detail != expected.Area.Detail {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Area.Detail, result.Area.Detail)
+	}
+	if result.Area.Value != expected.Area.Value {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Area.Value, result.Area.Value)
+	}
+	if result.Area.Type != expected.Area.Type {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Area.Type, result.Area.Type)
+	}
+	if result.Targets != expected.Targets {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Targets, result.Targets)
+	}
+	if result.Defense.Save != expected.Defense.Save {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Defense.Save, result.Defense.Save)
+	}
+	if result.Defense.Basic != expected.Defense.Basic {
+		t.Errorf("Expected ID '%t', got '%t'", expected.Defense.Basic, result.Defense.Basic)
+	}
+	if result.CastTime != expected.CastTime {
+		t.Errorf("Expected ID '%s', got '%s'", expected.CastTime, result.CastTime)
+	}
+	if result.Rarity != expected.Rarity {
+		t.Errorf("Expected Rarity '%s', got '%s'", expected.Rarity, result.Rarity)
+	}
+	if result.AtWill != expected.AtWill {
+		t.Errorf("Expected AtWill '%t', got '%t'", expected.AtWill, result.AtWill)
+	}
+	if result.SpellCastingBlockLocationID != expected.SpellCastingBlockLocationID {
+		t.Fatalf("Expected Spellcasting block ID '%s', got '%s'", expected.SpellCastingBlockLocationID, result.SpellCastingBlockLocationID)
+	}
+	if result.Uses != expected.Uses {
+		t.Fatalf("Expected uses '%s', got '%s'", expected.Uses, result.Uses)
+	}
+	if result.Ritual != expected.Ritual {
+		t.Fatalf("Expected ritualBool '%t', got '%t'", expected.Ritual, result.Ritual)
+	}
+	if result.RitualData.PrimaryCheck != expected.RitualData.PrimaryCheck {
+		t.Fatalf("Expected ritualPrimaryCheck '%s', got '%s'", expected.RitualData.PrimaryCheck, result.RitualData.PrimaryCheck)
+	}
+	if result.RitualData.SecondaryCheck != expected.RitualData.SecondaryCheck {
+		t.Fatalf("Expected ritual secondary check '%s', got '%s'", expected.RitualData.SecondaryCheck, result.RitualData.SecondaryCheck)
+	}
+	if result.RitualData.SecondaryCasters != expected.RitualData.SecondaryCasters {
+		t.Fatalf("Expected ritual secondary casters '%s', got '%s'", expected.RitualData.SecondaryCasters, result.RitualData.SecondaryCasters)
+	}
+	if len(result.Traits) != len(expected.Traits) {
+		t.Fatalf("Expected %d traits, got %d", len(expected.Traits), len(result.Traits))
+	}
+	for i, trait := range expected.Traits {
+		if result.Traits[i] != trait {
+			t.Errorf("Expected Trait '%s' at index %d, got '%s'", trait, i, result.Traits[i])
+		}
+	}
 	// Level 5 spontaneous spell, (slots exist in the spellcsting Entry. We just have to tie it to the entry via location.value)
 }
 
 func TestIngestRitualInnateSpell(t *testing.T) {
-	jsonData = `{
+	jsonData := `{
             "_id": "fts4AdQANVel1VuJ",
             "_stats": {
                 "compendiumSource": "Compendium.pf2e.spells-srd.Item.tsKnoBuBbKMXkiz5"
@@ -1359,7 +1592,123 @@ func TestIngestRitualInnateSpell(t *testing.T) {
         },`
 
 	// location == Null on rituals? Need a different mechanism for those.
+	expected := structs.Spell{
+		Name:           "Abyssal Pact",
+		ID:             "fts4AdQANVel1VuJ",
+		CastLevel:      "1",
+		SpellBaseLevel: "1",
+		Description:    stripHTMLUsingBluemonday("<p>You call in a favor from another demon whose level is no more than double <em>Abyssal pact's</em> spell rank, two demons whose levels are each at least 2 less than double the spell rank, or three demons whose levels are each at least 3 less than double the spell rank.</p>\n<hr />\n<p><strong>Critical Success</strong> You conjure the demon or demons. They are eager to pursue the task, so they don't ask for a favor.</p>\n<p><strong>Success</strong> You conjure the demon or demons. They are not eager to pursue the task, so they require a favor in return.</p>\n<p><strong>Failure</strong> You don't conjure any demons.</p>\n<p><strong>Critical Failure</strong> The demon or demons are angry that you disturbed them. They appear before you, but they immediately attack you.</p>"),
+		Range:          "",
+		Duration: structs.DurationBlock{
+			Sustained: false,
+			Duration:  "",
+		},
+		Area: structs.SpellArea{
+			Type:   "",
+			Value:  "",
+			Detail: "",
+		},
+		Targets: "",
+		Traits:  []string{},
+		Defense: structs.DefenseBlock{
+			Save:  "",
+			Basic: false,
+		},
+		CastTime:                    "1 day",
+		CastRequirements:            "",
+		Rarity:                      "uncommon",
+		AtWill:                      false,
+		SpellCastingBlockLocationID: "",
+		Uses:                        "1",
+		Ritual:                      true,
+		RitualData: structs.RitualData{
+			PrimaryCheck:     "Religion (expert; you must be a demon)",
+			SecondaryCasters: "0",
+			SecondaryCheck:   "",
+		}}
 
+	result := ParseSpell(jsonData)
+
+	if result.Name != expected.Name {
+		t.Errorf("Expected Name '%s', got '%s'", expected.Name, result.Name)
+	}
+	if result.ID != expected.ID {
+		t.Errorf("Expected ID '%s', got '%s'", expected.ID, result.ID)
+	}
+	if result.CastLevel != expected.CastLevel {
+		t.Errorf("Expected ID '%s', got '%s'", expected.CastLevel, result.CastLevel)
+	}
+	if result.SpellBaseLevel != expected.SpellBaseLevel {
+		t.Errorf("Expected ID '%s', got '%s'", expected.SpellBaseLevel, result.SpellBaseLevel)
+	}
+	if result.SpellBaseLevel != expected.SpellBaseLevel {
+		t.Errorf("Expected ID '%s', got '%s'", expected.SpellBaseLevel, result.SpellBaseLevel)
+	}
+	if result.Description != expected.Description {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Description, result.Description)
+	}
+	if result.Range != expected.Range {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Range, result.Range)
+	}
+	if result.Duration.Duration != expected.Duration.Duration {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Duration.Duration, result.Duration.Duration)
+	}
+	if result.Duration.Sustained != expected.Duration.Sustained {
+		t.Errorf("Expected ID '%t', got '%t'", expected.Duration.Sustained, result.Duration.Sustained)
+	}
+	if result.Area.Detail != expected.Area.Detail {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Area.Detail, result.Area.Detail)
+	}
+	if result.Area.Value != expected.Area.Value {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Area.Value, result.Area.Value)
+	}
+	if result.Area.Type != expected.Area.Type {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Area.Type, result.Area.Type)
+	}
+	if result.Targets != expected.Targets {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Targets, result.Targets)
+	}
+	if result.Defense.Save != expected.Defense.Save {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Defense.Save, result.Defense.Save)
+	}
+	if result.Defense.Basic != expected.Defense.Basic {
+		t.Errorf("Expected ID '%t', got '%t'", expected.Defense.Basic, result.Defense.Basic)
+	}
+	if result.CastTime != expected.CastTime {
+		t.Errorf("Expected ID '%s', got '%s'", expected.CastTime, result.CastTime)
+	}
+	if result.Rarity != expected.Rarity {
+		t.Errorf("Expected Rarity '%s', got '%s'", expected.Rarity, result.Rarity)
+	}
+	if result.AtWill != expected.AtWill {
+		t.Errorf("Expected AtWill '%t', got '%t'", expected.AtWill, result.AtWill)
+	}
+	if result.SpellCastingBlockLocationID != expected.SpellCastingBlockLocationID {
+		t.Fatalf("Expected Spellcasting block ID '%s', got '%s'", expected.SpellCastingBlockLocationID, result.SpellCastingBlockLocationID)
+	}
+	if result.Uses != expected.Uses {
+		t.Fatalf("Expected uses '%s', got '%s'", expected.Uses, result.Uses)
+	}
+	if result.Ritual != expected.Ritual {
+		t.Fatalf("Expected ritualBool '%t', got '%t'", expected.Ritual, result.Ritual)
+	}
+	if result.RitualData.PrimaryCheck != expected.RitualData.PrimaryCheck {
+		t.Fatalf("Expected ritualPrimaryCheck '%s', got '%s'", expected.RitualData.PrimaryCheck, result.RitualData.PrimaryCheck)
+	}
+	if result.RitualData.SecondaryCheck != expected.RitualData.SecondaryCheck {
+		t.Fatalf("Expected ritual secondary check '%s', got '%s'", expected.RitualData.SecondaryCheck, result.RitualData.SecondaryCheck)
+	}
+	if result.RitualData.SecondaryCasters != expected.RitualData.SecondaryCasters {
+		t.Fatalf("Expected ritual secondary casters '%s', got '%s'", expected.RitualData.SecondaryCasters, result.RitualData.SecondaryCasters)
+	}
+	if len(result.Traits) != len(expected.Traits) {
+		t.Fatalf("Expected %d traits, got %d", len(expected.Traits), len(result.Traits))
+	}
+	for i, trait := range expected.Traits {
+		if result.Traits[i] != trait {
+			t.Errorf("Expected Trait '%s' at index %d, got '%s'", trait, i, result.Traits[i])
+		}
+	}
 }
 
 func TestIngestPreparedSpell(t *testing.T) {
@@ -1524,10 +1873,128 @@ func TestIngestPreparedSpell(t *testing.T) {
             },
             "type": "spell"
         },`
+	expected := structs.Spell{
+		Name:           "Acid Splash",
+		ID:             "cgw07bSj0UprtiUE",
+		CastLevel:      "1",
+		SpellBaseLevel: "1",
+		Description:    stripHTMLUsingBluemonday("<p>You splash a glob of acid that splatters your target and nearby creatures. Make a spell attack. If you hit, you deal 1d6 acid damage plus 1 splash acid damage. On a critical success, the target also takes @Damage[(ceil(@item.level/2))[persistent,acid]] damage.</p><hr /><p><strong>Heightened (3rd)</strong> The initial damage increases to 2d6, and the persistent damage increases to 2.</p>\n<p><strong>Heightened (5th)</strong> The initial damage increases to 3d6, the persistent damage increases to 3, and the splash damage increases to 2.</p>\n<p><strong>Heightened (7th)</strong> The initial damage increases to 4d6, the persistent damage increases to 4, and the splash damage increases to 3.</p>\n<p><strong>Heightened (9th)</strong> The initial damage increases to 5d6, the persistent damage increases to 5, and the splash damage increases to 4.</p>"),
+		Range:          "30 feet",
+		Duration: structs.DurationBlock{
+			Sustained: false,
+			Duration:  "",
+		},
+		Area: structs.SpellArea{
+			Type:   "",
+			Value:  "",
+			Detail: "",
+		},
+		Targets: "1 creature",
+		Traits:  []string{"acid", "attack", "cantrip", "concentrate", "manipulate"},
+		Defense: structs.DefenseBlock{
+			Save:  "",
+			Basic: false,
+		},
+		CastTime:                    "2",
+		CastRequirements:            "",
+		Rarity:                      "common",
+		AtWill:                      false,
+		SpellCastingBlockLocationID: "9h6KJeGxzm8rEPaD",
+		Uses:                        "1",
+		Ritual:                      false,
+		RitualData: structs.RitualData{
+			PrimaryCheck:     "",
+			SecondaryCasters: "",
+			SecondaryCheck:   "",
+		},
+	}
 
-	//Level 1 prepared Primal Spell (forest-dragon-adult-spellcaster.json)
-	// location.value == spellcasting entry Level IS actually the slot it's prepped in.
+	result := ParseSpell(jsonData)
+
+	if result.Name != expected.Name {
+		t.Errorf("Expected Name '%s', got '%s'", expected.Name, result.Name)
+	}
+	if result.ID != expected.ID {
+		t.Errorf("Expected ID '%s', got '%s'", expected.ID, result.ID)
+	}
+	if result.CastLevel != expected.CastLevel {
+		t.Errorf("Expected ID '%s', got '%s'", expected.CastLevel, result.CastLevel)
+	}
+	if result.SpellBaseLevel != expected.SpellBaseLevel {
+		t.Errorf("Expected ID '%s', got '%s'", expected.SpellBaseLevel, result.SpellBaseLevel)
+	}
+	if result.SpellBaseLevel != expected.SpellBaseLevel {
+		t.Errorf("Expected ID '%s', got '%s'", expected.SpellBaseLevel, result.SpellBaseLevel)
+	}
+	if result.Description != expected.Description {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Description, result.Description)
+	}
+	if result.Range != expected.Range {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Range, result.Range)
+	}
+	if result.Duration.Duration != expected.Duration.Duration {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Duration.Duration, result.Duration.Duration)
+	}
+	if result.Duration.Sustained != expected.Duration.Sustained {
+		t.Errorf("Expected ID '%t', got '%t'", expected.Duration.Sustained, result.Duration.Sustained)
+	}
+	if result.Area.Detail != expected.Area.Detail {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Area.Detail, result.Area.Detail)
+	}
+	if result.Area.Value != expected.Area.Value {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Area.Value, result.Area.Value)
+	}
+	if result.Area.Type != expected.Area.Type {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Area.Type, result.Area.Type)
+	}
+	if result.Targets != expected.Targets {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Targets, result.Targets)
+	}
+	if result.Defense.Save != expected.Defense.Save {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Defense.Save, result.Defense.Save)
+	}
+	if result.Defense.Basic != expected.Defense.Basic {
+		t.Errorf("Expected ID '%t', got '%t'", expected.Defense.Basic, result.Defense.Basic)
+	}
+	if result.CastTime != expected.CastTime {
+		t.Errorf("Expected ID '%s', got '%s'", expected.CastTime, result.CastTime)
+	}
+	if result.Rarity != expected.Rarity {
+		t.Errorf("Expected Rarity '%s', got '%s'", expected.Rarity, result.Rarity)
+	}
+	if result.AtWill != expected.AtWill {
+		t.Errorf("Expected AtWill '%t', got '%t'", expected.AtWill, result.AtWill)
+	}
+	if result.SpellCastingBlockLocationID != expected.SpellCastingBlockLocationID {
+		t.Fatalf("Expected Spellcasting block ID '%s', got '%s'", expected.SpellCastingBlockLocationID, result.SpellCastingBlockLocationID)
+	}
+	if result.Uses != expected.Uses {
+		t.Fatalf("Expected uses '%s', got '%s'", expected.Uses, result.Uses)
+	}
+	if result.Ritual != expected.Ritual {
+		t.Fatalf("Expected ritualBool '%t', got '%t'", expected.Ritual, result.Ritual)
+	}
+	if result.RitualData.PrimaryCheck != expected.RitualData.PrimaryCheck {
+		t.Fatalf("Expected ritualPrimaryCheck '%s', got '%s'", expected.RitualData.PrimaryCheck, result.RitualData.PrimaryCheck)
+	}
+	if result.RitualData.SecondaryCheck != expected.RitualData.SecondaryCheck {
+		t.Fatalf("Expected ritual secondary check '%s', got '%s'", expected.RitualData.SecondaryCheck, result.RitualData.SecondaryCheck)
+	}
+	if result.RitualData.SecondaryCasters != expected.RitualData.SecondaryCasters {
+		t.Fatalf("Expected ritual secondary casters '%s', got '%s'", expected.RitualData.SecondaryCasters, result.RitualData.SecondaryCasters)
+	}
+	if len(result.Traits) != len(expected.Traits) {
+		t.Fatalf("Expected %d traits, got %d", len(expected.Traits), len(result.Traits))
+	}
+	for i, trait := range expected.Traits {
+		if result.Traits[i] != trait {
+			t.Errorf("Expected Trait '%s' at index %d, got '%s'", trait, i, result.Traits[i])
+		}
+	}
 }
+
+//Level 1 prepared Primal Spell (forest-dragon-adult-spellcaster.json)
+// location.value == spellcasting entry Level IS actually the slot it's prepped in.
 
 func TestIngestInnateSpell(t *testing.T) {
 	jsonData := `{
@@ -1615,13 +2082,130 @@ func TestIngestInnateSpell(t *testing.T) {
             },
             "type": "spell"
         },`
+	expected := structs.Spell{
+		Name:           "Fear",
+		ID:             "kBj0RqQnEELUYiNC",
+		CastLevel:      "2",
+		SpellBaseLevel: "1",
+		Description:    stripHTMLUsingBluemonday("<p>You plant fear in the target; it must attempt a Will save.</p>\n<hr />\n<p><strong>Critical Success</strong> The target is unaffected.</p>\n<p><strong>Success</strong> The target is @UUID[Compendium.pf2e.conditionitems.Item.Frightened]{Frightened 1}.</p>\n<p><strong>Failure</strong> The target is @UUID[Compendium.pf2e.conditionitems.Item.Frightened]{Frightened 2}.</p>\n<p><strong>Critical Failure</strong> The target is @UUID[Compendium.pf2e.conditionitems.Item.Frightened]{Frightened 3} and @UUID[Compendium.pf2e.conditionitems.Item.Fleeing] for 1 round.</p>\n<hr />\n<p><strong>Heightened (3rd)</strong> You can target up to five creatures.</p>"),
+		Range:          "30 feet",
+		Duration: structs.DurationBlock{
+			Sustained: false,
+			Duration:  "varies",
+		},
+		Area: structs.SpellArea{
+			Type:   "",
+			Value:  "",
+			Detail: "",
+		},
+		Targets: "1 creature",
+		Traits:  []string{"concentrate", "emotion", "fear", "manipulate", "mental"},
+		Defense: structs.DefenseBlock{
+			Save:  "will",
+			Basic: false,
+		},
+		CastTime:                    "2",
+		CastRequirements:            "",
+		Rarity:                      "common",
+		AtWill:                      false,
+		SpellCastingBlockLocationID: "0jNl0jg5W1N5NrTS",
+		Uses:                        "2",
+		Ritual:                      false,
+		RitualData: structs.RitualData{
+			PrimaryCheck:     "",
+			SecondaryCasters: "",
+			SecondaryCheck:   "",
+		},
+	}
+	result := ParseSpell(jsonData)
+
+	if result.Name != expected.Name {
+		t.Errorf("Expected Name '%s', got '%s'", expected.Name, result.Name)
+	}
+	if result.ID != expected.ID {
+		t.Errorf("Expected ID '%s', got '%s'", expected.ID, result.ID)
+	}
+	if result.CastLevel != expected.CastLevel {
+		t.Errorf("Expected CastLevel '%s', got '%s'", expected.CastLevel, result.CastLevel)
+	}
+	if result.SpellBaseLevel != expected.SpellBaseLevel {
+		t.Errorf("Expected ID '%s', got '%s'", expected.SpellBaseLevel, result.SpellBaseLevel)
+	}
+	if result.SpellBaseLevel != expected.SpellBaseLevel {
+		t.Errorf("Expected ID '%s', got '%s'", expected.SpellBaseLevel, result.SpellBaseLevel)
+	}
+	if result.Description != expected.Description {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Description, result.Description)
+	}
+	if result.Range != expected.Range {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Range, result.Range)
+	}
+	if result.Duration.Duration != expected.Duration.Duration {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Duration.Duration, result.Duration.Duration)
+	}
+	if result.Duration.Sustained != expected.Duration.Sustained {
+		t.Errorf("Expected ID '%t', got '%t'", expected.Duration.Sustained, result.Duration.Sustained)
+	}
+	if result.Area.Detail != expected.Area.Detail {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Area.Detail, result.Area.Detail)
+	}
+	if result.Area.Value != expected.Area.Value {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Area.Value, result.Area.Value)
+	}
+	if result.Area.Type != expected.Area.Type {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Area.Type, result.Area.Type)
+	}
+	if result.Targets != expected.Targets {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Targets, result.Targets)
+	}
+	if result.Defense.Save != expected.Defense.Save {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Defense.Save, result.Defense.Save)
+	}
+	if result.Defense.Basic != expected.Defense.Basic {
+		t.Errorf("Expected ID '%t', got '%t'", expected.Defense.Basic, result.Defense.Basic)
+	}
+	if result.CastTime != expected.CastTime {
+		t.Errorf("Expected ID '%s', got '%s'", expected.CastTime, result.CastTime)
+	}
+	if result.Rarity != expected.Rarity {
+		t.Errorf("Expected Rarity '%s', got '%s'", expected.Rarity, result.Rarity)
+	}
+	if result.AtWill != expected.AtWill {
+		t.Errorf("Expected AtWill '%t', got '%t'", expected.AtWill, result.AtWill)
+	}
+	if result.SpellCastingBlockLocationID != expected.SpellCastingBlockLocationID {
+		t.Fatalf("Expected Spellcasting block ID '%s', got '%s'", expected.SpellCastingBlockLocationID, result.SpellCastingBlockLocationID)
+	}
+	if result.Uses != expected.Uses {
+		t.Fatalf("Expected uses '%s', got '%s'", expected.Uses, result.Uses)
+	}
+	if result.Ritual != expected.Ritual {
+		t.Fatalf("Expected ritualBool '%t', got '%t'", expected.Ritual, result.Ritual)
+	}
+	if result.RitualData.PrimaryCheck != expected.RitualData.PrimaryCheck {
+		t.Fatalf("Expected ritualPrimaryCheck '%s', got '%s'", expected.RitualData.PrimaryCheck, result.RitualData.PrimaryCheck)
+	}
+	if result.RitualData.SecondaryCheck != expected.RitualData.SecondaryCheck {
+		t.Fatalf("Expected ritual secondary check '%s', got '%s'", expected.RitualData.SecondaryCheck, result.RitualData.SecondaryCheck)
+	}
+	if result.RitualData.SecondaryCasters != expected.RitualData.SecondaryCasters {
+		t.Fatalf("Expected ritual secondary casters '%s', got '%s'", expected.RitualData.SecondaryCasters, result.RitualData.SecondaryCasters)
+	}
+	if len(result.Traits) != len(expected.Traits) {
+		t.Fatalf("Expected %d traits, got %d", len(expected.Traits), len(result.Traits))
+	}
+	for i, trait := range expected.Traits {
+		if result.Traits[i] != trait {
+			t.Errorf("Expected Trait '%s' at index %d, got '%s'", trait, i, result.Traits[i])
+		}
+	}
 	//Location.value == spellcasting value
 	// Heightened Level == Level? what if it says level?
 	// Uses needs to be ingested into a use....
 	// If no use set then theres 1 use?
 }
 
-func IngestInnateSpell1Use(t *testing.T) {
+func TestIngestInnateSpell1Use(t *testing.T) {
 	jsonData := `{
             "_id": "6Dv8wIStddSP0cLP",
             "_stats": {
@@ -1705,9 +2289,126 @@ func IngestInnateSpell1Use(t *testing.T) {
             },
             "type": "spell"
         },`
+	expected := structs.Spell{
+		Name:           "Crisis of Faith",
+		ID:             "6Dv8wIStddSP0cLP",
+		CastLevel:      "4",
+		SpellBaseLevel: "3",
+		Description:    stripHTMLUsingBluemonday("<p>You assault the target's faith, riddling the creature with doubt and mental turmoil that deal 6d6 mental damage, or 6d8 mental damage if it can cast divine spells. The effects are determined by its Will save.</p>\n<p>To many deities, casting this spell on a follower of your own deity without significant cause is anathema.</p>\n<hr />\n<p><strong>Critical Success</strong> The target is unaffected.</p>\n<p><strong>Success</strong> The target takes half damage.</p>\n<p><strong>Failure</strong> The target takes full damage; if the target can cast divine spells, it's @UUID[Compendium.pf2e.conditionitems.Item.Stupefied]{Stupefied 1} for 1 round.</p>\n<p><strong>Critical Failure</strong> The target takes double damage, is @UUID[Compendium.pf2e.conditionitems.Item.Stupefied]{Stupefied 1} for 1 round, and can't cast divine spells for 1 round.</p>\n<hr />\n<p><strong>Heightened (+1)</strong> The damage increases by 2d6 (or by 2d8 if the target is a divine spellcaster).</p>"),
+		Range:          "30 feet",
+		Duration: structs.DurationBlock{
+			Sustained: false,
+			Duration:  "",
+		},
+		Area: structs.SpellArea{
+			Type:   "",
+			Value:  "",
+			Detail: "",
+		},
+		Targets: "1 creature",
+		Traits:  []string{"concentrate", "manipulate", "mental"},
+		Defense: structs.DefenseBlock{
+			Save:  "will",
+			Basic: false,
+		},
+		CastTime:                    "2",
+		CastRequirements:            "",
+		Rarity:                      "common",
+		AtWill:                      false,
+		SpellCastingBlockLocationID: "p3v8D49u0adS76qw",
+		Uses:                        "1",
+		Ritual:                      false,
+		RitualData: structs.RitualData{
+			PrimaryCheck:     "",
+			SecondaryCasters: "",
+			SecondaryCheck:   "",
+		},
+	}
+	result := ParseSpell(jsonData)
+
+	if result.Name != expected.Name {
+		t.Errorf("Expected Name '%s', got '%s'", expected.Name, result.Name)
+	}
+	if result.ID != expected.ID {
+		t.Errorf("Expected ID '%s', got '%s'", expected.ID, result.ID)
+	}
+	if result.CastLevel != expected.CastLevel {
+		t.Errorf("Expected CastLevel '%s', got '%s'", expected.CastLevel, result.CastLevel)
+	}
+	if result.SpellBaseLevel != expected.SpellBaseLevel {
+		t.Errorf("Expected ID '%s', got '%s'", expected.SpellBaseLevel, result.SpellBaseLevel)
+	}
+	if result.SpellBaseLevel != expected.SpellBaseLevel {
+		t.Errorf("Expected ID '%s', got '%s'", expected.SpellBaseLevel, result.SpellBaseLevel)
+	}
+	if result.Description != expected.Description {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Description, result.Description)
+	}
+	if result.Range != expected.Range {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Range, result.Range)
+	}
+	if result.Duration.Duration != expected.Duration.Duration {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Duration.Duration, result.Duration.Duration)
+	}
+	if result.Duration.Sustained != expected.Duration.Sustained {
+		t.Errorf("Expected ID '%t', got '%t'", expected.Duration.Sustained, result.Duration.Sustained)
+	}
+	if result.Area.Detail != expected.Area.Detail {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Area.Detail, result.Area.Detail)
+	}
+	if result.Area.Value != expected.Area.Value {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Area.Value, result.Area.Value)
+	}
+	if result.Area.Type != expected.Area.Type {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Area.Type, result.Area.Type)
+	}
+	if result.Targets != expected.Targets {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Targets, result.Targets)
+	}
+	if result.Defense.Save != expected.Defense.Save {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Defense.Save, result.Defense.Save)
+	}
+	if result.Defense.Basic != expected.Defense.Basic {
+		t.Errorf("Expected ID '%t', got '%t'", expected.Defense.Basic, result.Defense.Basic)
+	}
+	if result.CastTime != expected.CastTime {
+		t.Errorf("Expected ID '%s', got '%s'", expected.CastTime, result.CastTime)
+	}
+	if result.Rarity != expected.Rarity {
+		t.Errorf("Expected Rarity '%s', got '%s'", expected.Rarity, result.Rarity)
+	}
+	if result.AtWill != expected.AtWill {
+		t.Errorf("Expected AtWill '%t', got '%t'", expected.AtWill, result.AtWill)
+	}
+	if result.SpellCastingBlockLocationID != expected.SpellCastingBlockLocationID {
+		t.Fatalf("Expected Spellcasting block ID '%s', got '%s'", expected.SpellCastingBlockLocationID, result.SpellCastingBlockLocationID)
+	}
+	if result.Uses != expected.Uses {
+		t.Fatalf("Expected uses '%s', got '%s'", expected.Uses, result.Uses)
+	}
+	if result.Ritual != expected.Ritual {
+		t.Fatalf("Expected ritualBool '%t', got '%t'", expected.Ritual, result.Ritual)
+	}
+	if result.RitualData.PrimaryCheck != expected.RitualData.PrimaryCheck {
+		t.Fatalf("Expected ritualPrimaryCheck '%s', got '%s'", expected.RitualData.PrimaryCheck, result.RitualData.PrimaryCheck)
+	}
+	if result.RitualData.SecondaryCheck != expected.RitualData.SecondaryCheck {
+		t.Fatalf("Expected ritual secondary check '%s', got '%s'", expected.RitualData.SecondaryCheck, result.RitualData.SecondaryCheck)
+	}
+	if result.RitualData.SecondaryCasters != expected.RitualData.SecondaryCasters {
+		t.Fatalf("Expected ritual secondary casters '%s', got '%s'", expected.RitualData.SecondaryCasters, result.RitualData.SecondaryCasters)
+	}
+	if len(result.Traits) != len(expected.Traits) {
+		t.Fatalf("Expected %d traits, got %d", len(expected.Traits), len(result.Traits))
+	}
+	for i, trait := range expected.Traits {
+		if result.Traits[i] != trait {
+			t.Errorf("Expected Trait '%s' at index %d, got '%s'", trait, i, result.Traits[i])
+		}
+	}
 }
 
-func IngestAtWillInnateSpellUse(t *testing.T) {
+func TestIngestAtWillInnateSpellUse(t *testing.T) {
 	jsonData := `        {
             "_id": "ZSNdsMrtDj0biKjg",
             "_stats": {
@@ -1771,6 +2472,124 @@ func IngestAtWillInnateSpellUse(t *testing.T) {
             },
             "type": "spell"
         },`
+	expected := structs.Spell{
+		ID:             "ZSNdsMrtDj0biKjg",
+		Name:           "Dispel Magic (At Will)",
+		CastLevel:      "8",
+		SpellBaseLevel: "2",
+		Description:    stripHTMLUsingBluemonday("<p>You unravel the magic behind a spell or effect. Attempt a counteract check against the target. If you successfully counteract a magic item, the item becomes a mundane item of its type for 10 minutes. This doesn't change the item's non-magical properties. If the target is an artifact or similar item, you automatically fail.</p>"),
+		Range:          "120 feet",
+		Duration: structs.DurationBlock{
+			Sustained: false,
+			Duration:  "",
+		},
+		Area: structs.SpellArea{
+			Type:   "",
+			Value:  "",
+			Detail: "",
+		},
+		Targets: "1 spell effect or unattended magic item",
+		Traits:  []string{"concentrate", "manipulate"},
+		Defense: structs.DefenseBlock{
+			Save:  "",
+			Basic: false,
+		},
+		CastTime:                    "2",
+		CastRequirements:            "",
+		Rarity:                      "common",
+		AtWill:                      true,
+		SpellCastingBlockLocationID: "IsRnnfl27oJF1UGY",
+		Uses:                        "unlimited",
+		Ritual:                      false,
+		RitualData: structs.RitualData{
+			PrimaryCheck:     "",
+			SecondaryCasters: "",
+			SecondaryCheck:   "",
+		},
+	}
+
+	result := ParseSpell(jsonData)
+
+	if result.Name != expected.Name {
+		t.Errorf("Expected Name '%s', got '%s'", expected.Name, result.Name)
+	}
+	if result.ID != expected.ID {
+		t.Errorf("Expected ID '%s', got '%s'", expected.ID, result.ID)
+	}
+	if result.CastLevel != expected.CastLevel {
+		t.Errorf("Expected CastLevel '%s', got '%s'", expected.CastLevel, result.CastLevel)
+	}
+	if result.SpellBaseLevel != expected.SpellBaseLevel {
+		t.Errorf("Expected ID '%s', got '%s'", expected.SpellBaseLevel, result.SpellBaseLevel)
+	}
+	if result.SpellBaseLevel != expected.SpellBaseLevel {
+		t.Errorf("Expected ID '%s', got '%s'", expected.SpellBaseLevel, result.SpellBaseLevel)
+	}
+	if result.Description != expected.Description {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Description, result.Description)
+	}
+	if result.Range != expected.Range {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Range, result.Range)
+	}
+	if result.Duration.Duration != expected.Duration.Duration {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Duration.Duration, result.Duration.Duration)
+	}
+	if result.Duration.Sustained != expected.Duration.Sustained {
+		t.Errorf("Expected ID '%t', got '%t'", expected.Duration.Sustained, result.Duration.Sustained)
+	}
+	if result.Area.Detail != expected.Area.Detail {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Area.Detail, result.Area.Detail)
+	}
+	if result.Area.Value != expected.Area.Value {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Area.Value, result.Area.Value)
+	}
+	if result.Area.Type != expected.Area.Type {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Area.Type, result.Area.Type)
+	}
+	if result.Targets != expected.Targets {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Targets, result.Targets)
+	}
+	if result.Defense.Save != expected.Defense.Save {
+		t.Errorf("Expected ID '%s', got '%s'", expected.Defense.Save, result.Defense.Save)
+	}
+	if result.Defense.Basic != expected.Defense.Basic {
+		t.Errorf("Expected ID '%t', got '%t'", expected.Defense.Basic, result.Defense.Basic)
+	}
+	if result.CastTime != expected.CastTime {
+		t.Errorf("Expected ID '%s', got '%s'", expected.CastTime, result.CastTime)
+	}
+	if result.Rarity != expected.Rarity {
+		t.Errorf("Expected Rarity '%s', got '%s'", expected.Rarity, result.Rarity)
+	}
+	if result.AtWill != expected.AtWill {
+		t.Errorf("Expected AtWill '%t', got '%t'", expected.AtWill, result.AtWill)
+	}
+	if result.SpellCastingBlockLocationID != expected.SpellCastingBlockLocationID {
+		t.Fatalf("Expected Spellcasting block ID '%s', got '%s'", expected.SpellCastingBlockLocationID, result.SpellCastingBlockLocationID)
+	}
+	if result.Uses != expected.Uses {
+		t.Fatalf("Expected uses '%s', got '%s'", expected.Uses, result.Uses)
+	}
+	if result.Ritual != expected.Ritual {
+		t.Fatalf("Expected ritualBool '%t', got '%t'", expected.Ritual, result.Ritual)
+	}
+	if result.RitualData.PrimaryCheck != expected.RitualData.PrimaryCheck {
+		t.Fatalf("Expected ritualPrimaryCheck '%s', got '%s'", expected.RitualData.PrimaryCheck, result.RitualData.PrimaryCheck)
+	}
+	if result.RitualData.SecondaryCheck != expected.RitualData.SecondaryCheck {
+		t.Fatalf("Expected ritual secondary check '%s', got '%s'", expected.RitualData.SecondaryCheck, result.RitualData.SecondaryCheck)
+	}
+	if result.RitualData.SecondaryCasters != expected.RitualData.SecondaryCasters {
+		t.Fatalf("Expected ritual secondary casters '%s', got '%s'", expected.RitualData.SecondaryCasters, result.RitualData.SecondaryCasters)
+	}
+	if len(result.Traits) != len(expected.Traits) {
+		t.Fatalf("Expected %d traits, got %d", len(expected.Traits), len(result.Traits))
+	}
+	for i, trait := range expected.Traits {
+		if result.Traits[i] != trait {
+			t.Errorf("Expected Trait '%s' at index %d, got '%s'", trait, i, result.Traits[i])
+		}
+	}
 }
 
 // parse "(at will)" out of name. If it's there, it's unlimited uses.

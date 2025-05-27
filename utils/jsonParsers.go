@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Burtcam/encounter-builder-backend/structs"
 	"github.com/microcosm-cc/bluemonday"
@@ -58,6 +59,20 @@ func ParseSpontaneousSpellCasting(jsonData string) structs.SpontaneousSpellCasti
 
 	return entry
 }
+func ParseFocusSpellCasting(jsonData string) structs.FocusSpellCasting {
+	fmt.Println(gjson.Get(jsonData, "system.spelldc.value").String())
+	entry := structs.FocusSpellCasting{
+		DC:             int(gjson.Get(jsonData, "system.spelldc.dc").Int()),
+		Mod:            gjson.Get(jsonData, "system.spelldc.value").String(),
+		Tradition:      gjson.Get(jsonData, "system.tradition.value").String(),
+		ID:             gjson.Get(jsonData, "_id").String(),
+		FocusSpellList: []structs.Spell{},
+		Name:           gjson.Get(jsonData, "name").String(),
+		Description:    stripHTMLUsingBluemonday(gjson.Get(jsonData, "system.description.value").String()),
+		CastLevel:      "",
+	}
+	return entry
+}
 
 func ParseDamageBlocks(jsonData string) []structs.DamageBlock {
 	//loop over each item
@@ -87,7 +102,6 @@ func stripHTMLUsingBluemonday(input string) string {
 	p := bluemonday.StripTagsPolicy()
 	return p.Sanitize(input)
 }
-
 func ParseWeapon(jsonData string) structs.Attack {
 	var TypeDefinition string
 	if !(gjson.Get(jsonData, "system.weaponType.value").Exists()) {
@@ -107,7 +121,6 @@ func ParseWeapon(jsonData string) structs.Attack {
 	}
 	return attackInScope
 }
-
 func ParseFreeAction(jsonData string) structs.FreeAction {
 	fmt.Println("Found a free action")
 	freeAction := structs.FreeAction{
@@ -119,7 +132,6 @@ func ParseFreeAction(jsonData string) structs.FreeAction {
 	}
 	return freeAction
 }
-
 func ParseReaction(jsonData string) structs.Reaction {
 	reaction := structs.Reaction{
 		Name:     gjson.Get(jsonData, "name").String(),
@@ -129,6 +141,186 @@ func ParseReaction(jsonData string) structs.Reaction {
 		Rarity:   gjson.Get(jsonData, "system.traits.rarity").String(),
 	}
 	return reaction
+}
+func ExtractSkills(value gjson.Result) []structs.Skill {
+	var skills []structs.Skill
+	// Iterate over each key-value pair in the "skills" object.
+	value.ForEach(func(key, value gjson.Result) bool {
+		// key.String() is the skill name.
+		// value is an object containing "base" and optionally "special".
+		baseValue := int(value.Get("base").Int())
+		var specials []structs.SkillSpecial
+
+		// Check if a "special" field exists.
+		specialArray := value.Get("special")
+		if specialArray.Exists() {
+			// Iterate over each special item.
+			specialArray.ForEach(func(_, specialItem gjson.Result) bool {
+				specValue := int(specialItem.Get("base").Int())
+				specLabel := specialItem.Get("label").String()
+
+				// Extract "predicate" array.
+				var predicates []string
+				predicateArray := specialItem.Get("predicate")
+				predicateArray.ForEach(func(_, pred gjson.Result) bool {
+					predicates = append(predicates, pred.String())
+					return true // continue iteration
+				})
+
+				// Create a SkillSpecial instance and add to the slice.
+				specials = append(specials, structs.SkillSpecial{
+					Value:      specValue,
+					Label:      specLabel,
+					Predicates: predicates,
+				})
+				return true // continue iteration
+			})
+		}
+
+		// Append the skill to the final slice.
+		skills = append(skills, structs.Skill{
+			Name:     key.String(),
+			Value:    baseValue,
+			Specials: specials,
+		})
+		return true // continue iterating over skills
+	})
+
+	return skills
+}
+
+// written for immunities, but can be used for any list of objects
+func extractListOfObjectsValues(jsonData string, path string) []string {
+	var types []string
+
+	// Get the JSON array stored in "immunities"
+	immunities := gjson.Get(jsonData, path)
+	// Iterate over each element in the immunities array
+	immunities.ForEach(func(key, value gjson.Result) bool {
+		// For each object, get the "type" field
+		typ := value.Get("type").String()
+		types = append(types, typ)
+		return true // Continue iterating
+	})
+
+	return types
+}
+func ingestJSONList(jsonData string, listString string) []string {
+	result := gjson.Get(jsonData, listString).Array()
+
+	// Convert []gjson.Result to []string
+	var values []string
+	for _, v := range result {
+		values = append(values, v.String())
+	}
+	return values
+}
+func ParsePassives(value gjson.Result) structs.Passive {
+	// Ensure the pointer list exists
+
+	passive := structs.Passive{
+		Name:     value.Get("name").String(),
+		Text:     value.Get("system").Get("description").Get("value").String(),
+		Traits:   ingestJSONList((value.String()), "system.traits.value"),
+		Category: value.Get("system").Get("category").String(),
+	}
+	return passive
+}
+func ParseAction(jsonData string) structs.Action {
+	action := structs.Action{
+		Name:     gjson.Get(jsonData, ("name")).String(),
+		Text:     stripHTMLUsingBluemonday(gjson.Get(jsonData, "system.description.value").String()),
+		Traits:   ingestJSONList(jsonData, "system.traits.value"),
+		Category: gjson.Get(jsonData, "system.category").String(),
+		Actions:  gjson.Get(jsonData, "system.actions.value").String(),
+		Rarity:   gjson.Get(jsonData, "system.traits.rarity").String(),
+	}
+	return action
+}
+func SpellLevelParser(jsonData string) string {
+	if gjson.Get(jsonData, "system.location.heightenedLevel").String() != "" {
+		return gjson.Get(jsonData, "system.location.heightenedLevel").String()
+	} else {
+		return gjson.Get(jsonData, "system.level.value").String()
+	}
+}
+func ParseSpellArea(jsonData string) structs.SpellArea {
+	spellArea := structs.SpellArea{
+		Type:   gjson.Get(jsonData, "system.area.type").String(),
+		Value:  gjson.Get(jsonData, "system.area.value").String(),
+		Detail: gjson.Get(jsonData, "system.area.detail").String(),
+	}
+	return spellArea
+}
+func ParseDurationBlock(jsonData string) structs.DurationBlock {
+	duration := structs.DurationBlock{
+		Sustained: gjson.Get(jsonData, "system.duration.sustained").Bool(),
+		Duration:  gjson.Get(jsonData, "system.duration.value").String(),
+	}
+	return duration
+}
+func ParseDefenseBlock(jsonData string) structs.DefenseBlock {
+	defense := structs.DefenseBlock{
+		Save:  gjson.Get(jsonData, "system.defense.save.statistic").String(),
+		Basic: gjson.Get(jsonData, "system.defense.save.basic").Bool(),
+	}
+	return defense
+}
+func DetectRitual(jsonData string) (bool, structs.RitualData) {
+	if gjson.Get(jsonData, "system.ritual").String() != "" {
+		ritualBool := true
+		ritualData := structs.RitualData{
+			PrimaryCheck:     gjson.Get(jsonData, "system.ritual.primary.check").String(),
+			SecondaryCasters: gjson.Get(jsonData, "system.ritual.secondary.casters").String(),
+			SecondaryCheck:   gjson.Get(jsonData, "system.ritual.secondary.checks").String(),
+		}
+		return ritualBool, ritualData
+	} else {
+		return false, structs.RitualData{}
+	}
+}
+
+// spell plan
+// 1. Go get all spells and spellcasting blocks
+// 2. For each spell, tie to spellcasting block
+func ParseSpell(jsonData string) structs.Spell {
+	ritualBool, ritualData := DetectRitual(jsonData)
+	var uses string
+	var AtWill bool
+	Name := gjson.Get(jsonData, "name").String()
+	if strings.Contains(Name, "(At Will)") {
+		AtWill = true
+		uses = "unlimited"
+	} else {
+		AtWill = false
+	}
+	if gjson.Get(jsonData, "system.location.uses.value").Exists() && AtWill == false {
+		uses = gjson.Get(jsonData, "system.location.uses.value").String()
+	} else if !(gjson.Get(jsonData, "system.location.uses.value").Exists()) && AtWill == false {
+		uses = "1"
+	}
+	spell := structs.Spell{
+		ID:                          gjson.Get(jsonData, "_id").String(),
+		Name:                        gjson.Get(jsonData, "name").String(),
+		CastLevel:                   SpellLevelParser(jsonData),
+		SpellBaseLevel:              gjson.Get(jsonData, "system.level.value").String(),
+		Description:                 stripHTMLUsingBluemonday(gjson.Get(jsonData, "system.description.value").String()),
+		Range:                       gjson.Get(jsonData, "system.range.value").String(),
+		Area:                        ParseSpellArea(jsonData),
+		Duration:                    ParseDurationBlock(jsonData),
+		Targets:                     gjson.Get(jsonData, "system.target.value").String(),
+		Traits:                      ingestJSONList(jsonData, "system.traits.value"),
+		Defense:                     ParseDefenseBlock(jsonData),
+		CastTime:                    gjson.Get(jsonData, "system.time.value").String(),
+		CastRequirements:            gjson.Get(jsonData, "system.requirements").String(),
+		Rarity:                      gjson.Get(jsonData, "system.traits.rarity").String(),
+		SpellCastingBlockLocationID: gjson.Get(jsonData, "system.location.value").String(),
+		Uses:                        uses,
+		Ritual:                      ritualBool,
+		RitualData:                  ritualData,
+		AtWill:                      AtWill,
+	}
+	return spell
 }
 
 // func CompareSpellCastingIDs(spellCasting structs.SpellCasting, spell structs.Spell, value gjson.Result) {
@@ -231,102 +423,3 @@ func ParseReaction(jsonData string) structs.Reaction {
 
 // 	return senses
 // }
-
-func ExtractSkills(value gjson.Result) []structs.Skill {
-	var skills []structs.Skill
-	// Iterate over each key-value pair in the "skills" object.
-	value.ForEach(func(key, value gjson.Result) bool {
-		// key.String() is the skill name.
-		// value is an object containing "base" and optionally "special".
-		baseValue := int(value.Get("base").Int())
-		var specials []structs.SkillSpecial
-
-		// Check if a "special" field exists.
-		specialArray := value.Get("special")
-		if specialArray.Exists() {
-			// Iterate over each special item.
-			specialArray.ForEach(func(_, specialItem gjson.Result) bool {
-				specValue := int(specialItem.Get("base").Int())
-				specLabel := specialItem.Get("label").String()
-
-				// Extract "predicate" array.
-				var predicates []string
-				predicateArray := specialItem.Get("predicate")
-				predicateArray.ForEach(func(_, pred gjson.Result) bool {
-					predicates = append(predicates, pred.String())
-					return true // continue iteration
-				})
-
-				// Create a SkillSpecial instance and add to the slice.
-				specials = append(specials, structs.SkillSpecial{
-					Value:      specValue,
-					Label:      specLabel,
-					Predicates: predicates,
-				})
-				return true // continue iteration
-			})
-		}
-
-		// Append the skill to the final slice.
-		skills = append(skills, structs.Skill{
-			Name:     key.String(),
-			Value:    baseValue,
-			Specials: specials,
-		})
-		return true // continue iterating over skills
-	})
-
-	return skills
-}
-
-// written for immunities, but can be used for any list of objects
-func extractListOfObjectsValues(jsonData string, path string) []string {
-	var types []string
-
-	// Get the JSON array stored in "immunities"
-	immunities := gjson.Get(jsonData, path)
-	// Iterate over each element in the immunities array
-	immunities.ForEach(func(key, value gjson.Result) bool {
-		// For each object, get the "type" field
-		typ := value.Get("type").String()
-		types = append(types, typ)
-		return true // Continue iterating
-	})
-
-	return types
-}
-
-func ingestJSONList(jsonData string, listString string) []string {
-	result := gjson.Get(jsonData, listString).Array()
-
-	// Convert []gjson.Result to []string
-	var values []string
-	for _, v := range result {
-		values = append(values, v.String())
-	}
-	return values
-}
-
-func ParsePassives(value gjson.Result) structs.Passive {
-	// Ensure the pointer list exists
-
-	passive := structs.Passive{
-		Name:     value.Get("name").String(),
-		Text:     value.Get("system").Get("description").Get("value").String(),
-		Traits:   ingestJSONList((value.String()), "system.traits.value"),
-		Category: value.Get("system").Get("category").String(),
-	}
-	return passive
-}
-
-func ParseAction(jsonData string) structs.Action {
-	action := structs.Action{
-		Name:     gjson.Get(jsonData, ("name")).String(),
-		Text:     stripHTMLUsingBluemonday(gjson.Get(jsonData, "system.description.value").String()),
-		Traits:   ingestJSONList(jsonData, "system.traits.value"),
-		Category: gjson.Get(jsonData, "system.category").String(),
-		Actions:  gjson.Get(jsonData, "system.actions.value").String(),
-		Rarity:   gjson.Get(jsonData, "system.traits.rarity").String(),
-	}
-	return action
-}
