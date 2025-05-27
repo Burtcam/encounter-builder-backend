@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"strings"
+	"strconv"
 
 	"github.com/Burtcam/encounter-builder-backend/structs"
 	"github.com/microcosm-cc/bluemonday"
@@ -353,11 +354,17 @@ func AssignSpell(spellList *[]structs.Spell, castingBlocks *structs.SpellCasting
 		for p := 0; p < len(castingBlocks.InnateSpellCasting); p++ {
 			if (*spellList)[j].SpellCastingBlockLocationID == castingBlocks.InnateSpellCasting[p].ID {
 				// create a spell use using spell. 
+				// Convert CastLevel from string to int
+				levelInt := 0
+				if l, err := strconv.Atoi((*spellList)[j].CastLevel); err == nil {
+					levelInt = l
+				}
 				castingBlocks.InnateSpellCasting[p].SpellUses = append(castingBlocks.InnateSpellCasting[p].SpellUses, structs.SpellUse{
-					Spell: *(spellList[j]), 
-					Level: int(*spellList)[j].CastLevel), 
-					Uses: (*spellList)[j].Uses,
-				}) 
+					Spell: (*spellList)[j],
+					Level: levelInt,
+					Uses:  (*spellList)[j].Uses,
+				})
+				})
 			}
 			
 
