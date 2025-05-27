@@ -148,6 +148,7 @@ type InnateSpellCasting struct {
 	Mod         string
 	ID          string
 	Description string
+	Name        string
 }
 type PreparedSpellCasting struct {
 	DC          int

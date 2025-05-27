@@ -74,6 +74,19 @@ func ParseFocusSpellCasting(jsonData string) structs.FocusSpellCasting {
 	return entry
 }
 
+func ParseInnateSpellCasting(jsonData string) structs.InnateSpellCasting {
+	entry := structs.InnateSpellCasting{
+		DC:          int(gjson.Get(jsonData, "system.spelldc.dc").Int()),
+		Mod:         gjson.Get(jsonData, "system.spelldc.value").String(),
+		Tradition:   gjson.Get(jsonData, "system.tradition.value").String(),
+		ID:          gjson.Get(jsonData, "_id").String(),
+		SpellUses:   []structs.SpellUse{},
+		Name:        gjson.Get(jsonData, "name").String(),
+		Description: stripHTMLUsingBluemonday(gjson.Get(jsonData, "system.description.value").String()),
+	}
+	return entry
+}
+
 func ParseDamageBlocks(jsonData string) []structs.DamageBlock {
 	//loop over each item
 	var DamageBlocks []structs.DamageBlock
@@ -321,6 +334,10 @@ func ParseSpell(jsonData string) structs.Spell {
 		AtWill:                      AtWill,
 	}
 	return spell
+}
+
+func AssignSpell(spellList *[]structs.Spell, castingBlocks *structs.SpellCasting) {
+
 }
 
 // func CompareSpellCastingIDs(spellCasting structs.SpellCasting, spell structs.Spell, value gjson.Result) {

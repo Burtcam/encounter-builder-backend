@@ -833,6 +833,40 @@ func TestParseInnateSpellCasting(t *testing.T) {
             },
             "type": "spellcastingEntry"
         },`
+
+	expected := structs.InnateSpellCasting{
+		DC:          31,
+		Mod:         "21",
+		SpellUses:   []structs.SpellUse{},
+		Tradition:   "occult",
+		ID:          "yI8fil9Hp8Ob0BcY",
+		Description: stripHTMLUsingBluemonday(""),
+		Name:        "Occult Innate Spells",
+	}
+
+	result := ParseInnateSpellCasting(jsonData)
+	if result.DC != expected.DC {
+		t.Errorf("Expected DC '%d', got '%d'", expected.DC, result.DC)
+	}
+	if result.Mod != expected.Mod {
+		t.Errorf("Expected Mod '%s', got '%s'", expected.Mod, result.Mod)
+	}
+	if result.Tradition != expected.Tradition {
+		t.Errorf("Expected Tradition %s, got %s", expected.Tradition, result.Tradition)
+	}
+	if result.ID != expected.ID {
+		t.Errorf("Expected ID %s, got %s", expected.ID, result.ID)
+	}
+	if result.Description != expected.Description {
+		t.Errorf("Expected Description %s, got %s", expected.Description, result.Description)
+	}
+	if result.Name != expected.Name {
+		t.Errorf("Expected Name '%s', got '%s'", expected.Name, result.Name)
+	}
+	if len(expected.SpellUses) != len(result.SpellUses) {
+		t.Errorf("Expected %d yet, got %d", len(expected.SpellUses), len(result.SpellUses))
+	}
+
 }
 
 func TestParseDamageBlocks(t *testing.T) {
@@ -2590,6 +2624,391 @@ func TestIngestAtWillInnateSpellUse(t *testing.T) {
 			t.Errorf("Expected Trait '%s' at index %d, got '%s'", trait, i, result.Traits[i])
 		}
 	}
+}
+
+func TestAssignSpell(t *testing.T) {
+	spellData := `{
+            "_id": "cgw07bSj0UprtiUE",
+            "_stats": {
+                "compendiumSource": "Compendium.pf2e.spells-srd.Item.gISYsBFby1TiXfBt"
+            },
+            "img": "icons/magic/acid/projectile-smoke-glowing.webp",
+            "name": "Acid Splash",
+            "sort": 2200000,
+            "system": {
+                "area": null,
+                "cost": {
+                    "value": ""
+                },
+                "counteraction": false,
+                "damage": {
+                    "0": {
+                        "applyMod": false,
+                        "category": null,
+                        "formula": "1d6",
+                        "kinds": [
+                            "damage"
+                        ],
+                        "materials": [],
+                        "type": "acid"
+                    },
+                    "gcovwqxwitqchoin": {
+                        "applyMod": false,
+                        "category": "splash",
+                        "formula": "1",
+                        "kinds": [
+                            "damage"
+                        ],
+                        "materials": [],
+                        "type": "acid"
+                    }
+                },
+                "defense": null,
+                "description": {
+                    "value": "<p>You splash a glob of acid that splatters your target and nearby creatures. Make a spell attack. If you hit, you deal 1d6 acid damage plus 1 splash acid damage. On a critical success, the target also takes @Damage[(ceil(@item.level/2))[persistent,acid]] damage.</p><hr /><p><strong>Heightened (3rd)</strong> The initial damage increases to 2d6, and the persistent damage increases to 2.</p>\n<p><strong>Heightened (5th)</strong> The initial damage increases to 3d6, the persistent damage increases to 3, and the splash damage increases to 2.</p>\n<p><strong>Heightened (7th)</strong> The initial damage increases to 4d6, the persistent damage increases to 4, and the splash damage increases to 3.</p>\n<p><strong>Heightened (9th)</strong> The initial damage increases to 5d6, the persistent damage increases to 5, and the splash damage increases to 4.</p>"
+                },
+                "duration": {
+                    "sustained": false,
+                    "value": ""
+                },
+                "heightening": {
+                    "levels": {
+                        "3": {
+                            "damage": {
+                                "0": {
+                                    "applyMod": false,
+                                    "category": null,
+                                    "formula": "2d6",
+                                    "materials": [],
+                                    "type": "acid"
+                                },
+                                "gcovwqxwitqchoin": {
+                                    "applyMod": false,
+                                    "category": "splash",
+                                    "formula": "1",
+                                    "materials": [],
+                                    "type": "acid"
+                                }
+                            }
+                        },
+                        "5": {
+                            "damage": {
+                                "0": {
+                                    "applyMod": false,
+                                    "category": null,
+                                    "formula": "3d6",
+                                    "materials": [],
+                                    "type": "acid"
+                                },
+                                "gcovwqxwitqchoin": {
+                                    "applyMod": false,
+                                    "category": "splash",
+                                    "formula": "2",
+                                    "materials": [],
+                                    "type": "acid"
+                                }
+                            }
+                        },
+                        "7": {
+                            "damage": {
+                                "0": {
+                                    "applyMod": false,
+                                    "category": null,
+                                    "formula": "4d6",
+                                    "materials": [],
+                                    "type": "acid"
+                                },
+                                "gcovwqxwitqchoin": {
+                                    "applyMod": false,
+                                    "category": "splash",
+                                    "formula": "3",
+                                    "materials": [],
+                                    "type": "acid"
+                                }
+                            }
+                        },
+                        "9": {
+                            "damage": {
+                                "0": {
+                                    "applyMod": false,
+                                    "category": null,
+                                    "formula": "5d6",
+                                    "materials": [],
+                                    "type": "acid"
+                                },
+                                "gcovwqxwitqchoin": {
+                                    "applyMod": false,
+                                    "category": "splash",
+                                    "formula": "4",
+                                    "materials": [],
+                                    "type": "acid"
+                                }
+                            }
+                        }
+                    },
+                    "type": "fixed"
+                },
+                "level": {
+                    "value": 1
+                },
+                "location": {
+                    "value": "9h6KJeGxzm8rEPaD"
+                },
+                "publication": {
+                    "license": "OGL",
+                    "remaster": false,
+                    "title": "Pathfinder Core Rulebook"
+                },
+                "range": {
+                    "value": "30 feet"
+                },
+                "requirements": "",
+                "rules": [],
+                "slug": "acid-splash",
+                "target": {
+                    "value": "1 creature"
+                },
+                "time": {
+                    "value": "2"
+                },
+                "traits": {
+                    "rarity": "common",
+                    "traditions": [
+                        "arcane",
+                        "primal"
+                    ],
+                    "value": [
+                        "acid",
+                        "attack",
+                        "cantrip",
+                        "concentrate",
+                        "manipulate"
+                    ]
+                }
+            },
+            "type": "spell"
+        },`
+
+	spellCastingBlock := `{
+            "_id": "9h6KJeGxzm8rEPaD",
+            "img": "systems/pf2e/icons/default-icons/spellcastingEntry.svg",
+            "name": "Primal Prepared Spells",
+            "sort": 100000,
+            "system": {
+                "autoHeightenLevel": {
+                    "value": 6
+                },
+                "description": {
+                    "value": ""
+                },
+                "prepared": {
+                    "flexible": false,
+                    "value": "prepared"
+                },
+                "proficiency": {
+                    "value": 1
+                },
+                "publication": {
+                    "license": "OGL",
+                    "remaster": false,
+                    "title": ""
+                },
+                "rules": [],
+                "showSlotlessLevels": {
+                    "value": false
+                },
+                "slots": {
+                    "slot0": {
+                        "max": 5,
+                        "prepared": [
+                            {
+                                "id": "cgw07bSj0UprtiUE"
+                            },
+                            {
+                                "id": "GeRqpkpFNtXrmbgm"
+                            },
+                            {
+                                "id": "tLuFR0oqghOXKzbd"
+                            },
+                            {
+                                "id": "wmqu97fbZeHaDCYh"
+                            },
+                            {
+                                "id": "ELMWrZpjcRl1T4RG"
+                            }
+                        ]
+                    },
+                    "slot1": {
+                        "max": 3,
+                        "prepared": [
+                            {
+                                "id": "K2hzbKGlsnbs4Oim"
+                            },
+                            {
+                                "id": "YfWayh8Vf56Z3brL"
+                            },
+                            {
+                                "id": "ZiYYZgtUKyVmJTXf"
+                            }
+                        ]
+                    },
+                    "slot2": {
+                        "max": 3,
+                        "prepared": [
+                            {
+                                "id": "lyHhpzUmgixU51K3"
+                            },
+                            {
+                                "id": "JxsY3WYSjn7MwRgz"
+                            },
+                            {
+                                "id": "9YyN3ZnrZrlMGETw"
+                            }
+                        ]
+                    },
+                    "slot3": {
+                        "max": 3,
+                        "prepared": [
+                            {
+                                "id": "uu8jCMiKsmK3daVq"
+                            },
+                            {
+                                "id": "kKqJb4vg5dRnYkWw"
+                            },
+                            {
+                                "id": "gSRFsZkX8Qu19CEz"
+                            }
+                        ]
+                    },
+                    "slot4": {
+                        "max": 3,
+                        "prepared": [
+                            {
+                                "id": "Pc8OabeDh0D0QoNn"
+                            },
+                            {
+                                "id": "T6VXVjgqGBXusSVY"
+                            },
+                            {
+                                "id": "VVTdSugZYXwWMIqG"
+                            }
+                        ]
+                    },
+                    "slot5": {
+                        "max": 3,
+                        "prepared": [
+                            {
+                                "id": "Pr9Ih78tzMSQfxvf"
+                            },
+                            {
+                                "id": "7YdPP01kBJ4BN5CS"
+                            },
+                            {
+                                "id": "D5sHvAzd2vbdfA3E"
+                            }
+                        ]
+                    },
+                    "slot6": {
+                        "max": 3,
+                        "prepared": [
+                            {
+                                "id": "iUZaBJdkAt5wfkw9"
+                            },
+                            {
+                                "id": "Qc0rR7NFVpIq7lgF"
+                            },
+                            {
+                                "id": "ECGCJIVLGkNeDpoK"
+                            }
+                        ]
+                    }
+                },
+                "slug": null,
+                "spelldc": {
+                    "dc": 34,
+                    "mod": 0,
+                    "value": 28
+                },
+                "tradition": {
+                    "value": "primal"
+                }
+            },
+            "type": "spellcastingEntry"
+        }`
+
+	spell2Good := ` {
+            "_id": "K2hzbKGlsnbs4Oim",
+            "_stats": {
+                "compendiumSource": "Compendium.pf2e.spells-srd.Item.WzLKjSw6hsBhuklC"
+            },
+            "img": "systems/pf2e/icons/spells/create-water.webp",
+            "name": "Create Water",
+            "sort": 2300000,
+            "system": {
+                "area": null,
+                "cost": {
+                    "value": ""
+                },
+                "counteraction": false,
+                "damage": {},
+                "defense": null,
+                "description": {
+                    "value": "<p>As you cup your hands, water begins to flow forth from them. You create 2 gallons of water. If no one drinks it, it evaporates after 1 day.</p>"
+                },
+                "duration": {
+                    "sustained": false,
+                    "value": ""
+                },
+                "level": {
+                    "value": 1
+                },
+                "location": {
+                    "value": "9h6KJeGxzm8rEPaD"
+                },
+                "publication": {
+                    "license": "OGL",
+                    "remaster": false,
+                    "title": "Pathfinder Core Rulebook"
+                },
+                "range": {
+                    "value": "0 feet"
+                },
+                "requirements": "",
+                "rules": [],
+                "slug": "create-water",
+                "target": {
+                    "value": ""
+                },
+                "time": {
+                    "value": "2"
+                },
+                "traits": {
+                    "rarity": "common",
+                    "traditions": [
+                        "arcane",
+                        "divine",
+                        "primal"
+                    ],
+                    "value": [
+                        "concentrate",
+                        "manipulate",
+                        "water"
+                    ]
+                }
+            },
+            "type": "spell"
+        },`
+	expectedSpell := ParseSpell(spell2Good)
+	spellCasting := ParsePreparedSpellCasting(spellCastingBlock)
+	spellList := []structs.Spell{ParseSpell(spellData), expectedSpell}
+
+	demoSpellcasting := structs.SpellCasting{
+		PreparedSpellCasting: []structs.PreparedSpellCasting{spellCasting},
+	}
+	AssignSpell(&spellList, &demoSpellcasting)
+
+	//
+
 }
 
 // parse "(at will)" out of name. If it's there, it's unlimited uses.
