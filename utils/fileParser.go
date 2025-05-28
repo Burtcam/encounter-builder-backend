@@ -1,218 +1,133 @@
 package utils
 
+import (
+	"fmt"
+	"os"
+
+	"github.com/Burtcam/encounter-builder-backend/structs"
+	"github.com/tidwall/gjson"
+)
+
 func StandinFunc() bool {
 	return true
 }
 
-// func sortSpells(spellCastingList structs.SpellCasting, MasterSpellList []structs.Spell) error {
-// 	// loop over thhe master spell list, add it to the proper spellcastingList
-// 	MasterSpellList.ForEach(func(key, value) bool{
-// 		// match id in each spell to ID in spellcastingList
-// 		// For each spell, sort it appropriately based on each type.
-// 		// if found type is Prepared: create a PreparedSlot, and put the spell in it, and then put the Prepared Slot in the spellcasting struct
-// 		// If found type is Spontaenous put spell in SpellList
-// 		//If found type is Innate create a spellUse (with spell in it) and put in innate.SpellUses
-// 		// if found type is Focus put in focus spell list
-// 		return true
-// 	})
-// 	return nil
-// }
-//
+func ItemSwitch(item string,
+	passiveList *[]structs.Passive,
+	SpellCastingBlocks *structs.SpellCasting,
+	FreeActionList *[]structs.FreeAction,
+	ReactionList *[]structs.Reaction,
+	actionList *[]structs.Action,
+	SpellList *[]structs.Spell,
+	MeleeList *[]structs.Attack,
+	RangedList *[]structs.Attack) error {
+	switch gjson.Get(item, "type").String() {
+	case "action":
+		switch gjson.Get(item, "system.actionType.value").String() {
+		case "action":
+			*actionList = append(*actionList, ParseAction(item))
+		case "passive":
+			*passiveList = append(*passiveList, ParsePassive(item))
+		case "free":
+			*FreeActionList = append(*FreeActionList, ParseFreeAction(item))
+		case "reaction":
+			*ReactionList = append(*ReactionList, ParseReaction(item))
+		default:
+			fmt.Println("Uncategorized!: ", gjson.Get(item, "system.actionType.value"))
+			f, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+			if err != nil {
+				return err
+			}
+			defer f.Close() // Ensure the file is closed when we're done.
+		}
+	case "spellcastingentry":
+		switch gjson.Get(item, "system.prepared.value").String() {
+		case "prepared":
+			SpellCastingBlocks.PreparedSpellCasting = append(SpellCastingBlocks.PreparedSpellCasting, ParsePreparedSpellCasting(item))
+		case "spontaneous":
+			SpellCastingBlocks.SpontaneousSpellCasting = append(SpellCastingBlocks.SpontaneousSpellCasting, ParseSpontaneousSpellCasting(item))
+		case "focus":
+			SpellCastingBlocks.FocusSpellCasting = append(SpellCastingBlocks.FocusSpellCasting, ParseFocusSpellCasting(item))
+		case "innate":
+			SpellCastingBlocks.InnateSpellCasting = append(SpellCastingBlocks.InnateSpellCasting, ParseInnateSpellCasting(item))
+		}
+	case "spell":
+		*SpellList = append(*SpellList, ParseSpell(item))
+	case "lore":
+		fmt.Println("Found a Lore")
+	case "weapon":
+		fmt.Println("Found a weapon")
+	case "armor":
+		fmt.Println("Found an Armor")
+	case "equipment":
+		fmt.Println("Found equipment")
+	case "consumable":
+		fmt.Println("found a consumable")
+	case "effect":
+		fmt.Println("found an effect")
+	case "treasure":
+		fmt.Println("Found a Treasure")
+	case "shield":
+		fmt.Println("Shield")
+	case "backpack":
+		fmt.Println("backpack")
+	case "condition":
+		fmt.Println("condition")
+		//Can safely ignore because it's in the passives
+	case "melee":
+		switch gjson.Get(item, "system.weaponType.value").String() {
+		case "melee":
+			*MeleeList = append(*MeleeList, ParseWeapon(item))
+		case "ranged":
+			*RangedList = append(*RangedList, ParseWeapon(item))
+		default:
+			*MeleeList = append(*MeleeList, ParseWeapon(item))
+		} //switch on the different types and call the ingesters
 
-// []structs.Action, []structs.FreeAction, []structs.Attack, []structs.Attack, []structs.Reaction, []structs.Passive, []structs.SpellCasting,
-// func ParseItems(data []byte) ([]structs.FreeAction,
-// 	[]structs.Action,
-// 	[]structs.Reaction,
-// 	[]structs.Passive,
-// 	structs.SpellCasting,
-// 	error) {
-// 	rawItems := gjson.Get(string(data), "items")
-// 	// for each item in the block, "items.system"
-// 	// check systems.item.type and the three types (action, melee, ranged, spell, spellcastingEntry)
-// 	// if it's a spell, ignore for now but create a map to look it up later?
-// 	// if it's a action, encode it into the proper struct (passive, reaction, free, action)
-// 	// for each, make a slice of type each (so []Action, []Reaction, []Passive, []FreeAction)
-// 	// return those slices.
-// 	var passiveList []structs.Passive
-// 	var SpellCastingBlocks structs.SpellCasting
-// 	var FreeActionList []structs.FreeAction
-// 	var actionList []structs.Action
-// 	var ReactionList []structs.Reaction // If it's a spell, create the spell and put it in master spell list (with the location.id) as well as the uses
-// 	// If it's a spellcasting, create the spellcasting entry and attach it to the SpellCasting struct
-// 	rawItems.ForEach(func(key, value gjson.Result) bool {
-// 		switch value.Get("type").String() {
-// 		case "action":
-// 			fmt.Println("Found an Action")
-// 			switch value.Get("system").Get("actionType").Get("value").String() {
-// 			case "passive":
-// 				fmt.Println("Found a passive")
-// 				passive := structs.Passive{
-// 					Name:     value.Get("name").String(),
-// 					Text:     value.Get("system").Get("description").Get("value").String(),
-// 					Traits:   extractListOfObjectsValues(string(data), "system.traits.value"),
-// 					Category: value.Get("system").Get("category").String(),
-// 				}
-// 				passiveList = append(passiveList, passive)
-// 			case "action":
-// 				fmt.Println("found a subaction")
-// 				action := structs.Action{
-// 					Name:     value.Get("name").String(),
-// 					Text:     value.Get("system").Get("description").Get("value").String(),
-// 					Traits:   ingestJSONList(data, "system.traits.value"),
-// 					Category: value.Get("system").Get("category").String(),
-// 					Actions:  value.Get("system").Get("actions").Get("value").String(),
-// 					Rarity:   value.Get("system").Get("traits").Get("rarity").String(),
-// 				}
-// 				actionList = append(actionList, action)
-// 			case "free":
-// 				fmt.Println("Found a free action")
-// 				freeAction := structs.FreeAction{
-// 					Name:     value.Get("name").String(),
-// 					Text:     value.Get("system").Get("description").Get("value").String(),
-// 					Traits:   extractListOfObjectsValues(string(data), "system.traits.value"),
-// 					Category: value.Get("system").Get("category").String(),
-// 					Rarity:   value.Get("system").Get("traits").Get("rarity").String(),
-// 				}
-// 				FreeActionList = append(FreeActionList, freeAction)
+	}
 
-// 			case "reaction":
-// 				fmt.Println("Found a reaction")
-// 				// reaction := structs.Reaction{
-// 				// 	Name:     value.Get("name").String(),
-// 				// 	Text:     value.Get("system").Get("description").Get("value").String(),
-// 				// 	Traits:   ingestJSONList(data, "system.traits.value"),
-// 				// 	Category: value.Get("system").Get("category").String(),
-// 				// 	Rarity:   value.Get("system").Get("traits").Get("rarity").String(),
-// 				// }
-// 				ReactionList = append(ReactionList, reaction)
-// 			default:
-// 				fmt.Println("Uncategorized! : ", value.Get("system").Get("actionType").Get("value"))
-// 				f, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-// 				if err != nil {
-// 					log.Fatal(err)
-// 				}
-// 				defer f.Close() // Ensure the file is closed when we're done.
-// 				logLine := fmt.Sprintf("Uncategorized Item Found, %s in the file %s \n", value.Get("system").Get("actionType").Get("value"), gjson.Get(string(data), "name"))
-// 				// Write a string to the file.
-// 				if _, err := f.WriteString(logLine); err != nil {
-// 					log.Fatal(err)
-// 				}
+}
 
-// 			}
-// 			//split into passives, free, action ("system.actionType.Value" == passive)
-// 		case "spellcastingEntry":
-// 			fmt.Println("Found a spellcasting entry")
-// 			if value.Get("system").Get("prepared").Get("value").String() == "innate" {
-// 				fmt.Println("Innate Handler Called")
-// 				innate := structs.InnateSpellCasting{
-// 					ID:          value.Get("_id").String(),
-// 					Tradition:   value.Get("system").Get("tradition").Get("value").String(),
-// 					DC:          int(value.Get("system").Get("spelldc").Get("dc").Int()),
-// 					Mod:         value.Get("system").Get("spelldc").Get("value").String(),
-// 					Description: value.Get("system").Get("description").Get("value").String(),
-// 				}
-// 				SpellCastingBlocks.InnateSpellCasting = append(SpellCastingBlocks.InnateSpellCasting, innate)
-// 			} else if value.Get("system").Get("prepared").Get("value").String() == "prepared" {
-// 				fmt.Println("Innate Handler Called")
-// 				SpellCastingBlocks.PreparedSpellCasting = append(SpellCastingBlocks.PreparedSpellCasting, ParsePreparedSpellCasting(value.String()))
-// 				// Create a spellcastingEntry of the type,
-// 			} else if value.Get("system").Get("prepared").Get("value").String() == "spontaneous" {
-// 				fmt.Println("spontaneous Handler Called")
-// 				SpellCastingBlocks.SpontaneousSpellCasting = append(SpellCastingBlocks.SpontaneousSpellCasting, ParseSpontaneousSpellCasting(value.String()))
-// 				// Create a spellcastingEntry of the type,
-// 			} else if value.Get("system").Get("prepared").Get("value").String() == "focus" {
-// 				fmt.Println("focus Handler Called")
-// 				// Create a spellcastingEntry of the type,
-// 				focus := structs.FocusSpellCasting{
-// 					ID:          value.Get("_id").String(),
-// 					Tradition:   value.Get("system").Get("tradition").Get("value").String(),
-// 					DC:          int(value.Get("system").Get("spelldc").Get("dc").Int()),
-// 					Mod:         value.Get("system").Get("spelldc").Get("value").String(),
-// 					Description: value.Get("system").Get("description").Get("value").String(),
-// 				}
-// 				SpellCastingBlocks.FocusSpellCasting = append(SpellCastingBlocks.FocusSpellCasting, focus)
+func ParseItems(data string) ([]structs.FreeAction,
+	[]structs.Action,
+	[]structs.Reaction,
+	[]structs.Passive,
+	structs.SpellCasting,
+	[]structs.Spell,
+	[]structs.Attack,
+	[]structs.Attack) {
 
-// 			} else if value.Get("system").Get("prepared").Get("value").String() == "items" {
-// 				fmt.Println("Spell Item Handler Called")
-// 			} else {
-// 				fmt.Println("Uncategorized! : ", value.Get("type"))
-// 				f, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-// 				if err != nil {
-// 					log.Fatal(err)
-// 				}
-// 				defer f.Close() // Ensure the file is closed when we're done.
-// 				logLine := fmt.Sprintf("Uncategorized Spellcasting entry Found, %s in the file %s \n", value.Get("system").Get("prepared").Get("value").String(), gjson.Get(string(data), "name"))
-// 				// Write a string to the file.
-// 				if _, err := f.WriteString(logLine); err != nil {
-// 					log.Fatal(err)
-// 				}
+	var passiveList []structs.Passive
+	var SpellCastingBlocks structs.SpellCasting
+	var FreeActionList []structs.FreeAction
+	var actionList []structs.Action
+	var ReactionList []structs.Reaction
+	var SpellMasterList []structs.Spell
+	var MeleeList []structs.Attack
+	var RangedList []structs.Attack
 
-// // 			}
+	itemsList := gjson.Get(data, "items").Array()
 
-// 		// return a []Attack each one has a system.weaponType which will be ranged or melee
-// 		case "melee":
-// 			fmt.Println("Found a melee")
-// weapon, err := ParseWeapon(value.String())
-// if err != nil {
-// 	fmt.Println("Some other shit!")
-// 	fmt.Println("Uncategorized! : ", value.Get("type"))
-// 	f, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// 			// 	defer f.Close() // Ensure the file is closed when we're done.
-// 			// 	logLine := fmt.Sprintf("Uncategorized attack Found, %s in the file %s \n", value.Get("system").Get("weaponType").Get("value").String(), gjson.Get(string(data), "name"))
-// 			// 	// Write a string to the file.
-// 			// 	if _, err := f.WriteString(logLine); err != nil {
-// 			// 		log.Fatal(err)
-// 			// 	}
-// 			// }
-
-// 		case "spell":
-// 			fmt.Println("found a Spell")
-// 			// // Check if the referenced spellcasting struct exists yet, if it does, add it to that, (location.value) and (location.uses)
-// 			// SpellCastingBlocks, err := HandleSpell(&SpellCastingBlocks, value)
-// 			// if err != nil {
-// 			// 	fmt.Println("Failed to handle spell")
-// 			// }
-// 			// If it hasn't THEN loop over the item list till we find it and create it.
-// 		case "lore":
-// 			fmt.Println("Found a Lore")
-// 		case "weapon":
-// 			fmt.Println("Found a weapon")
-// 		case "armor":
-// 			fmt.Println("Found an Armor")
-// 		case "equipment":
-// 			fmt.Println("Found equipment")
-// 		case "consumable":
-// 			fmt.Println("found a consumable")
-// 		case "effect":
-// 			fmt.Println("found an effect")
-// 		case "treasure":
-// 			fmt.Println("Found a Treasure")
-// 		case "shield":
-// 			fmt.Println("Shield")
-// 		case "backpack":
-// 			fmt.Println("backpack")
-// 		case "condition":
-// 			fmt.Println("condition")
-// 		default:
-// 			fmt.Println("Uncategorized! : ", value.Get("type"))
-// 			f, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-// 			if err != nil {
-// 				log.Fatal(err)
-// 			}
-// 			defer f.Close() // Ensure the file is closed when we're done.
-// 			logLine := fmt.Sprintf("Uncategorized Item Found, %s in the file %s \n", value.Get("type"), gjson.Get(string(data), "name"))
-// 			// Write a string to the file.
-// 			if _, err := f.WriteString(logLine); err != nil {
-// 				log.Fatal(err)
-// 			}
-// 		}
-// 		return true // Continue iterating
-// 	})
-// 	return FreeActionList, actionList, ReactionList, passiveList, SpellCastingBlocks, nil
-// }
+	for i := 0; i < len(itemsList); i++ {
+		ItemSwitch(itemsList[i].String(),
+			&passiveList,
+			&SpellCastingBlocks,
+			&FreeActionList,
+			&ReactionList,
+			&actionList,
+			&SpellMasterList,
+			&MeleeList,
+			&RangedList)
+	}
+	return FreeActionList,
+		actionList,
+		ReactionList,
+		passiveList,
+		SpellCastingBlocks,
+		SpellMasterList,
+		MeleeList,
+		RangedList
+}
 
 // func parseJSON(data []byte) error {
 // 	fmt.Println(gjson.Get(string(data), "name"))

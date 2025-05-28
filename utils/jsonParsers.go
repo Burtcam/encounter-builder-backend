@@ -2,9 +2,11 @@ package utils
 
 import (
 	"fmt"
-	"strings"
+	"os"
 	"strconv"
+	"strings"
 
+	"github.com/Burtcam/encounter-builder-backend/logger"
 	"github.com/Burtcam/encounter-builder-backend/structs"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/tidwall/gjson"
@@ -229,14 +231,14 @@ func ingestJSONList(jsonData string, listString string) []string {
 	}
 	return values
 }
-func ParsePassives(value gjson.Result) structs.Passive {
+func ParsePassive(value string) structs.Passive {
 	// Ensure the pointer list exists
 
 	passive := structs.Passive{
-		Name:     value.Get("name").String(),
-		Text:     value.Get("system").Get("description").Get("value").String(),
-		Traits:   ingestJSONList((value.String()), "system.traits.value"),
-		Category: value.Get("system").Get("category").String(),
+		Name:     gjson.Get(value, "name").String(),
+		Text:     gjson.Get(value, "system.description.value").String(),
+		Traits:   ingestJSONList(value, "system.traits.value"),
+		Category: gjson.Get(value, "system.category").String(),
 	}
 	return passive
 }
@@ -347,129 +349,109 @@ func AssignSpell(spellList *[]structs.Spell, castingBlocks *structs.SpellCasting
 				for i := 0; i < len(castingBlocks.PreparedSpellCasting[p].Slots); i++ {
 					if castingBlocks.PreparedSpellCasting[p].Slots[i].SpellID == (*spellList)[j].ID {
 						castingBlocks.PreparedSpellCasting[p].Slots[i].Spell = (*spellList)[j]
+						break
 					}
 				}
 			}
 		}
 		for p := 0; p < len(castingBlocks.InnateSpellCasting); p++ {
 			if (*spellList)[j].SpellCastingBlockLocationID == castingBlocks.InnateSpellCasting[p].ID {
-				// create a spell use using spell. 
+				// create a spell use using spell.
 				// Convert CastLevel from string to int
 				levelInt := 0
 				if l, err := strconv.Atoi((*spellList)[j].CastLevel); err == nil {
 					levelInt = l
 				}
-				castingBlocks.InnateSpellCasting[p].SpellUses = append(castingBlocks.InnateSpellCasting[p].SpellUses, structs.SpellUse{
-					Spell: (*spellList)[j],
-					Level: levelInt,
-					Uses:  (*spellList)[j].Uses,
-				})
-				})
+				castingBlocks.InnateSpellCasting[p].SpellUses =
+					append(castingBlocks.InnateSpellCasting[p].SpellUses, structs.SpellUse{
+						Spell: (*spellList)[j],
+						Level: levelInt,
+						Uses:  (*spellList)[j].Uses,
+					})
+				break
 			}
-			
-
 		}
-
+		for p := 0; p < len(castingBlocks.SpontaneousSpellCasting); p++ {
+			if (*spellList)[j].SpellCastingBlockLocationID == castingBlocks.SpontaneousSpellCasting[p].ID {
+				castingBlocks.SpontaneousSpellCasting[p].SpellList =
+					append(castingBlocks.SpontaneousSpellCasting[p].SpellList, (*spellList)[j])
+				break
+			}
+		}
+		for p := 0; p < len(castingBlocks.FocusSpellCasting); p++ {
+			if (*spellList)[j].SpellCastingBlockLocationID == castingBlocks.FocusSpellCasting[p].ID {
+				castingBlocks.FocusSpellCasting[p].FocusSpellList =
+					append(castingBlocks.FocusSpellCasting[p].FocusSpellList, (*spellList)[j])
+				break
+			}
+		}
 	}
 }
 
-// func CompareSpellCastingIDs(spellCasting structs.SpellCasting, spell structs.Spell, value gjson.Result) {
-// 	// Check InnateSpellCasting
+func LoadJSON(path string) (string, error) {
+	fmt.Println("Path is :", path)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		logger.Log.Error(err.Error())
+		return string(data), err
+	}
+	return string(data), err
+}
 
-// 	locationID := value.Get("system").Get("location").Get("value").String()
+func ParseSenses(jsonData string) []structs.Sense {
+	var SenseList []structs.Sense
+	senseData := gjson.Get(jsonData, "system.perception.senses").Array()
+	for i := 0; i < len(senseData); i++ {
+		sense := structs.Sense{
+			Name:   senseData[i].Get("type").String(),
+			Acuity: senseData[i].Get("acuity").String(),
+			Range:  senseData[i].Get("range").String(),
+			Detail: senseData[i].Get("detail").String(),
+		}
+		SenseList = append(SenseList, sense)
+	}
+	return SenseList
+}
 
-// 	for _, item := range spellCasting.InnateSpellCasting {
-// 		if item.ID == locationID {
-// 			fmt.Printf("Match found in InnateSpellCasting: %s\n", item.ID)
-// 		}
-// 	}
+func ParseSaves(jsonData string) structs.Saves {
+	save := structs.Saves{
+		Fort:       gjson.Get(jsonData, "system.saves.fortitude.value").String(),
+		FortDetail: gjson.Get(jsonData, "system.saves.fortitude.saveDetail").String(),
+		Will:       gjson.Get(jsonData, "system.saves.will.value").String(),
+		WillDetail: gjson.Get(jsonData, "system.saves.will.saveDetail").String(),
+		Ref:        gjson.Get(jsonData, "system.saves.reflex.value").String(),
+		RefDetail:  gjson.Get(jsonData, "system.saves.reflex.saveDetail").String(),
+	}
 
-// 	// Check PreparedSpellCasting
-// 	for _, item := range spellCasting.PreparedSpellCasting {
-// 		if item.ID == locationID {
-// 			fmt.Printf("Match found in PreparedSpellCasting: %s\n", item.ID)
-// 		}
-// 	}
+	return save
+}
 
-// 	// Check SpontaneousSpellCasting
-// 	for _, item := range spellCasting.SpontaneousSpellCasting {
-// 		if item.ID == locationID {
-// 			fmt.Printf("Match found in SpontaneousSpellCasting: %s\n", item.ID)
-// 		}
-// 	}
+func ParsePrice(jsonData string) structs.PriceBlock {
+	price := structs.PriceBlock{
+		GP: int(gjson.Get(jsonData, "system.value.gp").Int()),
+		SP: int(gjson.Get(jsonData, "system.value.sp").Int()),
+		CP: int(gjson.Get(jsonData, "system.value.cp").Int()),
+		PP: int(gjson.Get(jsonData, "system.value.pp").Int()),
+	}
+	return price
+}
 
-// 	// Check FocusSpellCasting
-// 	for _, item := range spellCasting.FocusSpellCasting {
-// 		if item.ID == locationID {
-// 			fmt.Printf("Match found in FocusSpellCasting: %s\n", item.ID)
-// 		}
-// 	}
-// }
+func ParseItem(jsonData string) structs.Item {
 
-// func HandleSpell(spellCastingBlocks *structs.SpellCasting, value gjson.Result) (structs.SpellCasting, error) {
-// 	// Check if the referenced spellcasting exists in the spellcasting blocks. If it does, add to the spell to the right spot,
-// 	// ELSE create the spellcasting block, add it to the spellcasting THEN add the found spell.
-// 	var Sustained bool
-// 	var defenseSaveType bool
-// 	if value.Get("system").Get("duration").Get("sustained").String() == "false" {
-// 		Sustained = false
-// 	} else {
-// 		Sustained = true
-// 	}
-// 	if value.Get("system").Get("defense").Get("save").Get("basic") == "true" {
-// 		defenseSaveType = true
-// 	} else if value.Get("system").Get("defense").Get("save").Get("basic") == "false" {
-// 		defenseSaveType = false
-// 	} else {
-// 		defenseSaveType = nil
-// 	}
-// 	Traits := extractListOfObjectsValues(value.String(), "system.traits.value")
-
-// 	spell := structs.Spell{
-// 		ID:          value.Get("_id").String(),
-// 		Name:        value.Get("name").String(),
-// 		Level:       value.Get("system").Get("level").Get("value").String(),
-// 		Description: value.Get("system").Get("description").Get("value").String(),
-// 		Range:       value.Get("system").Get("range").Get("value").String(),
-// 		Area: structs.SpellArea{
-// 			Type:   value.Get("system").Get("area").Get("type").String(),
-// 			Value:  value.Get("system").Get("area").Get("value").String(),
-// 			Detail: value.Get("system").Get("area").Get("details").String(),
-// 		},
-// 		Duration: structs.DurationBlock{
-// 			Sustained: Sustained,
-// 			Duration:  value.Get("system").Get("duration").Get("value").String(),
-// 		},
-// 		Targets: value.Get("system").Get("target").Get("value").String(),
-// 		Traits:  Traits,
-// 		Defense: structs.DefenseBlock{
-// 			Save:  value.Get("system").Get("defense").Get("save").Get("statistic").String(),
-// 			Basic: defenseSaveType,
-// 		},
-// 		CastTime:       value.Get("system").Get("time").Get("value").String(),
-// 		CastComponents: value.Get("system").Get("cost").Get("value").String(),
-// 		Rarity:         value.Get("system").Get("traits").Get("rarity").String(),
-// 	}
-// 	spellCastingLocation := value.Get("system").Get("location").Get("value")
-// 	// find which spellcasting block it belongs in.
-// }
-
-// TODO Left off here
-// func CreateSenseList(jsonData []byte, path string) []structs.Sense {
-// 	var senses []structs.Sense
-
-// 	// Get the JSON array stored in "senses"
-// 	sensesData := gjson.Get(string(jsonData), path)
-// 	// Iterate over each element in the senses array
-// 	sensesData.ForEach(func(key, value gjson.Result) bool {
-// 		senses = append(senses, structs.Sense{
-// 			Name:   value.Get("type").String(),
-// 			Range:  value.Get("range").String(),
-// 			Detail: value.Get("details").String(),
-// 			Acuity: value.Get("acuity").String(),
-// 		})
-// 		return true // Continue iterating
-// 	})
-
-// 	return senses
-// }
+	item := structs.Item{
+		Name:        gjson.Get(jsonData, "name").String(),
+		ID:          gjson.Get(jsonData, "_id").String(),
+		Category:    gjson.Get(jsonData, "system.category").String(),
+		Description: stripHTMLUsingBluemonday(gjson.Get(jsonData, "system.description.value").String()),
+		Level:       gjson.Get(jsonData, "system.level.value").String(),
+		Price:       ParsePrice(jsonData),
+		Type:        gjson.Get(jsonData, "system.type").String(),
+		Traits:      ingestJSONList(jsonData, "system.traits.value"),
+		Rarity:      gjson.Get(jsonData, "system.traits.rarity").String(),
+		Range:       gjson.Get(jsonData, "system.range").String(),
+		Size:        gjson.Get(jsonData, "system.size").String(),
+		Reload:      gjson.Get(jsonData, "system.reload.value").String(),
+		Bulk:        gjson.Get(jsonData, "system.bulk.value").String(),
+	}
+	return item
+}

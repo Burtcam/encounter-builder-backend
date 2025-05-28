@@ -2626,7 +2626,7 @@ func TestIngestAtWillInnateSpellUse(t *testing.T) {
 	}
 }
 
-func TestAssignSpell(t *testing.T) {
+func TestAssignSpellPrepared(t *testing.T) {
 	spellData := `{
             "_id": "cgw07bSj0UprtiUE",
             "_stats": {
@@ -3008,7 +3008,178 @@ func TestAssignSpell(t *testing.T) {
 	AssignSpell(&spellList, &demoSpellcasting)
 
 	//
-
+	i := 0
+	for i < len(demoSpellcasting.PreparedSpellCasting[0].Slots) {
+		if demoSpellcasting.PreparedSpellCasting[0].Slots[i].Spell.Name != "Create Water" {
+			i += 1
+			fmt.Println("still lookin")
+		} else if demoSpellcasting.PreparedSpellCasting[0].Slots[i].Spell.Name == "Create Water" {
+			fmt.Println("Found it!")
+			fmt.Println(demoSpellcasting.PreparedSpellCasting[0].Slots[i].Spell)
+			break
+		}
+	}
+	if i == len(demoSpellcasting.PreparedSpellCasting[0].Slots)-1 {
+		t.Errorf("Unable to find Create water in prepared spellcasting block")
+	}
 }
 
-// parse "(at will)" out of name. If it's there, it's unlimited uses.
+func TestLoadJSON(t *testing.T) {
+	data, err := LoadJSON("forest-dragon-adult-spellcaster.json")
+	if err != nil {
+		t.Errorf("Error on loading. %v", err)
+	}
+	fmt.Println(data)
+}
+
+func TestParseSenses(t *testing.T) {
+	data, err := LoadJSON("forest-dragon-adult-spellcaster.json")
+	if err != nil {
+		t.Errorf("Error on loading. %v", err)
+	}
+
+	result := ParseSenses(data)
+	expected := []structs.Sense{
+		{
+			Name: "darkvision",
+		},
+		{
+			Name:   "scent",
+			Range:  "60",
+			Acuity: "imprecise",
+		},
+	}
+	if result[0].Name != expected[0].Name {
+		t.Errorf("Expected Name %s, got %s", expected[0].Name, result[0].Name)
+	}
+	if result[1].Name != expected[1].Name {
+		t.Errorf("Expected Name %s, got %s", expected[1].Name, result[1].Name)
+	}
+	if result[1].Range != expected[1].Range {
+		t.Errorf("Expected Range %s, got %s", expected[1].Range, result[1].Range)
+	}
+	if result[1].Acuity != expected[1].Acuity {
+		t.Errorf("Expected Acuity %s, got %s", expected[1].Acuity, result[1].Acuity)
+	}
+}
+
+func TestParseSaves(t *testing.T) {
+	data, err := LoadJSON("forest-dragon-adult-spellcaster.json")
+	if err != nil {
+		t.Errorf("Error on loading. %v", err)
+	}
+
+	result := ParseSaves(data)
+	expected := structs.Saves{
+		Fort:       "25",
+		FortDetail: "",
+		Ref:        "22",
+		RefDetail:  "",
+		Will:       "27",
+		WillDetail: "",
+	}
+	if result.Fort != expected.Fort {
+		t.Errorf("Expected Fort %s, got %s", expected.Fort, result.Fort)
+	}
+	if result.FortDetail != expected.FortDetail {
+		t.Errorf("Expected FortDetail %s, got %s", expected.FortDetail, result.FortDetail)
+	}
+	if result.Will != expected.Will {
+		t.Errorf("Expected Will %s, got %s", expected.Will, result.Will)
+	}
+	if result.WillDetail != expected.WillDetail {
+		t.Errorf("Expected WillDetail %s, got %s", expected.WillDetail, result.WillDetail)
+	}
+	if result.Ref != expected.Ref {
+		t.Errorf("Expected Ref %s, got %s", expected.Ref, result.Ref)
+	}
+	if result.RefDetail != expected.RefDetail {
+		t.Errorf("Expected RefDetail %s, got %s", expected.RefDetail, result.RefDetail)
+	}
+}
+
+func TestParseItemShield(t *testing.T) {
+	jsonData := `{
+            "_id": "pU3Y57Kf8Ys0wWfG",
+            "_stats": {
+                "compendiumSource": "Compendium.pf2e.equipment-srd.Item.ezVp13Uw8cWW08Da"
+            },
+            "img": "icons/equipment/shield/round-wooden-boss-steel-yellow-blue.webp",
+            "name": "Wooden Shield",
+            "sort": 600000,
+            "system": {
+                "acBonus": 2,
+                "baseItem": "wooden-shield",
+                "bulk": {
+                    "value": 1
+                },
+                "containerId": null,
+                "description": {
+                    "value": "<p>Though they come in a variety of shapes and sizes, the protection offered by wooden shields comes from the stoutness of their materials. While wooden shields are less expensive than steel shields, they break more easily.</p>\n<table class=\"pf2e\">\n<thead>\n<tr>\n<th>Hardness</th>\n<th>HP</th>\n<th>BT</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>3</td>\n<td>12</td>\n<td>6</td>\n</tr>\n</tbody>\n</table>"
+                },
+                "equipped": {
+                    "carryType": "held",
+                    "handsHeld": 1,
+                    "invested": null
+                },
+                "hardness": 3,
+                "hp": {
+                    "max": 12,
+                    "value": 12
+                },
+                "level": {
+                    "value": 0
+                },
+                "material": {
+                    "grade": null,
+                    "type": null
+                },
+                "price": {
+                    "value": {
+                        "gp": 1
+                    }
+                },
+                "publication": {
+                    "license": "OGL",
+                    "remaster": false,
+                    "title": ""
+                },
+                "quantity": 1,
+                "rules": [],
+                "runes": {
+                    "reinforcing": 0
+                },
+                "size": "med",
+                "slug": "wooden-shield",
+                "speedPenalty": 0,
+                "traits": {
+                    "integrated": null,
+                    "rarity": "common",
+                    "value": []
+                }
+            },
+            "type": "shield"
+        },`
+	expected := structs.Item{
+		Name:        "Wooden Shield",
+		ID:          "pU3Y57Kf8Ys0wWfG",
+		Category:    "",
+		Level:       "0",
+		Description: stripHTMLUsingBluemonday("<p>Though they come in a variety of shapes and sizes, the protection offered by wooden shields comes from the stoutness of their materials. While wooden shields are less expensive than steel shields, they break more easily.</p>\n<table class=\"pf2e\">\n<thead>\n<tr>\n<th>Hardness</th>\n<th>HP</th>\n<th>BT</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>3</td>\n<td>12</td>\n<td>6</td>\n</tr>\n</tbody>\n</table>"),
+		Price: structs.PriceBlock{
+			GP: 1,
+		},
+		Type:   "Shield",
+		Traits: []string{},
+		Rarity: "Common",
+		Range:  "",
+		Size:   "med",
+		Reload: "",
+		Bulk:   "1",
+	}
+	result := ParseItem(jsonData)
+
+	if result.Name != expected.Name {
+		t.Errorf("Expected name %s, got %s", expected.Name, result.Name)
+	}
+}

@@ -24,6 +24,30 @@ type Monster struct {
 	Ranged       []Attack
 	SpellCasting SpellCasting
 	FocusPoints  int
+	Inventory    []Item
+}
+
+type Item struct {
+	Name        string
+	ID          string
+	Category    string
+	Description string
+	Level       string
+	Price       PriceBlock
+	Type        string
+	Traits      []string
+	Rarity      string
+	Size        string
+	Range       string
+	Reload      string
+	Bulk        string
+}
+type PriceBlock struct {
+	Per int
+	CP  int
+	SP  int
+	GP  int
+	PP  int
 }
 type Perception struct {
 	Mod    string
