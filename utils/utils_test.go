@@ -125,10 +125,10 @@ func TestParsePassives(t *testing.T) {
         }`
 
 	// Parse the JSON using gjson
-	result := gjson.Parse(jsonData)
+	result := gjson.Parse(jsonData).String()
 
 	// Call parsePassives function
-	passive := ParsePassives(result)
+	passive := ParsePassive(result)
 
 	// Validate parsed values
 	if passive.Name != "Telepathy 100 feet" {
@@ -3169,9 +3169,9 @@ func TestParseItemShield(t *testing.T) {
 		Price: structs.PriceBlock{
 			GP: 1,
 		},
-		Type:   "Shield",
+		Type:   "shield",
 		Traits: []string{},
-		Rarity: "Common",
+		Rarity: "common",
 		Range:  "",
 		Size:   "med",
 		Reload: "",
@@ -3182,4 +3182,349 @@ func TestParseItemShield(t *testing.T) {
 	if result.Name != expected.Name {
 		t.Errorf("Expected name %s, got %s", expected.Name, result.Name)
 	}
+	if result.ID != expected.ID {
+		t.Errorf("Expected ID %s, got %s", expected.ID, result.ID)
+	}
+	if result.Category != expected.Category {
+		t.Errorf("Expected Category %s, got %s", expected.Category, result.Category)
+	}
+	if result.Description != expected.Description {
+		t.Errorf("Expected Description %s, got %s", expected.Description, result.Description)
+	}
+	if result.Type != expected.Type {
+		t.Errorf("Expected Type %s, got %s", expected.Type, result.Type)
+	}
+	if result.Rarity != expected.Rarity {
+		t.Errorf("Expected Rarity %s, got %s", expected.Rarity, result.Rarity)
+	}
+	if result.Range != expected.Range {
+		t.Errorf("Expected Range %s, got %s", expected.Range, result.Range)
+	}
+	if result.Reload != expected.Reload {
+		t.Errorf("Expected Reload %s, got %s", expected.Reload, result.Reload)
+	}
+	if result.Price.CP != expected.Price.CP {
+		t.Errorf("Expected CP Price %d, got %d", expected.Price.CP, result.Price.CP)
+	}
+	if result.Price.SP != expected.Price.SP {
+		t.Errorf("Expected SP price %d, got %d", expected.Price.SP, result.Price.SP)
+	}
+	if result.Price.GP != expected.Price.GP {
+		t.Errorf("Expected GP price %d, got %d", expected.Price.GP, result.Price.GP)
+	}
+	if result.Price.Per != expected.Price.Per {
+		t.Errorf("Expected price per %d, got %d", expected.Price.Per, result.Price.Per)
+	}
+
+	for i, trait := range expected.Traits {
+		if result.Traits[i] != trait {
+			t.Errorf("Expected Trait '%s' at index %d, got '%s'", trait, i, result.Traits[i])
+		}
+	}
+
+}
+
+func TestParseItemWeapon(t *testing.T) {
+	jsonData := `{
+            "_id": "CvqNMEeYJFk8B5Uf",
+            "_stats": {
+                "compendiumSource": "Compendium.pf2e.equipment-srd.Item.tH5GirEy7YB3ZgCk"
+            },
+            "img": "systems/pf2e/icons/equipment/weapons/rapier.webp",
+            "name": "Rapier",
+            "sort": 500000,
+            "system": {
+                "baseItem": "rapier",
+                "bonus": {
+                    "value": 0
+                },
+                "bonusDamage": {
+                    "value": 0
+                },
+                "bulk": {
+                    "value": 1
+                },
+                "category": "martial",
+                "containerId": null,
+                "damage": {
+                    "damageType": "piercing",
+                    "dice": 1,
+                    "die": "d6"
+                },
+                "description": {
+                    "value": "<p>The rapier is a long and thin piercing blade with a basket hilt. It is prized among many as a dueling weapon.</p>"
+                },
+                "equipped": {
+                    "carryType": "worn",
+                    "handsHeld": 0,
+                    "invested": null
+                },
+                "group": "sword",
+                "hardness": 0,
+                "hp": {
+                    "max": 0,
+                    "value": 0
+                },
+                "level": {
+                    "value": 0
+                },
+                "material": {
+                    "grade": null,
+                    "type": null
+                },
+                "price": {
+                    "value": {
+                        "gp": 2
+                    }
+                },
+                "publication": {
+                    "license": "OGL",
+                    "remaster": false,
+                    "title": ""
+                },
+                "quantity": 1,
+                "range": null,
+                "reload": {
+                    "value": ""
+                },
+                "rules": [],
+                "runes": {
+                    "potency": 0,
+                    "property": [],
+                    "striking": 0
+                },
+                "size": "med",
+                "slug": "rapier",
+                "splashDamage": {
+                    "value": 0
+                },
+                "traits": {
+                    "rarity": "common",
+                    "value": [
+                        "deadly-d8",
+                        "disarm",
+                        "finesse"
+                    ]
+                },
+                "usage": {
+                    "value": "held-in-one-hand"
+                }
+            },
+            "type": "weapon"
+        },`
+	expected := structs.Item{
+		Name:        "Rapier",
+		ID:          "CvqNMEeYJFk8B5Uf",
+		Category:    "martial",
+		Level:       "0",
+		Description: stripHTMLUsingBluemonday("<p>The rapier is a long and thin piercing blade with a basket hilt. It is prized among many as a dueling weapon.</p>"),
+		Price: structs.PriceBlock{
+			GP: 2,
+		},
+		Type:   "weapon",
+		Traits: []string{"deadly-d8", "disarm", "finesse"},
+		Rarity: "common",
+		Range:  "",
+		Size:   "med",
+		Reload: "",
+		Bulk:   "1",
+	}
+	result := ParseItem(jsonData)
+
+	if result.Name != expected.Name {
+		t.Errorf("Expected name %s, got %s", expected.Name, result.Name)
+	}
+	if result.ID != expected.ID {
+		t.Errorf("Expected ID %s, got %s", expected.ID, result.ID)
+	}
+	if result.Category != expected.Category {
+		t.Errorf("Expected Category %s, got %s", expected.Category, result.Category)
+	}
+	if result.Description != expected.Description {
+		t.Errorf("Expected Description %s, got %s", expected.Description, result.Description)
+	}
+	if result.Type != expected.Type {
+		t.Errorf("Expected Type %s, got %s", expected.Type, result.Type)
+	}
+	if result.Rarity != expected.Rarity {
+		t.Errorf("Expected Rarity %s, got %s", expected.Rarity, result.Rarity)
+	}
+	if result.Range != expected.Range {
+		t.Errorf("Expected Range %s, got %s", expected.Range, result.Range)
+	}
+	if result.Reload != expected.Reload {
+		t.Errorf("Expected Reload %s, got %s", expected.Reload, result.Reload)
+	}
+	if result.Price.CP != expected.Price.CP {
+		t.Errorf("Expected CP Price %d, got %d", expected.Price.CP, result.Price.CP)
+	}
+	if result.Price.SP != expected.Price.SP {
+		t.Errorf("Expected SP price %d, got %d", expected.Price.SP, result.Price.SP)
+	}
+	if result.Price.GP != expected.Price.GP {
+		t.Errorf("Expected GP price %d, got %d", expected.Price.GP, result.Price.GP)
+	}
+	if result.Price.Per != expected.Price.Per {
+		t.Errorf("Expected price per %d, got %d", expected.Price.Per, result.Price.Per)
+	}
+
+	for i, trait := range expected.Traits {
+		if result.Traits[i] != trait {
+			t.Errorf("Expected Trait '%s' at index %d, got '%s'", trait, i, result.Traits[i])
+		}
+	}
+
+}
+
+// TODO left off here.
+func TestParseItemArmor(t *testing.T) {
+	jsonData := `{
+            "_id": "CvqNMEeYJFk8B5Uf",
+            "_stats": {
+                "compendiumSource": "Compendium.pf2e.equipment-srd.Item.tH5GirEy7YB3ZgCk"
+            },
+            "img": "systems/pf2e/icons/equipment/weapons/rapier.webp",
+            "name": "Rapier",
+            "sort": 500000,
+            "system": {
+                "baseItem": "rapier",
+                "bonus": {
+                    "value": 0
+                },
+                "bonusDamage": {
+                    "value": 0
+                },
+                "bulk": {
+                    "value": 1
+                },
+                "category": "martial",
+                "containerId": null,
+                "damage": {
+                    "damageType": "piercing",
+                    "dice": 1,
+                    "die": "d6"
+                },
+                "description": {
+                    "value": "<p>The rapier is a long and thin piercing blade with a basket hilt. It is prized among many as a dueling weapon.</p>"
+                },
+                "equipped": {
+                    "carryType": "worn",
+                    "handsHeld": 0,
+                    "invested": null
+                },
+                "group": "sword",
+                "hardness": 0,
+                "hp": {
+                    "max": 0,
+                    "value": 0
+                },
+                "level": {
+                    "value": 0
+                },
+                "material": {
+                    "grade": null,
+                    "type": null
+                },
+                "price": {
+                    "value": {
+                        "gp": 2
+                    }
+                },
+                "publication": {
+                    "license": "OGL",
+                    "remaster": false,
+                    "title": ""
+                },
+                "quantity": 1,
+                "range": null,
+                "reload": {
+                    "value": ""
+                },
+                "rules": [],
+                "runes": {
+                    "potency": 0,
+                    "property": [],
+                    "striking": 0
+                },
+                "size": "med",
+                "slug": "rapier",
+                "splashDamage": {
+                    "value": 0
+                },
+                "traits": {
+                    "rarity": "common",
+                    "value": [
+                        "deadly-d8",
+                        "disarm",
+                        "finesse"
+                    ]
+                },
+                "usage": {
+                    "value": "held-in-one-hand"
+                }
+            },
+            "type": "weapon"
+        },`
+	expected := structs.Item{
+		Name:        "Rapier",
+		ID:          "CvqNMEeYJFk8B5Uf",
+		Category:    "martial",
+		Level:       "0",
+		Description: stripHTMLUsingBluemonday("<p>The rapier is a long and thin piercing blade with a basket hilt. It is prized among many as a dueling weapon.</p>"),
+		Price: structs.PriceBlock{
+			GP: 2,
+		},
+		Type:   "weapon",
+		Traits: []string{"deadly-d8", "disarm", "finesse"},
+		Rarity: "common",
+		Range:  "",
+		Size:   "med",
+		Reload: "",
+		Bulk:   "1",
+	}
+	result := ParseItem(jsonData)
+
+	if result.Name != expected.Name {
+		t.Errorf("Expected name %s, got %s", expected.Name, result.Name)
+	}
+	if result.ID != expected.ID {
+		t.Errorf("Expected ID %s, got %s", expected.ID, result.ID)
+	}
+	if result.Category != expected.Category {
+		t.Errorf("Expected Category %s, got %s", expected.Category, result.Category)
+	}
+	if result.Description != expected.Description {
+		t.Errorf("Expected Description %s, got %s", expected.Description, result.Description)
+	}
+	if result.Type != expected.Type {
+		t.Errorf("Expected Type %s, got %s", expected.Type, result.Type)
+	}
+	if result.Rarity != expected.Rarity {
+		t.Errorf("Expected Rarity %s, got %s", expected.Rarity, result.Rarity)
+	}
+	if result.Range != expected.Range {
+		t.Errorf("Expected Range %s, got %s", expected.Range, result.Range)
+	}
+	if result.Reload != expected.Reload {
+		t.Errorf("Expected Reload %s, got %s", expected.Reload, result.Reload)
+	}
+	if result.Price.CP != expected.Price.CP {
+		t.Errorf("Expected CP Price %d, got %d", expected.Price.CP, result.Price.CP)
+	}
+	if result.Price.SP != expected.Price.SP {
+		t.Errorf("Expected SP price %d, got %d", expected.Price.SP, result.Price.SP)
+	}
+	if result.Price.GP != expected.Price.GP {
+		t.Errorf("Expected GP price %d, got %d", expected.Price.GP, result.Price.GP)
+	}
+	if result.Price.Per != expected.Price.Per {
+		t.Errorf("Expected price per %d, got %d", expected.Price.Per, result.Price.Per)
+	}
+
+	for i, trait := range expected.Traits {
+		if result.Traits[i] != trait {
+			t.Errorf("Expected Trait '%s' at index %d, got '%s'", trait, i, result.Traits[i])
+		}
+	}
+
 }

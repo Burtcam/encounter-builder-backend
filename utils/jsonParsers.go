@@ -428,10 +428,11 @@ func ParseSaves(jsonData string) structs.Saves {
 
 func ParsePrice(jsonData string) structs.PriceBlock {
 	price := structs.PriceBlock{
-		GP: int(gjson.Get(jsonData, "system.value.gp").Int()),
-		SP: int(gjson.Get(jsonData, "system.value.sp").Int()),
-		CP: int(gjson.Get(jsonData, "system.value.cp").Int()),
-		PP: int(gjson.Get(jsonData, "system.value.pp").Int()),
+		GP:  int(gjson.Get(jsonData, "system.price.value.gp").Int()),
+		SP:  int(gjson.Get(jsonData, "system.price.value.sp").Int()),
+		CP:  int(gjson.Get(jsonData, "system.price.value.cp").Int()),
+		PP:  int(gjson.Get(jsonData, "system.price.value.pp").Int()),
+		Per: int(gjson.Get(jsonData, "system.price.value.per").Int()),
 	}
 	return price
 }
@@ -445,7 +446,7 @@ func ParseItem(jsonData string) structs.Item {
 		Description: stripHTMLUsingBluemonday(gjson.Get(jsonData, "system.description.value").String()),
 		Level:       gjson.Get(jsonData, "system.level.value").String(),
 		Price:       ParsePrice(jsonData),
-		Type:        gjson.Get(jsonData, "system.type").String(),
+		Type:        gjson.Get(jsonData, "type").String(),
 		Traits:      ingestJSONList(jsonData, "system.traits.value"),
 		Rarity:      gjson.Get(jsonData, "system.traits.rarity").String(),
 		Range:       gjson.Get(jsonData, "system.range").String(),

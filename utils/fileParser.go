@@ -20,7 +20,8 @@ func ItemSwitch(item string,
 	actionList *[]structs.Action,
 	SpellList *[]structs.Spell,
 	MeleeList *[]structs.Attack,
-	RangedList *[]structs.Attack) error {
+	RangedList *[]structs.Attack,
+	Inventory *[]structs.Item) error {
 	switch gjson.Get(item, "type").String() {
 	case "action":
 		switch gjson.Get(item, "system.actionType.value").String() {
@@ -55,22 +56,31 @@ func ItemSwitch(item string,
 		*SpellList = append(*SpellList, ParseSpell(item))
 	case "lore":
 		fmt.Println("Found a Lore")
+		//Safe to skip for now.
 	case "weapon":
 		fmt.Println("Found a weapon")
+		*Inventory = append(*Inventory, ParseItem(item))
 	case "armor":
 		fmt.Println("Found an Armor")
+		*Inventory = append(*Inventory, ParseItem(item))
 	case "equipment":
 		fmt.Println("Found equipment")
+		*Inventory = append(*Inventory, ParseItem(item))
 	case "consumable":
 		fmt.Println("found a consumable")
+		*Inventory = append(*Inventory, ParseItem(item))
 	case "effect":
 		fmt.Println("found an effect")
+		//Can safely ignore because it's in the passives or actives
 	case "treasure":
 		fmt.Println("Found a Treasure")
+		*Inventory = append(*Inventory, ParseItem(item))
 	case "shield":
 		fmt.Println("Shield")
+		*Inventory = append(*Inventory, ParseItem(item))
 	case "backpack":
 		fmt.Println("backpack")
+		*Inventory = append(*Inventory, ParseItem(item))
 	case "condition":
 		fmt.Println("condition")
 		//Can safely ignore because it's in the passives
@@ -85,6 +95,7 @@ func ItemSwitch(item string,
 		} //switch on the different types and call the ingesters
 
 	}
+	return nil
 
 }
 
@@ -95,7 +106,8 @@ func ParseItems(data string) ([]structs.FreeAction,
 	structs.SpellCasting,
 	[]structs.Spell,
 	[]structs.Attack,
-	[]structs.Attack) {
+	[]structs.Attack,
+	[]structs.Item) {
 
 	var passiveList []structs.Passive
 	var SpellCastingBlocks structs.SpellCasting
@@ -105,6 +117,7 @@ func ParseItems(data string) ([]structs.FreeAction,
 	var SpellMasterList []structs.Spell
 	var MeleeList []structs.Attack
 	var RangedList []structs.Attack
+	var inventory []structs.Item
 
 	itemsList := gjson.Get(data, "items").Array()
 
@@ -117,7 +130,8 @@ func ParseItems(data string) ([]structs.FreeAction,
 			&actionList,
 			&SpellMasterList,
 			&MeleeList,
-			&RangedList)
+			&RangedList,
+			&inventory)
 	}
 	return FreeActionList,
 		actionList,
@@ -126,7 +140,8 @@ func ParseItems(data string) ([]structs.FreeAction,
 		SpellCastingBlocks,
 		SpellMasterList,
 		MeleeList,
-		RangedList
+		RangedList,
+		inventory
 }
 
 // func parseJSON(data []byte) error {
