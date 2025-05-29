@@ -204,72 +204,37 @@ func TestIngestJSONList(t *testing.T) {
 	}
 }
 
-func TestExtractSkills(t *testing.T) {
+func TestParseSkills(t *testing.T) {
 	// Sample JSON input
-	jsonData := `{
-            "acrobatics": {
-                "base": 21
-            },
-            "athletics": {
-                "base": 27
-            },
-            "deception": {
-                "base": 24
-            },
-            "intimidation": {
-                "base": 26
-            },
-            "nature": {
-                "base": 25
-            },
-            "stealth": {
-                "base": 21,
-                "special": [
-                    {
-                        "base": 25,
-                        "label": "in forests",
-                        "predicate": [
-                            "terrain:forest"
-							"terrain:moon"
-							"terrain:yourmommasass"
-                        ]
-                    }
-					{
-					"base": 54,
-					"label": "UNDERWATER",
-					"predicate": [
-						"terrain:water"
-						"terrain:lakes"
-						"terrain:ocean"
-					]
-                    }
-                ]
-					}`
+	jsonData, err := LoadJSON("forest-dragon-adult-spellcaster.json")
+
+	if err != nil {
+		fmt.Println("FUCK")
+	}
 	expectedValues := []structs.Skill{
 		{
-			Name:     "acrobatics",
-			Value:    21,
-			Specials: nil,
+			Name:  "acrobatics",
+			Value: 21,
 		},
 		{
-			Name:     "athletics",
-			Value:    27,
-			Specials: nil,
+			Name:  "athletics",
+			Value: 27,
 		},
 		{
-			Name:     "deception",
-			Value:    24,
-			Specials: nil,
+			Name:  "deception",
+			Value: 24,
 		},
 		{
-			Name:     "intimidation",
-			Value:    26,
-			Specials: nil,
+			Name:  "intimidation",
+			Value: 26,
 		},
 		{
-			Name:     "nature",
-			Value:    25,
-			Specials: nil,
+			Name:  "nature",
+			Value: 25,
+		},
+		{
+			Name:  "survival",
+			Value: 23,
 		},
 		{
 			Name:  "stealth",
@@ -278,17 +243,12 @@ func TestExtractSkills(t *testing.T) {
 				{
 					Value:      25,
 					Label:      "in forests",
-					Predicates: []string{"terrain:forest", "terrain:moon", "terrain:yourmommasass"},
-				},
-				{
-					Value:      54,
-					Label:      "UNDERWATER",
-					Predicates: []string{"terrain:water", "terrain:lakes", "terrain:ocean"},
+					Predicates: []string{"terrain:forest"},
 				},
 			},
 		},
 	}
-	result := ExtractSkills(gjson.Parse(jsonData))
+	result := ParseSkills(jsonData)
 	if len(result) != len(expectedValues) {
 		fmt.Printf("Result: %v\n", result)
 		t.Fatalf("Expected %d skills, got %d", len(expectedValues), len(result))

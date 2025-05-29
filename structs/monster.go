@@ -9,8 +9,8 @@ type Monster struct {
 	AClass       AC
 	HP           HP
 	Immunities   []string
-	Weaknesses   []string
-	Resistances  []string
+	Weaknesses   []DamageModifierBlock
+	Resistances  []DamageModifierBlock
 	Perception   Perception
 	Languages    []string
 	Senses       []Sense
@@ -27,6 +27,12 @@ type Monster struct {
 	Inventory    []Item
 }
 
+type DamageModifierBlock struct {
+	Value      int
+	Type       string
+	Exceptions []string
+	Double     []string
+}
 type Item struct {
 	Name        string
 	ID          string

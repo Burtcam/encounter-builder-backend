@@ -158,10 +158,12 @@ func ParseReaction(jsonData string) structs.Reaction {
 	}
 	return reaction
 }
-func ExtractSkills(value gjson.Result) []structs.Skill {
+func ParseSkills(jsonData string) []structs.Skill {
 	var skills []structs.Skill
+
+	SkillBlock := gjson.Get(jsonData, "system.skills")
 	// Iterate over each key-value pair in the "skills" object.
-	value.ForEach(func(key, value gjson.Result) bool {
+	SkillBlock.ForEach(func(key, value gjson.Result) bool {
 		// key.String() is the skill name.
 		// value is an object containing "base" and optionally "special".
 		baseValue := int(value.Get("base").Int())
@@ -456,4 +458,69 @@ func ParseItem(jsonData string) structs.Item {
 		Quantity:    gjson.Get(jsonData, "system.quantity").String(),
 	}
 	return item
+}
+
+func ExtractWeaknessOrResistances(jsonData string, path string) []structs.DamageModifierBlock {
+	block := gjson.Get(jsonData, path)
+	var ModifierList []structs.DamageModifierBlock
+	block.ForEach(func(key, value gjson.Result) bool {
+		ModifierList = append(ModifierList, structs.DamageModifierBlock{
+			Type:       value.Get("type").String(),
+			Value:      int(value.Get("value").Int()),
+			Exceptions: ingestJSONList(value.String(), "exception"),
+			Double:     ingestJSONList(value.String(), "doubleVs"),
+		})
+		return true // Continue iterating
+	})
+	return ModifierList
+}
+
+func ParsePerception(jsonData string) structs.Perception {
+	return structs.Perception{
+		Mod:    gjson.Get(jsonData, "system.perception.mod").String(),
+		Detail: gjson.Get(jsonData, "system.perception.details").String(),
+	}
+}
+
+func ParseMovements(jsonData string) []structs.Movement {
+	return []structs.Movement{}
+}
+
+func ParseCoreData(jsonData string) structs.Monster {
+	monster := structs.Monster{
+		Name: gjson.Get(jsonData, "name").String(),
+		Traits: structs.Traits{
+			Rarity:    gjson.Get(jsonData, "system.traits.rarity").String(),
+			Size:      gjson.Get(jsonData, "system.traits.size.value").String(),
+			TraitList: ingestJSONList(jsonData, "system.traits.value"),
+		},
+		Attributes: structs.Attributes{
+			Str: gjson.Get(jsonData, "system.abilities.str.mod").String(),
+			Dex: gjson.Get(jsonData, "system.abilities.dex.mod").String(),
+			Con: gjson.Get(jsonData, "system.abilities.con.mod").String(),
+			Wis: gjson.Get(jsonData, "system.abilities.wis.mod").String(),
+			Int: gjson.Get(jsonData, "system.abilities.int.mod").String(),
+			Cha: gjson.Get(jsonData, "system.abilities.cha.mod").String(),
+		},
+		Level: gjson.Get(jsonData, "system.level.value").String(),
+		Saves: ParseSaves(jsonData),
+		AClass: structs.AC{
+			Value:  gjson.Get(jsonData, "system.attributes.ac.value").String(),
+			Detail: gjson.Get(jsonData, "system.attributes.ac.details").String(),
+		},
+		HP: structs.HP{
+			Detail: gjson.Get(jsonData, "system.hp.details").String(),
+			Value:  int(gjson.Get(jsonData, "system.hp.max").Int()),
+		},
+		Immunities:  extractListOfObjectsValues(jsonData, "system.immunities"),
+		Weaknesses:  ExtractWeaknessOrResistances(jsonData, "system.attributes.weaknesses"),
+		Resistances: ExtractWeaknessOrResistances(jsonData, "system.attributes.resistances"),
+		Perception:  ParsePerception(jsonData),
+		Languages:   ingestJSONList(jsonData, "system.details.languages.value"),
+		Senses:      ParseSenses(jsonData),
+		Skills:      ParseSkills(jsonData),
+		Movements:   ParseMovements(jsonData),
+		FocusPoints: int(gjson.Get(jsonData, "system.resources.focus.max").Int()),
+	}
+	return monster
 }
