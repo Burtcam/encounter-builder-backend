@@ -342,11 +342,11 @@ func ParseSpell(jsonData string) structs.Spell {
 func AssignSpell(spellList *[]structs.Spell, castingBlocks *structs.SpellCasting) {
 	//For each spell in spell list. Look in each list of castingblocks for the match
 	// castingblocks.PreparedSpellList[0].ID == spellList[i].SpellCastingBlockLocationID
-	for j := 0; j < len(*spellList); j++ {
-		for p := 0; p < len(castingBlocks.PreparedSpellCasting); p++ {
+	for j := range len(*spellList) {
+		for p := range len(castingBlocks.PreparedSpellCasting) {
 			//Loop over and check if spell[]
 			if (*spellList)[j].SpellCastingBlockLocationID == castingBlocks.PreparedSpellCasting[p].ID {
-				for i := 0; i < len(castingBlocks.PreparedSpellCasting[p].Slots); i++ {
+				for i := range len(castingBlocks.PreparedSpellCasting[p].Slots) {
 					if castingBlocks.PreparedSpellCasting[p].Slots[i].SpellID == (*spellList)[j].ID {
 						castingBlocks.PreparedSpellCasting[p].Slots[i].Spell = (*spellList)[j]
 						break
@@ -354,7 +354,7 @@ func AssignSpell(spellList *[]structs.Spell, castingBlocks *structs.SpellCasting
 				}
 			}
 		}
-		for p := 0; p < len(castingBlocks.InnateSpellCasting); p++ {
+		for p := range len(castingBlocks.InnateSpellCasting) {
 			if (*spellList)[j].SpellCastingBlockLocationID == castingBlocks.InnateSpellCasting[p].ID {
 				// create a spell use using spell.
 				// Convert CastLevel from string to int
@@ -371,14 +371,14 @@ func AssignSpell(spellList *[]structs.Spell, castingBlocks *structs.SpellCasting
 				break
 			}
 		}
-		for p := 0; p < len(castingBlocks.SpontaneousSpellCasting); p++ {
+		for p := range len(castingBlocks.SpontaneousSpellCasting) {
 			if (*spellList)[j].SpellCastingBlockLocationID == castingBlocks.SpontaneousSpellCasting[p].ID {
 				castingBlocks.SpontaneousSpellCasting[p].SpellList =
 					append(castingBlocks.SpontaneousSpellCasting[p].SpellList, (*spellList)[j])
 				break
 			}
 		}
-		for p := 0; p < len(castingBlocks.FocusSpellCasting); p++ {
+		for p := range len(castingBlocks.FocusSpellCasting) {
 			if (*spellList)[j].SpellCastingBlockLocationID == castingBlocks.FocusSpellCasting[p].ID {
 				castingBlocks.FocusSpellCasting[p].FocusSpellList =
 					append(castingBlocks.FocusSpellCasting[p].FocusSpellList, (*spellList)[j])
@@ -401,7 +401,7 @@ func LoadJSON(path string) (string, error) {
 func ParseSenses(jsonData string) []structs.Sense {
 	var SenseList []structs.Sense
 	senseData := gjson.Get(jsonData, "system.perception.senses").Array()
-	for i := 0; i < len(senseData); i++ {
+	for i := range len(senseData) {
 		sense := structs.Sense{
 			Name:   senseData[i].Get("type").String(),
 			Acuity: senseData[i].Get("acuity").String(),
