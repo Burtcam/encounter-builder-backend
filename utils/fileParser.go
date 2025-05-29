@@ -8,20 +8,7 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-func StandinFunc() bool {
-	return true
-}
-
-func ItemSwitch(item string,
-	passiveList *[]structs.Passive,
-	SpellCastingBlocks *structs.SpellCasting,
-	FreeActionList *[]structs.FreeAction,
-	ReactionList *[]structs.Reaction,
-	actionList *[]structs.Action,
-	SpellList *[]structs.Spell,
-	MeleeList *[]structs.Attack,
-	RangedList *[]structs.Attack,
-	Inventory *[]structs.Item) error {
+func ItemSwitch(item string, passiveList *[]structs.Passive, SpellCastingBlocks *structs.SpellCasting, FreeActionList *[]structs.FreeAction, ReactionList *[]structs.Reaction, actionList *[]structs.Action, SpellList *[]structs.Spell, MeleeList *[]structs.Attack, RangedList *[]structs.Attack, Inventory *[]structs.Item) error {
 	switch gjson.Get(item, "type").String() {
 	case "action":
 		switch gjson.Get(item, "system.actionType.value").String() {
@@ -96,18 +83,9 @@ func ItemSwitch(item string,
 
 	}
 	return nil
-
 }
 
-func ParseItems(data string) ([]structs.FreeAction,
-	[]structs.Action,
-	[]structs.Reaction,
-	[]structs.Passive,
-	structs.SpellCasting,
-	[]structs.Spell,
-	[]structs.Attack,
-	[]structs.Attack,
-	[]structs.Item) {
+func ParseItems(data string) ([]structs.FreeAction, []structs.Action, []structs.Reaction, []structs.Passive, structs.SpellCasting, []structs.Spell, []structs.Attack, []structs.Attack, []structs.Item) {
 
 	var passiveList []structs.Passive
 	var SpellCastingBlocks structs.SpellCasting
@@ -143,46 +121,3 @@ func ParseItems(data string) ([]structs.FreeAction,
 		RangedList,
 		inventory
 }
-
-// func parseJSON(data []byte) error {
-// 	fmt.Println(gjson.Get(string(data), "name"))
-// 	fmt.Println(gjson.Get(string(data), "system.abilities.cha.mod"))
-// 	// dont delete
-// 	// dbObj := structs.Monster{
-// 	// 	Name: gjson.Get(string(data), "name").String(),
-// 	// 	Traits: structs.Traits{
-// 	// 		Rarity:    gjson.Get(string(data), "system.traits.rarity").String(),
-// 	// 		Size:      gjson.Get(string(data), "system.traits.size.value").String(),
-// 	// 		TraitList: ingestJSONList(data, "system.traits.value"),
-// 	// 	},
-// 	// 	Attributes: structs.Attributes{
-// 	// 		Str: gjson.Get(string(data), "system.abilities.str.mod").String(),
-// 	// 		Dex: gjson.Get(string(data), "system.abilities.dex.mod").String(),
-// 	// 		Con: gjson.Get(string(data), "system.abilities.con.mod").String(),
-// 	// 		Wis: gjson.Get(string(data), "system.abilities.wis.mod").String(),
-// 	// 		Int: gjson.Get(string(data), "system.abilities.int.mod").String(),
-// 	// 		Cha: gjson.Get(string(data), "system.abilities.cha.mod").String(),
-// 	// 	},
-// 	// 	Level: gjson.Get(string(data), "system.details.level.value").String(),
-// 	// 	AClass: structs.AC{
-// 	// 		Value:  gjson.Get(string(data), "system.attributes.ac.value").String(),
-// 	// 		Detail: gjson.Get(string(data), "system.attributes.ac.details.value").String(),
-// 	// 	},
-// 	// 	HP: structs.HP{
-// 	// 		Detail: gjson.Get(string(data), "system.attributes.hp.details.value").String(),
-// 	// 		Value:  int(gjson.Get(string(data), "system.attributes.hp.value").Int()),
-// 	// 	},
-// 	// 	Immunities:  extractListOfObjectsValues(string(data), "system.attributes.immunities"),
-// 	// 	Weaknesses:  extractListOfObjectsValues(string(data), "system.attributes.weaknesses"),
-// 	// 	Resistances: extractListOfObjectsValues(string(data), "system.attributes.resistances"),
-// 	// 	Languages:   ingestJSONList(data, "system.details.languages.value"),
-// 	// 	Senses:      CreateSenseList(data, "system.perception.senses"),
-// 	// 	Perception: structs.Perception{
-// 	// 		Mod:    gjson.Get(string(data), "system.perception.mod").String(),
-// 	// 		Detail: gjson.Get(string(data), "system.perception.details").String(),
-// 	// 	},
-// 	// 	Skills: ExtractSkills(string(data)),
-// 	// }
-// 	ParseItems(data)
-// 	return nil
-// }

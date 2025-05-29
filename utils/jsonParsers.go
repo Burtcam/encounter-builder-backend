@@ -483,9 +483,24 @@ func ParsePerception(jsonData string) structs.Perception {
 }
 
 func ParseMovements(jsonData string) []structs.Movement {
-	return []structs.Movement{}
+	speedBlock := gjson.Get(jsonData, "system.attributes.speed.otherSpeeds")
+	//ingest the land speed
+	MovementList := []structs.Movement{
+		{
+			Type:  "land",
+			Speed: gjson.Get(jsonData, "system.attributes.speed.value").String(),
+			Notes: gjson.Get(jsonData, "system.attributes.speed.details").String(),
+		}}
+	speedBlock.ForEach(func(key gjson.Result, value gjson.Result) bool {
+		MovementList = append(MovementList, structs.Movement{
+			Type:  value.Get("type").String(),
+			Speed: value.Get("value").String(),
+			Notes: value.Get("details").String(),
+		})
+		return true
+	})
+	return MovementList
 }
-
 func ParseCoreData(jsonData string) structs.Monster {
 	monster := structs.Monster{
 		Name: gjson.Get(jsonData, "name").String(),
@@ -502,17 +517,17 @@ func ParseCoreData(jsonData string) structs.Monster {
 			Int: gjson.Get(jsonData, "system.abilities.int.mod").String(),
 			Cha: gjson.Get(jsonData, "system.abilities.cha.mod").String(),
 		},
-		Level: gjson.Get(jsonData, "system.level.value").String(),
+		Level: gjson.Get(jsonData, "system.details.level.value").String(),
 		Saves: ParseSaves(jsonData),
 		AClass: structs.AC{
 			Value:  gjson.Get(jsonData, "system.attributes.ac.value").String(),
 			Detail: gjson.Get(jsonData, "system.attributes.ac.details").String(),
 		},
 		HP: structs.HP{
-			Detail: gjson.Get(jsonData, "system.hp.details").String(),
-			Value:  int(gjson.Get(jsonData, "system.hp.max").Int()),
+			Detail: gjson.Get(jsonData, "system.attributes.hp.details").String(),
+			Value:  int(gjson.Get(jsonData, "system.attributes.hp.max").Int()),
 		},
-		Immunities:  extractListOfObjectsValues(jsonData, "system.immunities"),
+		Immunities:  extractListOfObjectsValues(jsonData, "system.attributes.immunities"),
 		Weaknesses:  ExtractWeaknessOrResistances(jsonData, "system.attributes.weaknesses"),
 		Resistances: ExtractWeaknessOrResistances(jsonData, "system.attributes.resistances"),
 		Perception:  ParsePerception(jsonData),

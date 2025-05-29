@@ -14,6 +14,7 @@ import (
 
 	"github.com/Burtcam/encounter-builder-backend/config"
 	"github.com/Burtcam/encounter-builder-backend/logger"
+	"github.com/Burtcam/encounter-builder-backend/structs"
 	"github.com/robfig/cron/v3"
 	"github.com/tidwall/gjson"
 )
@@ -166,6 +167,17 @@ func GetListofJSON(dir string) ([]string, error) {
 	return fileList, err
 }
 
+func ParseFoundJson(data string) structs.Monster {
+	monster := ParseCoreData(string(data))
+	//Parse items and pass it just the items list then attach the return values to monster.
+	ItemsList := gjson.Get(string(data), "items").String()
+	var spells []structs.Spell
+	monster.FreeActions, monster.Actions, monster.Reactions, monster.Passives, monster.SpellCasting, spells, monster.Melees, monster.Ranged, monster.Inventory = ParseItems(ItemsList)
+
+	AssignSpell(&spells, &monster.SpellCasting)
+	return monster
+}
+
 func LoadEachJSON(path string) error {
 	fmt.Println("Path is :", path)
 	data, err := os.ReadFile(path)
@@ -180,6 +192,15 @@ func LoadEachJSON(path string) error {
 	// }
 	if gjson.Get(string(data), "type").String() == "npc" {
 		fmt.Println("Found a monster")
+		monster := ParseCoreData(string(data))
+		//Parse items and pass it just the items list then attach the return values to monster.
+		ItemsList := gjson.Get(string(data), "items").String()
+		var spells []structs.Spell
+		monster.FreeActions, monster.Actions, monster.Reactions, monster.Passives, monster.SpellCasting, spells, monster.Melees, monster.Ranged, monster.Inventory = ParseItems(ItemsList)
+
+		AssignSpell(&spells, &monster.SpellCasting)
+
+		fmt.Println(monster)
 		// err = parseJSON(data)
 		// if err != nil {
 		// 	logger.Log.Error(fmt.Sprintf("Error Parsing file %s", path))
