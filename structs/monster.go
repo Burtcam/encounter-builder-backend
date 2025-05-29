@@ -41,6 +41,7 @@ type Item struct {
 	Range       string
 	Reload      string
 	Bulk        string
+	Quantity    string
 }
 type PriceBlock struct {
 	Per int

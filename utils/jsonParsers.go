@@ -432,7 +432,7 @@ func ParsePrice(jsonData string) structs.PriceBlock {
 		SP:  int(gjson.Get(jsonData, "system.price.value.sp").Int()),
 		CP:  int(gjson.Get(jsonData, "system.price.value.cp").Int()),
 		PP:  int(gjson.Get(jsonData, "system.price.value.pp").Int()),
-		Per: int(gjson.Get(jsonData, "system.price.value.per").Int()),
+		Per: int(gjson.Get(jsonData, "system.price.per").Int()),
 	}
 	return price
 }
@@ -453,6 +453,7 @@ func ParseItem(jsonData string) structs.Item {
 		Size:        gjson.Get(jsonData, "system.size").String(),
 		Reload:      gjson.Get(jsonData, "system.reload.value").String(),
 		Bulk:        gjson.Get(jsonData, "system.bulk.value").String(),
+		Quantity:    gjson.Get(jsonData, "system.quantity").String(),
 	}
 	return item
 }

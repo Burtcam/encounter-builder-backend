@@ -121,7 +121,7 @@ func ParseItems(data string) ([]structs.FreeAction,
 
 	itemsList := gjson.Get(data, "items").Array()
 
-	for i := 0; i < len(itemsList); i++ {
+	for i := range len(itemsList) {
 		ItemSwitch(itemsList[i].String(),
 			&passiveList,
 			&SpellCastingBlocks,

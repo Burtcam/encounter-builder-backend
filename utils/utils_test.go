@@ -3528,3 +3528,389 @@ func TestParseItemArmor(t *testing.T) {
 	}
 
 }
+func TestParseItemTreasure(t *testing.T) {
+	jsonData := `{
+            "_id": "txASc5iIQvLV4Nxv",
+            "img": "systems/pf2e/icons/equipment/worn-items/other-worn-items/aluum-charm.webp",
+            "name": "Bejeweled Necklace featuring a Porpoise",
+            "sort": 1700000,
+            "system": {
+                "baseItem": null,
+                "bulk": {
+                    "value": 0
+                },
+                "containerId": null,
+                "description": {
+                    "value": "<p>Ayla, My Beloved</p>"
+                },
+                "equipped": {
+                    "carryType": "worn",
+                    "handsHeld": 0
+                },
+                "hardness": 0,
+                "hp": {
+                    "max": 0,
+                    "value": 0
+                },
+                "level": {
+                    "value": 0
+                },
+                "material": {
+                    "grade": null,
+                    "type": null
+                },
+                "price": {
+                    "value": {
+                        "gp": 10
+                    }
+                },
+                "publication": {
+                    "license": "OGL",
+                    "remaster": false,
+                    "title": ""
+                },
+                "quantity": 1,
+                "rules": [],
+                "size": "med",
+                "slug": null,
+                "traits": {
+                    "rarity": "common",
+                    "value": []
+                }
+            },
+            "type": "treasure"
+        },`
+	expected := structs.Item{
+		Name:        "Bejeweled Necklace featuring a Porpoise",
+		ID:          "txASc5iIQvLV4Nxv",
+		Category:    "",
+		Level:       "0",
+		Description: stripHTMLUsingBluemonday("<p>Ayla, My Beloved</p>"),
+		Price: structs.PriceBlock{
+			GP: 10,
+		},
+		Type:   "treasure",
+		Traits: []string{},
+		Rarity: "common",
+		Range:  "",
+		Size:   "med",
+		Reload: "",
+		Bulk:   "0",
+	}
+	result := ParseItem(jsonData)
+
+	if result.Name != expected.Name {
+		t.Errorf("Expected name %s, got %s", expected.Name, result.Name)
+	}
+	if result.ID != expected.ID {
+		t.Errorf("Expected ID %s, got %s", expected.ID, result.ID)
+	}
+	if result.Category != expected.Category {
+		t.Errorf("Expected Category %s, got %s", expected.Category, result.Category)
+	}
+	if result.Description != expected.Description {
+		t.Errorf("Expected Description %s, got %s", expected.Description, result.Description)
+	}
+	if result.Type != expected.Type {
+		t.Errorf("Expected Type %s, got %s", expected.Type, result.Type)
+	}
+	if result.Rarity != expected.Rarity {
+		t.Errorf("Expected Rarity %s, got %s", expected.Rarity, result.Rarity)
+	}
+	if result.Range != expected.Range {
+		t.Errorf("Expected Range %s, got %s", expected.Range, result.Range)
+	}
+	if result.Reload != expected.Reload {
+		t.Errorf("Expected Reload %s, got %s", expected.Reload, result.Reload)
+	}
+	if result.Price.CP != expected.Price.CP {
+		t.Errorf("Expected CP Price %d, got %d", expected.Price.CP, result.Price.CP)
+	}
+	if result.Price.SP != expected.Price.SP {
+		t.Errorf("Expected SP price %d, got %d", expected.Price.SP, result.Price.SP)
+	}
+	if result.Price.GP != expected.Price.GP {
+		t.Errorf("Expected GP price %d, got %d", expected.Price.GP, result.Price.GP)
+	}
+	if result.Price.Per != expected.Price.Per {
+		t.Errorf("Expected price per %d, got %d", expected.Price.Per, result.Price.Per)
+	}
+
+	for i, trait := range expected.Traits {
+		if result.Traits[i] != trait {
+			t.Errorf("Expected Trait '%s' at index %d, got '%s'", trait, i, result.Traits[i])
+		}
+	}
+
+}
+
+func TestParseItemConsumable(t *testing.T) {
+	jsonData := `{
+            "_id": "DSpF3QNsGXCQO5Re",
+            "_stats": {
+                "compendiumSource": "Compendium.pf2e.equipment-srd.Item.w2ENw2VMPcsbif8g"
+            },
+            "img": "systems/pf2e/icons/equipment/weapons/arrows.webp",
+            "name": "Arrows",
+            "sort": 500000,
+            "system": {
+                "baseItem": null,
+                "bulk": {
+                    "value": 0.1
+                },
+                "category": "ammo",
+                "containerId": null,
+                "damage": null,
+                "description": {
+                    "value": "<p>These projectiles are the ammunition for bows. The shaft of an arrow is made of wood. It is stabilized in flight by fletching at one end and bears a metal head on the other.</p>"
+                },
+                "equipped": {
+                    "carryType": "held",
+                    "handsHeld": 1
+                },
+                "hardness": 0,
+                "hp": {
+                    "max": 0,
+                    "value": 0
+                },
+                "level": {
+                    "value": 0
+                },
+                "material": {
+                    "grade": null,
+                    "type": null
+                },
+                "price": {
+                    "per": 10,
+                    "value": {
+                        "sp": 1
+                    }
+                },
+                "publication": {
+                    "license": "OGL",
+                    "remaster": false,
+                    "title": "Pathfinder Core Rulebook"
+                },
+                "quantity": 20,
+                "rules": [],
+                "size": "med",
+                "slug": "arrows",
+                "stackGroup": "arrows",
+                "traits": {
+                    "rarity": "common",
+                    "value": []
+                },
+                "usage": {
+                    "value": "held-in-one-hand"
+                },
+                "uses": {
+                    "autoDestroy": true,
+                    "max": 1,
+                    "value": 1
+                }
+            },
+            "type": "consumable"
+        },`
+	expected := structs.Item{
+		Name:        "Arrows",
+		ID:          "DSpF3QNsGXCQO5Re",
+		Category:    "ammo",
+		Level:       "0",
+		Description: stripHTMLUsingBluemonday("<p>These projectiles are the ammunition for bows. The shaft of an arrow is made of wood. It is stabilized in flight by fletching at one end and bears a metal head on the other.</p>"),
+		Price: structs.PriceBlock{
+			SP:  1,
+			Per: 10,
+		},
+		Type:     "consumable",
+		Traits:   []string{},
+		Rarity:   "common",
+		Range:    "",
+		Size:     "med",
+		Reload:   "",
+		Bulk:     "0.1",
+		Quantity: "20",
+	}
+	result := ParseItem(jsonData)
+
+	if result.Name != expected.Name {
+		t.Errorf("Expected name %s, got %s", expected.Name, result.Name)
+	}
+	if result.ID != expected.ID {
+		t.Errorf("Expected ID %s, got %s", expected.ID, result.ID)
+	}
+	if result.Category != expected.Category {
+		t.Errorf("Expected Category %s, got %s", expected.Category, result.Category)
+	}
+	if result.Description != expected.Description {
+		t.Errorf("Expected Description %s, got %s", expected.Description, result.Description)
+	}
+	if result.Type != expected.Type {
+		t.Errorf("Expected Type %s, got %s", expected.Type, result.Type)
+	}
+	if result.Rarity != expected.Rarity {
+		t.Errorf("Expected Rarity %s, got %s", expected.Rarity, result.Rarity)
+	}
+	if result.Range != expected.Range {
+		t.Errorf("Expected Range %s, got %s", expected.Range, result.Range)
+	}
+	if result.Reload != expected.Reload {
+		t.Errorf("Expected Reload %s, got %s", expected.Reload, result.Reload)
+	}
+	if result.Price.CP != expected.Price.CP {
+		t.Errorf("Expected CP Price %d, got %d", expected.Price.CP, result.Price.CP)
+	}
+	if result.Price.SP != expected.Price.SP {
+		t.Errorf("Expected SP price %d, got %d", expected.Price.SP, result.Price.SP)
+	}
+	if result.Price.GP != expected.Price.GP {
+		t.Errorf("Expected GP price %d, got %d", expected.Price.GP, result.Price.GP)
+	}
+	if result.Price.Per != expected.Price.Per {
+		t.Errorf("Expected price per %d, got %d", expected.Price.Per, result.Price.Per)
+	}
+	if result.Quantity != expected.Quantity {
+		t.Errorf("Expected Quantity %s, got %s", expected.Quantity, result.Quantity)
+	}
+
+	for i, trait := range expected.Traits {
+		if result.Traits[i] != trait {
+			t.Errorf("Expected Trait '%s' at index %d, got '%s'", trait, i, result.Traits[i])
+		}
+	}
+
+}
+
+func TestParseItemBackPack(t *testing.T) {
+	jsonData := `{
+            "_id": "hetb6HQzsfpikrYo",
+            "_stats": {
+                "compendiumSource": "Compendium.pf2e.equipment-srd.Item.jaEEvuQ32GjAa8jy"
+            },
+            "img": "systems/pf2e/icons/equipment/held-items/bag-of-holding.webp",
+            "name": "Bag of Holding (Type I)",
+            "sort": 1000000,
+            "system": {
+                "baseItem": null,
+                "bulk": {
+                    "capacity": 25,
+                    "heldOrStowed": 1,
+                    "ignored": 25,
+                    "value": 1
+                },
+                "collapsed": false,
+                "containerId": null,
+                "description": {
+                    "value": "<p>Though it appears to be a cloth sack decorated with panels of richly colored silk or stylish embroidery, a <em>bag of holding</em> opens into an extradimensional space larger than its outside dimensions. The Bulk held inside the bag doesn't change the Bulk of the <em>bag of holding</em> itself. The amount of Bulk the bag's extradimensional space can hold depends on its type.</p>\n<p>You can Interact with the <em>bag of holding</em> to put items in or remove them just like a mundane sack. Though the bag can hold a great amount of material, an object still needs to be able to fit through the opening of the sack to be stored inside.</p>\n<p>If the bag is overloaded or broken, it ruptures and is ruined, causing the items inside to be lost forever. If it's turned inside out, the items inside spill out unharmed, but the bag must be put right before it can be used again. A living creature placed inside the bag has enough air for 10 minutes before it begins to suffocate, and it can attempt to Escape against a DC of 13. An item inside the bag provides no benefits unless it's retrieved first. An item in the bag can't be detected by magic that detects only things on the same plane.</p>\n<p><strong>Capacity</strong> 25 Bulk</p>"
+                },
+                "equipped": {
+                    "carryType": "worn",
+                    "handsHeld": 0,
+                    "invested": null
+                },
+                "hardness": 0,
+                "hp": {
+                    "max": 0,
+                    "value": 0
+                },
+                "level": {
+                    "value": 4
+                },
+                "material": {
+                    "grade": null,
+                    "type": null
+                },
+                "price": {
+                    "value": {
+                        "gp": 75
+                    }
+                },
+                "publication": {
+                    "license": "OGL",
+                    "remaster": false,
+                    "title": "Pathfinder Gamemastery Guide"
+                },
+                "quantity": 1,
+                "rules": [],
+                "size": "med",
+                "slug": "bag-of-holding-type-i",
+                "stowing": true,
+                "traits": {
+                    "rarity": "common",
+                    "value": [
+                        "extradimensional",
+                        "magical"
+                    ]
+                },
+                "usage": {
+                    "value": "held-in-two-hands"
+                }
+            },
+            "type": "backpack"
+        },`
+
+	expected := structs.Item{
+		Name:        "Bag of Holding (Type I)",
+		ID:          "hetb6HQzsfpikrYo",
+		Category:    "",
+		Level:       "4",
+		Description: stripHTMLUsingBluemonday("<p>Though it appears to be a cloth sack decorated with panels of richly colored silk or stylish embroidery, a <em>bag of holding</em> opens into an extradimensional space larger than its outside dimensions. The Bulk held inside the bag doesn't change the Bulk of the <em>bag of holding</em> itself. The amount of Bulk the bag's extradimensional space can hold depends on its type.</p>\n<p>You can Interact with the <em>bag of holding</em> to put items in or remove them just like a mundane sack. Though the bag can hold a great amount of material, an object still needs to be able to fit through the opening of the sack to be stored inside.</p>\n<p>If the bag is overloaded or broken, it ruptures and is ruined, causing the items inside to be lost forever. If it's turned inside out, the items inside spill out unharmed, but the bag must be put right before it can be used again. A living creature placed inside the bag has enough air for 10 minutes before it begins to suffocate, and it can attempt to Escape against a DC of 13. An item inside the bag provides no benefits unless it's retrieved first. An item in the bag can't be detected by magic that detects only things on the same plane.</p>\n<p><strong>Capacity</strong> 25 Bulk</p>"),
+		Price: structs.PriceBlock{
+			GP: 75,
+		},
+		Type:     "backpack",
+		Traits:   []string{"extradimensional", "magical"},
+		Rarity:   "common",
+		Range:    "",
+		Size:     "med",
+		Reload:   "",
+		Bulk:     "1",
+		Quantity: "1",
+	}
+	result := ParseItem(jsonData)
+
+	if result.Name != expected.Name {
+		t.Errorf("Expected name %s, got %s", expected.Name, result.Name)
+	}
+	if result.ID != expected.ID {
+		t.Errorf("Expected ID %s, got %s", expected.ID, result.ID)
+	}
+	if result.Category != expected.Category {
+		t.Errorf("Expected Category %s, got %s", expected.Category, result.Category)
+	}
+	if result.Description != expected.Description {
+		t.Errorf("Expected Description %s, got %s", expected.Description, result.Description)
+	}
+	if result.Type != expected.Type {
+		t.Errorf("Expected Type %s, got %s", expected.Type, result.Type)
+	}
+	if result.Rarity != expected.Rarity {
+		t.Errorf("Expected Rarity %s, got %s", expected.Rarity, result.Rarity)
+	}
+	if result.Range != expected.Range {
+		t.Errorf("Expected Range %s, got %s", expected.Range, result.Range)
+	}
+	if result.Reload != expected.Reload {
+		t.Errorf("Expected Reload %s, got %s", expected.Reload, result.Reload)
+	}
+	if result.Price.CP != expected.Price.CP {
+		t.Errorf("Expected CP Price %d, got %d", expected.Price.CP, result.Price.CP)
+	}
+	if result.Price.SP != expected.Price.SP {
+		t.Errorf("Expected SP price %d, got %d", expected.Price.SP, result.Price.SP)
+	}
+	if result.Price.GP != expected.Price.GP {
+		t.Errorf("Expected GP price %d, got %d", expected.Price.GP, result.Price.GP)
+	}
+	if result.Price.Per != expected.Price.Per {
+		t.Errorf("Expected price per %d, got %d", expected.Price.Per, result.Price.Per)
+	}
+	if result.Quantity != expected.Quantity {
+		t.Errorf("Expected Quantity %s, got %s", expected.Quantity, result.Quantity)
+	}
+
+	for i, trait := range expected.Traits {
+		if result.Traits[i] != trait {
+			t.Errorf("Expected Trait '%s' at index %d, got '%s'", trait, i, result.Traits[i])
+		}
+	}
+}
