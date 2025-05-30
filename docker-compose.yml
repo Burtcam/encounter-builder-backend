@@ -1,10 +1,16 @@
+version: "3.8"
+
 services:
-  dynamodb-local:
-    image: amazon/dynamodb-local
-    container_name: dynamodb-local
-    ports:
-      - "8000:8000"
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
     volumes:
-      - /mnt/c/Users/cburt/dynamodb-data:/home/dynamodblocal/data
-    command: "-jar DynamoDBLocal.jar -dbPath /home/dynamodblocal/data"
-    working_dir: /home/dynamodblocal
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  pgdata:
