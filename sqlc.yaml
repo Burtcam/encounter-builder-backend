@@ -1,0 +1,10 @@
+version: "1"
+packages:
+  - name: "db"                 # Name for the generated Go package
+    path: "./db"               # Output directory for generated code
+    queries: "./queries/"      # Directory containing SQL query files
+    schema: "./schema/"        # Directory containing SQL schema files
+    engine: "postgresql"       # or "mysql", "sqlite", etc.
+    gen:
+      go:
+        package: "db"
