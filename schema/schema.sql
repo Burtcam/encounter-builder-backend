@@ -36,11 +36,6 @@ CREATE TABLE monster_immunities (
     immunity VARCHAR(100)
 );
 
-CREATE TABLE monster_languages (
-    id SERIAL PRIMARY KEY,
-    monster_id INTEGER REFERENCES monsters(id) ON DELETE CASCADE,
-    language VARCHAR(50)
-);
 CREATE TABLE monster_damage_modifiers (
     id SERIAL PRIMARY KEY,
     monster_id INTEGER REFERENCES monsters(id) ON DELETE CASCADE,
@@ -60,6 +55,13 @@ CREATE TABLE monster_modifier_doubles (
     modifier_id INTEGER REFERENCES monster_damage_modifiers(id) ON DELETE CASCADE,
     double_value VARCHAR(100)
 );
+
+CREATE TABLE monster_languages (
+    id SERIAL PRIMARY KEY,
+    monster_id INTEGER REFERENCES monsters(id) ON DELETE CASCADE,
+    language VARCHAR(50)
+);
+
 CREATE TABLE monster_senses (
     id SERIAL PRIMARY KEY,
     monster_id INTEGER REFERENCES monsters(id) ON DELETE CASCADE,
@@ -82,6 +84,7 @@ CREATE TABLE monster_skill_specials (
     label VARCHAR(100),
     predicates TEXT[]  -- storing an array of strings
 );
+
 CREATE TABLE monster_movements (
     id SERIAL PRIMARY KEY,
     monster_id INTEGER REFERENCES monsters(id) ON DELETE CASCADE,
@@ -123,6 +126,8 @@ CREATE TABLE attack_damage_blocks (
     damage_roll VARCHAR(50),
     damage_type VARCHAR(50)
 );
+
+
 CREATE TABLE spells (
     id VARCHAR(50) PRIMARY KEY,
     name VARCHAR(100),

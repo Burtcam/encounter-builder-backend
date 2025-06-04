@@ -3,10 +3,11 @@
 services:
   db:
     image: postgres:latest
+    container_name: "encounter-builder-postgres"
     environment:
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
-      POSTGRES_DB: mydatabase
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: encounterBuilder
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
