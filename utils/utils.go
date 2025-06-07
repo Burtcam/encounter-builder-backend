@@ -233,6 +233,23 @@ func writeImmunites(ctx context.Context, queries *writeMonsters.Queries, monster
 	return nil
 }
 
+func ProcessWeakAndResist(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
+	var damageBlockList []structs.DamageBlock
+	damageBlockList = append(damageBlockList, monster.Weaknesseses)
+	damageBlockList = append(damageBlockList, monster.Resistances)
+
+	for i := 0; i < len(damageBlockList); i++ {
+		id, err := &queries.InsertMonsterDamageModifier(ctx, writeMonsters.InsertMonsterDamageModifier{
+			MonsterID: pgtype.Int4{Int: id, Valid: true},
+			Modifier:  pgtype.Text{String: damageBlockList[i].Modifier, Valid: true},
+			Detail:    pgtype.Text{String: damageBlockList[i].Detail, Valid: true},
+			Type:      pgtype.Text{String: damageBlockList[i].Type, Valid: true},
+		})
+	}
+
+	return nil
+}
+
 func WriteMonsterToDb(monster structs.Monster, cfg config.Config) error {
 	ctx := context.Background()
 	// ✅ 2. Begin a transaction
@@ -256,7 +273,10 @@ func WriteMonsterToDb(monster structs.Monster, cfg config.Config) error {
 	if err != nil {
 		logger.Log.Error("Failed to process immunities: %w", err)
 	}
-
+	err = ProcessWeakAndResist(ctx, queries, monster, id)
+	if err != nil {
+		logger.Log.Error("Failed to process weaknesses and resistances: %w", err)
+	}
 	return nil
 
 }
