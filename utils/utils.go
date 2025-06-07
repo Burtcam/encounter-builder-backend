@@ -227,11 +227,20 @@ func WriteMonsterToDb(monster structs.Monster, cfg config.Config) error {
 	//prep main params
 	monsterParams := PrepMonsterParams(monster)
 
-	id, err := writeMonsters.InsertMonster(cfg, monsterParams)
+	queries := writeMonsters.New(cfg.DBPool)
 
+	id, err = queries.InsertMonster(ctx, monsterParams)
 	if err != nil {
-		logger.Log.Error(fmt.Sprintf("Failed to write core data for %s", monster.Name))
+		logger.Log.Error(Failed to instert monster %v, err)
 	}
+	
+
+
+	// id, err := writeMonsters.InsertMonster(cfg, monsterParams)
+
+	// if err != nil {
+	// 	logger.Log.Error(fmt.Sprintf("Failed to write core data for %s", monster.Name))
+	// }
 
 	return nil
 
