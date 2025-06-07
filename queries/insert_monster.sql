@@ -26,7 +26,7 @@ INSERT INTO monsters (name,
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
 RETURNING id;
 
--- name: InsertMonsterImmunities :batchexec
+-- name: InsertMonsterImmunities :exec
 INSERT INTO monster_immunities (monster_id, immunity)
 VALUES ($1, $2);
 
@@ -103,7 +103,7 @@ VALUES ($1, $2, $3);
 INSERT INTO ritual_data (spell_id, primary_check, secondary_casters, secondary_check)
 VALUES ($1, $2, $3, $4); 
 
--- name: InsertSpellTraits :batchexec
+-- name: InsertSpellTraits :exec
 INSERT INTO spell_traits (spell_id, trait)
 VALUES ($1, $2); 
 
@@ -112,7 +112,7 @@ INSERT INTO focus_spell_casting (monster_id, dc, mod, tradition, spellcasting_id
 Values($1, $2, $3, $4, $5, $6, $7, $8)
 RETURNING id; 
 
--- name: InsertFocusSpellsCasts :batchexec
+-- name: InsertFocusSpellsCasts :exec
 INSERT INTO focus_spell_casting_spells (focus_spell_casting_id, spell_id)
 VALUES ($1, $2); 
 
@@ -121,7 +121,7 @@ INSERT INTO innate_spell_casting (monster_id, dc, tradition, mod, spellcasting_i
 VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING id; 
 
--- name: InsertInnateSpellUse :batchexec
+-- name: InsertInnateSpellUse :exec
 INSERT INTO innate_spell_uses (innate_spell_casting_id, spell_id, level, uses)
 VALUES ($1, $2, $3, $4);
 
@@ -130,7 +130,7 @@ INSERT INTO prepared_spell_casting (monster_id, dc, tradition, mod, spellcasting
 VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING id; 
 
--- name: InsertPreparedSlots :batchexec
+-- name: InsertPreparedSlots :exec
 INSERT INTO prepared_slots (prepared_spell_casting_id, level, spell_id)
 VALUES ($1, $2, $3);
 
@@ -139,11 +139,11 @@ INSERT INTO spontaneous_spell_casting (monster_id, dc, id_string, tradition, mod
 VALUES ($1, $2, $3, $4, $5)
 RETURNING id; 
 
--- name: InsertSpontaneousSpellSlots :batchexec
+-- name: InsertSpontaneousSpellSlots :exec
 INSERT INTO spontaneous_slots (spontaneous_spell_casting_id, level, casts)
 VALUES ($1, $2, $3); 
 
--- name: InsertSpontaneousSpellList :batchexec
+-- name: InsertSpontaneousSpellList :exec
 INSERT INTO spontaneous_spell_list (spontaneous_spell_casting_id, spell_id)
 VALUES ($1, $2); 
 
@@ -152,6 +152,6 @@ INSERT INTO items (monster_id, id, name, category, description, level, rarity, b
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 RETURNING id; 
 
--- name: InsertItemTraits :batchexec
+-- name: InsertItemTraits :exec
 INSERT INTO item_traits (item_id, trait)
 VALUES ($1, $2);

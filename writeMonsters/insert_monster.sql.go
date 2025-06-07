@@ -44,6 +44,21 @@ func (q *Queries) InsertFocusSpellCasting(ctx context.Context, arg InsertFocusSp
 	return id, err
 }
 
+const insertFocusSpellsCasts = `-- name: InsertFocusSpellsCasts :exec
+INSERT INTO focus_spell_casting_spells (focus_spell_casting_id, spell_id)
+VALUES ($1, $2)
+`
+
+type InsertFocusSpellsCastsParams struct {
+	FocusSpellCastingID pgtype.Int4
+	SpellID             pgtype.Text
+}
+
+func (q *Queries) InsertFocusSpellsCasts(ctx context.Context, arg InsertFocusSpellsCastsParams) error {
+	_, err := q.db.Exec(ctx, insertFocusSpellsCasts, arg.FocusSpellCastingID, arg.SpellID)
+	return err
+}
+
 const insertInnateSpellCasting = `-- name: InsertInnateSpellCasting :one
 INSERT INTO innate_spell_casting (monster_id, dc, tradition, mod, spellcasting_id, description, name)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -73,6 +88,43 @@ func (q *Queries) InsertInnateSpellCasting(ctx context.Context, arg InsertInnate
 	var id int32
 	err := row.Scan(&id)
 	return id, err
+}
+
+const insertInnateSpellUse = `-- name: InsertInnateSpellUse :exec
+INSERT INTO innate_spell_uses (innate_spell_casting_id, spell_id, level, uses)
+VALUES ($1, $2, $3, $4)
+`
+
+type InsertInnateSpellUseParams struct {
+	InnateSpellCastingID pgtype.Int4
+	SpellID              pgtype.Text
+	Level                pgtype.Int4
+	Uses                 pgtype.Text
+}
+
+func (q *Queries) InsertInnateSpellUse(ctx context.Context, arg InsertInnateSpellUseParams) error {
+	_, err := q.db.Exec(ctx, insertInnateSpellUse,
+		arg.InnateSpellCastingID,
+		arg.SpellID,
+		arg.Level,
+		arg.Uses,
+	)
+	return err
+}
+
+const insertItemTraits = `-- name: InsertItemTraits :exec
+INSERT INTO item_traits (item_id, trait)
+VALUES ($1, $2)
+`
+
+type InsertItemTraitsParams struct {
+	ItemID pgtype.Text
+	Trait  pgtype.Text
+}
+
+func (q *Queries) InsertItemTraits(ctx context.Context, arg InsertItemTraitsParams) error {
+	_, err := q.db.Exec(ctx, insertItemTraits, arg.ItemID, arg.Trait)
+	return err
 }
 
 const insertItems = `-- name: InsertItems :one
@@ -318,6 +370,21 @@ func (q *Queries) InsertMonsterDamageModifier(ctx context.Context, arg InsertMon
 	return id, err
 }
 
+const insertMonsterImmunities = `-- name: InsertMonsterImmunities :exec
+INSERT INTO monster_immunities (monster_id, immunity)
+VALUES ($1, $2)
+`
+
+type InsertMonsterImmunitiesParams struct {
+	MonsterID pgtype.Int4
+	Immunity  pgtype.Text
+}
+
+func (q *Queries) InsertMonsterImmunities(ctx context.Context, arg InsertMonsterImmunitiesParams) error {
+	_, err := q.db.Exec(ctx, insertMonsterImmunities, arg.MonsterID, arg.Immunity)
+	return err
+}
+
 const insertMonsterLanguages = `-- name: InsertMonsterLanguages :exec
 INSERT INTO monster_languages (monster_id, language)
 values ($1, $2)
@@ -448,6 +515,22 @@ func (q *Queries) InsertMonsterSkills(ctx context.Context, arg InsertMonsterSkil
 	var id int32
 	err := row.Scan(&id)
 	return id, err
+}
+
+const insertPreparedSlots = `-- name: InsertPreparedSlots :exec
+INSERT INTO prepared_slots (prepared_spell_casting_id, level, spell_id)
+VALUES ($1, $2, $3)
+`
+
+type InsertPreparedSlotsParams struct {
+	PreparedSpellCastingID pgtype.Int4
+	Level                  pgtype.Text
+	SpellID                pgtype.Text
+}
+
+func (q *Queries) InsertPreparedSlots(ctx context.Context, arg InsertPreparedSlotsParams) error {
+	_, err := q.db.Exec(ctx, insertPreparedSlots, arg.PreparedSpellCastingID, arg.Level, arg.SpellID)
+	return err
 }
 
 const insertPreparedSpellCasting = `-- name: InsertPreparedSpellCasting :one
@@ -595,6 +678,52 @@ type InsertSpellDurationParams struct {
 
 func (q *Queries) InsertSpellDuration(ctx context.Context, arg InsertSpellDurationParams) error {
 	_, err := q.db.Exec(ctx, insertSpellDuration, arg.SpellID, arg.Sustained, arg.Duration)
+	return err
+}
+
+const insertSpellTraits = `-- name: InsertSpellTraits :exec
+INSERT INTO spell_traits (spell_id, trait)
+VALUES ($1, $2)
+`
+
+type InsertSpellTraitsParams struct {
+	SpellID pgtype.Text
+	Trait   pgtype.Text
+}
+
+func (q *Queries) InsertSpellTraits(ctx context.Context, arg InsertSpellTraitsParams) error {
+	_, err := q.db.Exec(ctx, insertSpellTraits, arg.SpellID, arg.Trait)
+	return err
+}
+
+const insertSpontaneousSpellList = `-- name: InsertSpontaneousSpellList :exec
+INSERT INTO spontaneous_spell_list (spontaneous_spell_casting_id, spell_id)
+VALUES ($1, $2)
+`
+
+type InsertSpontaneousSpellListParams struct {
+	SpontaneousSpellCastingID pgtype.Int4
+	SpellID                   pgtype.Text
+}
+
+func (q *Queries) InsertSpontaneousSpellList(ctx context.Context, arg InsertSpontaneousSpellListParams) error {
+	_, err := q.db.Exec(ctx, insertSpontaneousSpellList, arg.SpontaneousSpellCastingID, arg.SpellID)
+	return err
+}
+
+const insertSpontaneousSpellSlots = `-- name: InsertSpontaneousSpellSlots :exec
+INSERT INTO spontaneous_slots (spontaneous_spell_casting_id, level, casts)
+VALUES ($1, $2, $3)
+`
+
+type InsertSpontaneousSpellSlotsParams struct {
+	SpontaneousSpellCastingID pgtype.Int4
+	Level                     pgtype.Text
+	Casts                     pgtype.Text
+}
+
+func (q *Queries) InsertSpontaneousSpellSlots(ctx context.Context, arg InsertSpontaneousSpellSlotsParams) error {
+	_, err := q.db.Exec(ctx, insertSpontaneousSpellSlots, arg.SpontaneousSpellCastingID, arg.Level, arg.Casts)
 	return err
 }
 

@@ -216,6 +216,23 @@ func PrepMonsterParams(monster structs.Monster) writeMonsters.InsertMonsterParam
 	return monsterParams
 }
 
+func writeImmunites(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
+
+	for i := 0; i < len(monster.Immunities); i++ {
+		err := &queries.InsertMonsterImmunity(ctx, writeMonsters.InsertMonsterImmunityParams{
+			MonsterID: pgtype.Int4{Int: id, Valid: true},
+			Immunity:  pgtype.Text{String: monster.Immunities[i], Valid: true},
+		})
+		if err != nil {
+			logger.Log.Error("Failed to insert immunity %s for monster ID %d: %v", monster.Immunities[i], id, err)
+			return fmt.Errorf("failed to insert immunity %s for monster ID %d: %w", monster.Immunities[i], id, err)
+		}
+		logger.Log.Info(fmt.Sprintf("Succesfully inserted immunity %s for monster ID %d", monster.Immunities[i], id))
+	}
+
+	return nil
+}
+
 func WriteMonsterToDb(monster structs.Monster, cfg config.Config) error {
 	ctx := context.Background()
 	// ✅ 2. Begin a transaction
@@ -229,18 +246,16 @@ func WriteMonsterToDb(monster structs.Monster, cfg config.Config) error {
 
 	queries := writeMonsters.New(cfg.DBPool)
 
-	id, err = queries.InsertMonster(ctx, monsterParams)
+	id, err := queries.InsertMonster(ctx, monsterParams)
 	if err != nil {
-		logger.Log.Error(Failed to instert monster %v, err)
+		logger.Log.Error("Failed to insert monster %v", err)
 	}
-	
-
-
-	// id, err := writeMonsters.InsertMonster(cfg, monsterParams)
-
-	// if err != nil {
-	// 	logger.Log.Error(fmt.Sprintf("Failed to write core data for %s", monster.Name))
-	// }
+	logger.Log.Info(fmt.Sprintf("Succesfully started the transaction for ID %d", id))
+	//for each immunities
+	err = writeImmunites(ctx, queries, monster, id)
+	if err != nil {
+		logger.Log.Error("Failed to process immunities: %w", err)
+	}
 
 	return nil
 
