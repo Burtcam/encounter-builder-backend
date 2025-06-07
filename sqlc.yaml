@@ -1,10 +1,14 @@
-version: "1"
-packages:
-  - name: "db"                 # Name for the generated Go package
-    path: "./db"               # Output directory for generated code
-    queries: "./queries/"      # Directory containing SQL query files
-    schema: "./schema/"        # Directory containing SQL schema files
-    engine: "postgresql"       # or "mysql", "sqlite", etc.
-    gen:
-      go:
-        package: "db"
+version: "2"
+cloud:
+  project: "encounter-builder"
+sql:
+- schema: "schema/schema.sql"
+  queries: "queries/insert_monster.sql"
+  engine: "postgresql"
+  gen:
+    go: 
+      package: "writeMonsters"
+      out: "writeMonsters"
+      sql_package: "pgx/v5"
+  database:
+      uri: "postgres://user:password@localhost:5432/encounterBuilder?sslmode=disable"

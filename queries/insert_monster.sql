@@ -1,8 +1,3 @@
-/* SELECT id, username, email, created_at
-FROM users
-WHERE id = $1; */
-
-BEGIN;
 -- name: InsertMonster :one
 INSERT INTO monsters (name, 
                         level, 
@@ -31,7 +26,7 @@ INSERT INTO monsters (name,
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
 RETURNING id;
 
--- name: InsertMonsterImmunities :batch
+-- name: InsertMonsterImmunities :batchexec
 INSERT INTO monster_immunities (monster_id, immunity)
 VALUES ($1, $2);
 
@@ -58,25 +53,25 @@ VALUES ($1, $2, $3, $4, $5);
 
 -- name: InsertMonsterSkills :one
 INSERT INTO monster_skills (monster_id, name, value)
-VALUES($1, $2, $3, $4)
+VALUES($1, $2, $3)
 RETURNING id; 
 
 -- name: InsertMonsterSkillSpecials :exec
 INSERT INTO monster_skill_specials(skill_id, value, label, predicates)
-VALUES ($1, $2, $3, $4)
+VALUES ($1, $2, $3, $4);
 
--- name InsertMonsterMovements :exec
+-- name: InsertMonsterMovements :exec
 INSERT INTO monster_movements(monster_id, movement_type, speed, notes)
-VALUES ($1,$2, $3, $4)
+VALUES ($1, $2, $3, $4);
 
 -- name: InsertMonsterAction :one
 INSERT INTO monster_actions (monster_id, action_type, name, text, actions, category, rarity, dc)
-VALUES ($1, $2, $3, $4, $5, $6, $7); 
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 RETURNING id; 
 
 -- name: InsertMonsterActionTraits :exec
 INSERT INTO monster_action_traits (monster_action_id, trait)
-VALUES($1, $2)
+VALUES($1, $2);
 
 -- name: InsertMonsterAttacks :one
 INSERT INTO monster_attacks (monster_id, attack_category, name, attack_type, to_hit_bonus, effects_custom_string, effects_values)
@@ -85,11 +80,11 @@ RETURNING id;
 
 -- name: InsertMonsterAttackDamageBlock :exec
 INSERT INTO attack_damage_blocks (attack_id, damage_roll, damage_type)
-VALUES ($1, $2, $3)
+VALUES ($1, $2, $3);
 
 -- name: InsertSpell :one
 INSERT INTO spells (name, cast_level, spell_base_level, description, range, cast_time, cast_requirements, rarity, at_will, spell_casting_block_location_id, uses, ritual, targets)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13); 
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 RETURNING id; 
 
 -- name: InsertSpellArea :exec
@@ -108,7 +103,7 @@ VALUES ($1, $2, $3);
 INSERT INTO ritual_data (spell_id, primary_check, secondary_casters, secondary_check)
 VALUES ($1, $2, $3, $4); 
 
--- name: InsertSpellTraits :batch
+-- name: InsertSpellTraits :batchexec
 INSERT INTO spell_traits (spell_id, trait)
 VALUES ($1, $2); 
 
@@ -117,7 +112,7 @@ INSERT INTO focus_spell_casting (monster_id, dc, mod, tradition, spellcasting_id
 Values($1, $2, $3, $4, $5, $6, $7, $8)
 RETURNING id; 
 
--- name: InsertFocusSpellsCasts :batch
+-- name: InsertFocusSpellsCasts :batchexec
 INSERT INTO focus_spell_casting_spells (focus_spell_casting_id, spell_id)
 VALUES ($1, $2); 
 
@@ -126,29 +121,29 @@ INSERT INTO innate_spell_casting (monster_id, dc, tradition, mod, spellcasting_i
 VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING id; 
 
--- name: InsertInnateSpellUse :batch
+-- name: InsertInnateSpellUse :batchexec
 INSERT INTO innate_spell_uses (innate_spell_casting_id, spell_id, level, uses)
-VALUES ($1, $2, $3, $4)
+VALUES ($1, $2, $3, $4);
 
 -- name: InsertPreparedSpellCasting :one
 INSERT INTO prepared_spell_casting (monster_id, dc, tradition, mod, spellcasting_id, description)
 VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING id; 
 
--- name: InsertPreparedSlots :batch
+-- name: InsertPreparedSlots :batchexec
 INSERT INTO prepared_slots (prepared_spell_casting_id, level, spell_id)
-VALUES ($1, $2, $3)
+VALUES ($1, $2, $3);
 
 -- name: InsertSpontaneousSpells :one
 INSERT INTO spontaneous_spell_casting (monster_id, dc, id_string, tradition, mod)
 VALUES ($1, $2, $3, $4, $5)
 RETURNING id; 
 
--- name: InsertSpontaneousSpellSlots :batch
+-- name: InsertSpontaneousSpellSlots :batchexec
 INSERT INTO spontaneous_slots (spontaneous_spell_casting_id, level, casts)
 VALUES ($1, $2, $3); 
 
--- name: InsertSpontaneousSpellList :batch
+-- name: InsertSpontaneousSpellList :batchexec
 INSERT INTO spontaneous_spell_list (spontaneous_spell_casting_id, spell_id)
 VALUES ($1, $2); 
 
@@ -157,11 +152,6 @@ INSERT INTO items (monster_id, id, name, category, description, level, rarity, b
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 RETURNING id; 
 
--- name: InsertItemTraits :batch
+-- name: InsertItemTraits :batchexec
 INSERT INTO item_traits (item_id, trait)
-VALUES ($1, $2)
-
-
-
-
-COMMIT; 
+VALUES ($1, $2);

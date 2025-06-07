@@ -73,7 +73,9 @@ func GetRepoArchive(cfg config.Config) error {
 	if err != nil {
 		return err
 	}
+	logger.Log.Info(fmt.Sprintf("Response Return code is: %s", resp.Status))
 	defer resp.Body.Close()
+
 	// Handle the response (assume we want to save it)
 	outFile, err := os.Create("repo_archive.tar.gz")
 	if err != nil {
@@ -87,7 +89,7 @@ func GetRepoArchive(cfg config.Config) error {
 		return fmt.Errorf("error saving archive: %w", err)
 	}
 
-	fmt.Println("Repository archive downloaded successfully!")
+	logger.Log.Info(fmt.Sprintf("Repository archive downloaded successfully!"))
 	return nil
 }
 func extractTarball(tarFile string, destDir string) error {
