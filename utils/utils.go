@@ -3,6 +3,7 @@ package utils
 import (
 	"archive/tar"
 	"compress/gzip"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -15,6 +16,9 @@ import (
 	"github.com/Burtcam/encounter-builder-backend/config"
 	"github.com/Burtcam/encounter-builder-backend/logger"
 	"github.com/Burtcam/encounter-builder-backend/structs"
+	"github.com/Burtcam/encounter-builder-backend/writeMonsters"
+	"github.com/jackc/pgx/pgtype"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/robfig/cron/v3"
 	"github.com/tidwall/gjson"
 )
@@ -180,18 +184,67 @@ func ParseFoundJson(data string) structs.Monster {
 	return monster
 }
 
-func LoadEachJSON(path string) error {
+func PrepMonsterParams(monster structs.Monster) writeMonsters.InsertMonsterParams {
+
+	monsterParams := writeMonsters.InsertMonsterParams{
+
+		Name:             pgtype.Text{String: monster.Name, Valid: true},
+		Level:            pgtype.Text{String: monster.Level, Valid: true},
+		FocusPoints:      pgtype.Int4{String: monster.FocusPoints, value: true},
+		TraitsRarity:     pgtype.Text{String: monster.Traits.Rarity},
+		TraitsSize:       pgtype.Text{String: monster.Traits.Size},
+		AttrStr:          pgtype.Text{String: monster.Attributes.Str},
+		AttrDex:          pgtype.Text{String: monster.Attributes.Dex},
+		AttrCon:          pgtype.Text{String: monster.Attributes.Con},
+		AttrWis:          pgtype.Text{String: monster.Attributes.Wis},
+		AttrInt:          pgtype.Text{String: monster.Attributes.Int},
+		AttrCha:          pgtype.Text{String: monster.Attributes.Cha},
+		SavesFort:        pgtype.Text{String: monster.Saves.Fort},
+		SavesFortDetail:  pgtype.Text{String: monster.Saves.FortDetail},
+		SavesRef:         pgtype.Text{String: monster.Saves.Ref},
+		SavesRefDetail:   pgtype.Text{String: monster.Saves.RefDetail},
+		SavesWill:        pgtype.Text{String: monster.Saves.Will},
+		SavesWillDetail:  pgtype.Text{String: monster.Saves.WillDetail},
+		SavesException:   pgtype.Text{String: monster.Saves.Exception},
+		AcValue:          pgtype.Text{String: monster.AClass.Value},
+		AcDetail:         pgtype.Text{String: monster.AClass.Detail},
+		HpValue:          pgtype.int4{Int: monster.HP.Value},
+		HpDetail:         pgtype.Text{String: monster.HP.Detail},
+		PerceptionMod:    pgtype.Text{String: monster.Perception.Mod},
+		PerceptionDetail: pgtype.Text{String: monster.Perception.Detail},
+	}
+	return monsterParams
+}
+
+func WriteMonsterToDb(monster structs.Monster, cfg config.Config) error {
+	ctx := context.Background()
+	// ✅ 2. Begin a transaction
+	tx, err := cfg.DBPool.Begin(ctx)
+	if err != nil {
+		logger.Log.Error("failed to start transaction: %v", err)
+	}
+
+	//prep main params
+	monsterParams := PrepMonsterParams(monster)
+
+	id, err := writeMonsters.InsertMonster(cfg, monsterParams)
+
+	if err != nil {
+		logger.Log.Error(fmt.Sprintf("Failed to write core data for %s", monster.Name))
+	}
+
+	return nil
+
+}
+
+func LoadEachJSON(cfg config.Config, path string) error {
 	fmt.Println("Path is :", path)
 	data, err := os.ReadFile(path)
 	if err != nil {
 		logger.Log.Error(err.Error())
 		return err
 	}
-	// var payload map[string]interface{}
-	// err = json.Unmarshal(data, &payload)
-	// if err != nil {
-	// 	logger.Log.Error("Error during Unmarshal(): %s", path, err)
-	// }
+
 	if gjson.Get(string(data), "type").String() == "npc" {
 		fmt.Println("Found a monster")
 		monster := ParseCoreData(string(data))
@@ -203,6 +256,11 @@ func LoadEachJSON(path string) error {
 		AssignSpell(&spells, &monster.SpellCasting)
 
 		fmt.Println(monster)
+
+		err = WriteMonsterToDb(monster, cfg)
+		if err != nil {
+			logger.Log.Error(fmt.Sprintf("Unable to  write %s, to db %w", monster.Name, err))
+		}
 		// err = parseJSON(data)
 		// if err != nil {
 		// 	logger.Log.Error(fmt.Sprintf("Error Parsing file %s", path))
@@ -237,7 +295,7 @@ func KickOffSync(cfg config.Config) error {
 	//
 
 	for _, value := range fileList {
-		err = LoadEachJSON(value)
+		err = LoadEachJSON(cfg, value)
 		if err != nil {
 			logger.Log.Error(err.Error())
 		}
