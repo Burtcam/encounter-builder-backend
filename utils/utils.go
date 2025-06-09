@@ -17,7 +17,10 @@ import (
 	"github.com/Burtcam/encounter-builder-backend/logger"
 	"github.com/Burtcam/encounter-builder-backend/structs"
 	"github.com/Burtcam/encounter-builder-backend/writeMonsters"
-	"github.com/jackc/pgx/pgtype"
+
+	//"github.com/jackc/pgx/pgtype"
+
+	// "github.com/jackc/pgx/pgtype"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/robfig/cron/v3"
 	"github.com/tidwall/gjson"
@@ -188,9 +191,9 @@ func PrepMonsterParams(monster structs.Monster) writeMonsters.InsertMonsterParam
 
 	monsterParams := writeMonsters.InsertMonsterParams{
 
-		Name:             pgtype.Text{String: monster.Name, Valid: true},
+		Name:             monster.Name,
 		Level:            pgtype.Text{String: monster.Level, Valid: true},
-		FocusPoints:      pgtype.Int4{String: monster.FocusPoints, value: true},
+		FocusPoints:      pgtype.Int4{Int32: int32(monster.FocusPoints), Valid: true},
 		TraitsRarity:     pgtype.Text{String: monster.Traits.Rarity},
 		TraitsSize:       pgtype.Text{String: monster.Traits.Size},
 		AttrStr:          pgtype.Text{String: monster.Attributes.Str},
@@ -208,7 +211,7 @@ func PrepMonsterParams(monster structs.Monster) writeMonsters.InsertMonsterParam
 		SavesException:   pgtype.Text{String: monster.Saves.Exception},
 		AcValue:          pgtype.Text{String: monster.AClass.Value},
 		AcDetail:         pgtype.Text{String: monster.AClass.Detail},
-		HpValue:          pgtype.int4{Int: monster.HP.Value},
+		HpValue:          pgtype.Int4{Int32: int32(monster.HP.Value)},
 		HpDetail:         pgtype.Text{String: monster.HP.Detail},
 		PerceptionMod:    pgtype.Text{String: monster.Perception.Mod},
 		PerceptionDetail: pgtype.Text{String: monster.Perception.Detail},
@@ -219,8 +222,8 @@ func PrepMonsterParams(monster structs.Monster) writeMonsters.InsertMonsterParam
 func writeImmunites(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
 
 	for i := 0; i < len(monster.Immunities); i++ {
-		err := &queries.InsertMonsterImmunity(ctx, writeMonsters.InsertMonsterImmunityParams{
-			MonsterID: pgtype.Int4{Int: id, Valid: true},
+		err := queries.InsertMonsterImmunities(ctx, writeMonsters.InsertMonsterImmunitiesParams{
+			MonsterID: pgtype.Int4{Int32: id, Valid: true},
 			Immunity:  pgtype.Text{String: monster.Immunities[i], Valid: true},
 		})
 		if err != nil {
@@ -234,18 +237,94 @@ func writeImmunites(ctx context.Context, queries *writeMonsters.Queries, monster
 }
 
 func ProcessWeakAndResist(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
-	var damageBlockList []structs.DamageBlock
-	damageBlockList = append(damageBlockList, monster.Weaknesseses)
-	damageBlockList = append(damageBlockList, monster.Resistances)
 
-	for i := 0; i < len(damageBlockList); i++ {
-		id, err := &queries.InsertMonsterDamageModifier(ctx, writeMonsters.InsertMonsterDamageModifier{
-			MonsterID: pgtype.Int4{Int: id, Valid: true},
-			Modifier:  pgtype.Text{String: damageBlockList[i].Modifier, Valid: true},
-			Detail:    pgtype.Text{String: damageBlockList[i].Detail, Valid: true},
-			Type:      pgtype.Text{String: damageBlockList[i].Type, Valid: true},
+	for i := 0; i < len(monster.Weaknesses); i++ {
+		DamageModifierID, err := queries.InsertMonsterDamageModifier(ctx, writeMonsters.InsertMonsterDamageModifierParams{
+			MonsterID:        pgtype.Int4{Int32: id},
+			ModifierCategory: pgtype.Text{String: "Weakness"},
+			Value:            pgtype.Int4{Int32: int32(monster.Weaknesses[i].Value), Valid: true},
+			DamageType:       pgtype.Text{String: monster.Weaknesses[i].Type},
 		})
+		if err != nil {
+			return fmt.Errorf("Failed to add damage modifier to DB %w", err)
+		}
+		// if exceptions len > 0
+		if len(monster.Weaknesses[i].Exceptions) > 0 {
+			for j := 0; j < len(monster.Weaknesses[i].Exceptions); j++ {
+				err = queries.InsertMonsterModifierExceptions(ctx, writeMonsters.InsertMonsterModifierExceptionsParams{
+					ModifierID: pgtype.Int4{Int32: DamageModifierID},
+					Exception:  pgtype.Text{String: monster.Weaknesses[i].Exceptions[j]},
+				})
+			}
+		}
+		if err != nil {
+			return fmt.Errorf("Failed to add damage modifier to DB %w", err)
+		}
+		// if exceptions len > 0
+		if len(monster.Weaknesses[i].Double) > 0 {
+			for k := 0; k < len(monster.Weaknesses[i].Double); k++ {
+				err = queries.InsertMonsterModifierExceptions(ctx, writeMonsters.InsertMonsterModifierExceptionsParams{
+					ModifierID: pgtype.Int4{Int32: DamageModifierID},
+					Exception:  pgtype.Text{String: monster.Weaknesses[i].Double[k]},
+				})
+			}
+		}
+		if err != nil {
+			return fmt.Errorf("Failed to add damage modifier to DB %w", err)
+		}
 	}
+	for i := 0; i < len(monster.Resistances); i++ {
+		DamageModifierID, err := queries.InsertMonsterDamageModifier(ctx, writeMonsters.InsertMonsterDamageModifierParams{
+			MonsterID:        pgtype.Int4{Int32: id},
+			ModifierCategory: pgtype.Text{String: "Resistance"},
+			Value:            pgtype.Int4{Int32: int32(monster.Resistances[i].Value)},
+			DamageType:       pgtype.Text{String: monster.Resistances[i].Type},
+		})
+		if err != nil {
+			return fmt.Errorf("Failed to add damage modifier to DB %w", err)
+		}
+		// if exceptions len > 0
+		if len(monster.Resistances[i].Exceptions) > 0 {
+			for j := 0; j < len(monster.Resistances[i].Exceptions); j++ {
+				err = queries.InsertMonsterModifierExceptions(ctx, writeMonsters.InsertMonsterModifierExceptionsParams{
+					ModifierID: pgtype.Int4{Int32: DamageModifierID},
+					Exception:  pgtype.Text{String: monster.Resistances[i].Exceptions[j]},
+				})
+			}
+		}
+		if err != nil {
+			return fmt.Errorf("Failed to add damage modifier to DB %w", err)
+		}
+		// if exceptions len > 0
+		if len(monster.Resistances[i].Double) > 0 {
+			for k := 0; k < len(monster.Resistances[i].Double); k++ {
+				err = queries.InsertMonsterModifierExceptions(ctx, writeMonsters.InsertMonsterModifierExceptionsParams{
+					ModifierID: pgtype.Int4{Int32: DamageModifierID},
+					Exception:  pgtype.Text{String: monster.Resistances[i].Double[k]},
+				})
+			}
+		}
+		if err != nil {
+			return fmt.Errorf("Failed to add damage modifier to DB %w", err)
+		}
+	}
+	return nil
+}
+
+func ProcessLanguages(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
+	for i := 0; i < len(monster.Languages); i++ {
+		err := queries.InsertMonsterLanguages(ctx, writeMonsters.InsertMonsterLanguagesParams{
+			MonsterID: pgtype.Int4{Int: id},
+			Language:  pgtype.Text{String: monster.Languages[i]},
+		})
+		if err != nil {
+			return fmt.Errorf("Failed to write language %w", err)
+		}
+	}
+	return nil
+}
+
+func ProcessSenses(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
 
 	return nil
 }
@@ -277,6 +356,15 @@ func WriteMonsterToDb(monster structs.Monster, cfg config.Config) error {
 	if err != nil {
 		logger.Log.Error("Failed to process weaknesses and resistances: %w", err)
 	}
+	err = ProcessLanguages(ctx, queries, monster, id)
+	if err != nil {
+		logger.Log.Error("Failed to process languages %w", err)
+	}
+	err = ProcessSenses(ctx, queries, monster, id)
+	if err != nil {
+		logger.Log.Error("failed to process sense %w", err)
+	}
+
 	return nil
 
 }
