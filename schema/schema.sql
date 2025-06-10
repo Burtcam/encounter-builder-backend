@@ -115,10 +115,15 @@ CREATE TABLE monster_attacks (
     attack_category VARCHAR(20) CHECK (attack_category IN ('melee', 'ranged')),
     name VARCHAR(100),
     attack_type VARCHAR(50),
-    to_hit_bonus VARCHAR(50),
-    effects_custom_string TEXT,
-    effects_values TEXT[]  -- array of strings for the DamageEffect.Value field
+    to_hit_bonus VARCHAR(50)
 );
+
+CREATE TABLE attack_effect {
+    id SERIAL PRIMARY KEY,
+    attack_id INTEGER REFERENCES monster_attacks(id) ON DELETE CASCADE, 
+    effects_custom_string TEXT,
+    effects_values TEXT []
+}
 
 CREATE TABLE attack_damage_blocks (
     id SERIAL PRIMARY KEY,

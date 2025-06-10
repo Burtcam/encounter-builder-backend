@@ -60,7 +60,7 @@ func GetXpBudget(difficulty string, pSize int) (int, error) {
 			return budget, nil
 		}
 	} else {
-		return 0, errors.New("Failed likely due to the difficulty input being incorrect and not in the map")
+		return 0, errors.New("failed likely due to the difficulty input being incorrect and not in the map")
 	}
 	return 0, errors.New("unspecfied Error")
 }
@@ -96,7 +96,7 @@ func GetRepoArchive(cfg config.Config) error {
 		return fmt.Errorf("error saving archive: %w", err)
 	}
 
-	logger.Log.Info(fmt.Sprintf("Repository archive downloaded successfully!"))
+	logger.Log.Info(fmt.Sprintln("Repository archive downloaded successfully!"))
 	return nil
 }
 func extractTarball(tarFile string, destDir string) error {
@@ -227,7 +227,6 @@ func writeImmunites(ctx context.Context, queries *writeMonsters.Queries, monster
 			Immunity:  pgtype.Text{String: monster.Immunities[i], Valid: true},
 		})
 		if err != nil {
-			logger.Log.Error("Failed to insert immunity %s for monster ID %d: %v", monster.Immunities[i], id, err)
 			return fmt.Errorf("failed to insert immunity %s for monster ID %d: %w", monster.Immunities[i], id, err)
 		}
 		logger.Log.Info(fmt.Sprintf("Succesfully inserted immunity %s for monster ID %d", monster.Immunities[i], id))
@@ -246,7 +245,7 @@ func ProcessWeakAndResist(ctx context.Context, queries *writeMonsters.Queries, m
 			DamageType:       pgtype.Text{String: monster.Weaknesses[i].Type},
 		})
 		if err != nil {
-			return fmt.Errorf("Failed to add damage modifier to DB %w", err)
+			return fmt.Errorf("failed to add damage modifier to DB %w", err)
 		}
 		// if exceptions len > 0
 		if len(monster.Weaknesses[i].Exceptions) > 0 {
@@ -258,7 +257,7 @@ func ProcessWeakAndResist(ctx context.Context, queries *writeMonsters.Queries, m
 			}
 		}
 		if err != nil {
-			return fmt.Errorf("Failed to add damage modifier to DB %w", err)
+			return fmt.Errorf("failed to add damage modifier to DB %w", err)
 		}
 		// if exceptions len > 0
 		if len(monster.Weaknesses[i].Double) > 0 {
@@ -270,7 +269,7 @@ func ProcessWeakAndResist(ctx context.Context, queries *writeMonsters.Queries, m
 			}
 		}
 		if err != nil {
-			return fmt.Errorf("Failed to add damage modifier to DB %w", err)
+			return fmt.Errorf("failed to add damage modifier to DB %w", err)
 		}
 	}
 	for i := 0; i < len(monster.Resistances); i++ {
@@ -281,7 +280,7 @@ func ProcessWeakAndResist(ctx context.Context, queries *writeMonsters.Queries, m
 			DamageType:       pgtype.Text{String: monster.Resistances[i].Type},
 		})
 		if err != nil {
-			return fmt.Errorf("Failed to add damage modifier to DB %w", err)
+			return fmt.Errorf("failed to add damage modifier to DB %w", err)
 		}
 		// if exceptions len > 0
 		if len(monster.Resistances[i].Exceptions) > 0 {
@@ -293,7 +292,7 @@ func ProcessWeakAndResist(ctx context.Context, queries *writeMonsters.Queries, m
 			}
 		}
 		if err != nil {
-			return fmt.Errorf("Failed to add damage modifier to DB %w", err)
+			return fmt.Errorf("failed to add damage modifier to DB %w", err)
 		}
 		// if exceptions len > 0
 		if len(monster.Resistances[i].Double) > 0 {
@@ -305,7 +304,7 @@ func ProcessWeakAndResist(ctx context.Context, queries *writeMonsters.Queries, m
 			}
 		}
 		if err != nil {
-			return fmt.Errorf("Failed to add damage modifier to DB %w", err)
+			return fmt.Errorf("failed to add damage modifier to DB %w", err)
 		}
 	}
 	return nil
@@ -314,18 +313,166 @@ func ProcessWeakAndResist(ctx context.Context, queries *writeMonsters.Queries, m
 func ProcessLanguages(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
 	for i := 0; i < len(monster.Languages); i++ {
 		err := queries.InsertMonsterLanguages(ctx, writeMonsters.InsertMonsterLanguagesParams{
-			MonsterID: pgtype.Int4{Int: id},
+			MonsterID: pgtype.Int4{Int32: id},
 			Language:  pgtype.Text{String: monster.Languages[i]},
 		})
 		if err != nil {
-			return fmt.Errorf("Failed to write language %w", err)
+			return fmt.Errorf("failed to write language %w", err)
 		}
 	}
 	return nil
 }
 
 func ProcessSenses(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
+	for i := 0; i < len(monster.Senses); i++ {
+		err := queries.InsertMonsterSenses(ctx, writeMonsters.InsertMonsterSensesParams{
+			MonsterID: pgtype.Int4{Int32: id},
+			Name:      pgtype.Text{String: monster.Senses[i].Name},
+			Range:     pgtype.Text{String: monster.Senses[i].Range},
+			Acuity:    pgtype.Text{String: monster.Senses[i].Acuity},
+			Detail:    pgtype.Text{String: monster.Senses[i].Detail},
+		})
+		if err != nil {
+			return fmt.Errorf("unable to write sense to DB %w", err)
+		}
+	}
+	return nil
+}
 
+func ProcessMovements(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
+	for i := 0; i < len(monster.Movements); i++ {
+		err := queries.InsertMonsterMovements(ctx, writeMonsters.InsertMonsterMovementsParams{
+			MonsterID:    pgtype.Int4{Int32: id},
+			MovementType: pgtype.Text{String: monster.Movements[i].Type},
+			Speed:        pgtype.Text{String: monster.Movements[i].Speed},
+			Notes:        pgtype.Text{String: monster.Movements[i].Notes},
+		})
+		if err != nil {
+			return fmt.Errorf("failed to write Movements to DB %w", err)
+		}
+	}
+	return nil
+}
+
+func ProcessSkills(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
+	for i := 0; i < len(monster.Skills); i++ {
+		skillId, err := queries.InsertMonsterSkills(ctx, writeMonsters.InsertMonsterSkillsParams{
+			MonsterID: pgtype.Int4{Int32: id},
+			Name:      pgtype.Text{String: monster.Skills[i].Name},
+			Value:     pgtype.Int4{Int32: int32(monster.Skills[i].Value)},
+		})
+		if err != nil {
+			return fmt.Errorf("Unable to write skill %w", err)
+		}
+		if len(monster.Skills[i].Specials) > 0 {
+			for j := 0; j < len(monster.Skills[i].Specials); j++ {
+				err := queries.InsertMonsterSkillSpecials(ctx, writeMonsters.InsertMonsterSkillSpecialsParams{
+					SkillID:    pgtype.Int4{Int32: skillId},
+					Value:      pgtype.Int4{Int32: int32(monster.Skills[i].Specials[j].Value)},
+					Label:      pgtype.Text{String: monster.Skills[i].Specials[j].Label},
+					Predicates: monster.Skills[i].Specials[j].Predicates,
+				})
+				if err != nil {
+					return fmt.Errorf("Unable to write skill specials %w", err)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func ProcessAction(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
+	for i := 0; i < len(monster.Actions); i++ {
+		actionId, err := queries.InsertMonsterAction(ctx, writeMonsters.InsertMonsterActionParams{
+			MonsterID:  pgtype.Int4{Int32: id},
+			ActionType: pgtype.Text{String: "action"},
+			Name:       pgtype.Text{String: monster.Actions[i].Name},
+			Text:       pgtype.Text{String: monster.Actions[i].Text},
+			Actions:    pgtype.Text{String: monster.Actions[i].Actions},
+			Category:   pgtype.Text{String: monster.Actions[i].Category},
+			Rarity:     pgtype.Text{String: monster.Actions[i].Rarity},
+		})
+		if err != nil {
+			return fmt.Errorf("unable to process Monster Action %w", err)
+		}
+		for j := 0; j < len(monster.Actions[i].Traits); j++ {
+			err := queries.InsertMonsterActionTraits(ctx, writeMonsters.InsertMonsterActionTraitsParams{
+				MonsterActionID: pgtype.Int4{Int32: actionId},
+				Trait:           pgtype.Text{String: monster.Actions[i].Traits[j]},
+			})
+			if err != nil {
+				return fmt.Errorf("unable to Process Traits for Actions %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+func ProcessReaction(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
+	for i := 0; i < len(monster.Reactions); i++ {
+		actionId, err := queries.InsertMonsterAction(ctx, writeMonsters.InsertMonsterActionParams{
+			MonsterID:  pgtype.Int4{Int32: id},
+			ActionType: pgtype.Text{String: "Reaction"},
+			Name:       pgtype.Text{String: monster.Reactions[i].Name},
+			Text:       pgtype.Text{String: monster.Reactions[i].Text},
+			Category:   pgtype.Text{String: monster.Reactions[i].Category},
+			Rarity:     pgtype.Text{String: monster.Reactions[i].Rarity},
+		})
+		if err != nil {
+			return fmt.Errorf("unable to process Monster Reaction %w", err)
+		}
+		for j := 0; j < len(monster.Reactions[i].Traits); j++ {
+			err := queries.InsertMonsterActionTraits(ctx, writeMonsters.InsertMonsterActionTraitsParams{
+				MonsterActionID: pgtype.Int4{Int32: actionId},
+				Trait:           pgtype.Text{String: monster.Reactions[i].Traits[j]},
+			})
+			if err != nil {
+				return fmt.Errorf("unable to Process Traits for Reaction %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+func ProcessPassive(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
+	for i := 0; i < len(monster.Passives); i++ {
+		actionId, err := queries.InsertMonsterAction(ctx, writeMonsters.InsertMonsterActionParams{
+			MonsterID:  pgtype.Int4{Int32: id},
+			ActionType: pgtype.Text{String: "Passive"},
+			Name:       pgtype.Text{String: monster.Passives[i].Name},
+			Text:       pgtype.Text{String: monster.Passives[i].Text},
+			Category:   pgtype.Text{String: monster.Passives[i].Category},
+			Rarity:     pgtype.Text{String: monster.Passives[i].Rarity},
+			Dc:         pgtype.Text{String: monster.Passives[i].DC},
+		})
+		if err != nil {
+			return fmt.Errorf("unable to process Monster Passive %w", err)
+		}
+		for j := 0; j < len(monster.Passives[i].Traits); j++ {
+			err := queries.InsertMonsterActionTraits(ctx, writeMonsters.InsertMonsterActionTraitsParams{
+				MonsterActionID: pgtype.Int4{Int32: actionId},
+				Trait:           pgtype.Text{String: monster.Passives[i].Traits[j]},
+			})
+			if err != nil {
+				return fmt.Errorf("unable to Process Traits for Passive %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+func ProcessAttacks(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
+	for i := range len(monster.Melees) {
+		attackID, err := queries.InsertMonsterAttacks(ctx, writeMonsters.InsertMonsterAttacksParams{
+			MonsterID:           pgtype.Int4{Int32: id},
+			AttackCategory:      pgtype.Text{String: "melee"},
+			Name:                pgtype.Text{String: monster.Melees[i].Name},
+			AttackType:          pgtype.Text{String: monster.Melees[i].Type},
+			ToHitBonus:          pgtype.Text{String: monster.Melees[i].ToHitBonus},
+			EffectsCustomString: pgtype.Text{String: monster.Melees[i].Effects.CustomString},
+			EffectsValues:       monster.Melees[i].Effects.Value,
+		})
+	}
 	return nil
 }
 
@@ -334,7 +481,7 @@ func WriteMonsterToDb(monster structs.Monster, cfg config.Config) error {
 	// ✅ 2. Begin a transaction
 	tx, err := cfg.DBPool.Begin(ctx)
 	if err != nil {
-		logger.Log.Error("failed to start transaction: %v", err)
+		logger.Log.Error("failed to start transaction", "err", err.Error())
 	}
 
 	//prep main params
@@ -344,27 +491,56 @@ func WriteMonsterToDb(monster structs.Monster, cfg config.Config) error {
 
 	id, err := queries.InsertMonster(ctx, monsterParams)
 	if err != nil {
-		logger.Log.Error("Failed to insert monster %v", err)
+		logger.Log.Error("Failed to insert monster", "err", err.Error())
 	}
 	logger.Log.Info(fmt.Sprintf("Succesfully started the transaction for ID %d", id))
 	//for each immunities
 	err = writeImmunites(ctx, queries, monster, id)
 	if err != nil {
-		logger.Log.Error("Failed to process immunities: %w", err)
+		logger.Log.Error("Failed to process immunities: ", "err", err.Error())
 	}
 	err = ProcessWeakAndResist(ctx, queries, monster, id)
 	if err != nil {
-		logger.Log.Error("Failed to process weaknesses and resistances: %w", err)
+		logger.Log.Error("Failed to process weaknesses and resistances: ", "err", err.Error())
 	}
 	err = ProcessLanguages(ctx, queries, monster, id)
 	if err != nil {
-		logger.Log.Error("Failed to process languages %w", err)
+		logger.Log.Error("Failed to process languages ", "err", err.Error())
 	}
 	err = ProcessSenses(ctx, queries, monster, id)
 	if err != nil {
-		logger.Log.Error("failed to process sense %w", err)
+		logger.Log.Error("failed to process sense ", "err", err.Error())
+	}
+	err = ProcessSkills(ctx, queries, monster, id)
+	if err != nil {
+		logger.Log.Error("Failed to process Skills ", "err", err.Error())
 	}
 
+	err = ProcessMovements(ctx, queries, monster, id)
+	if err != nil {
+		logger.Log.Error("Failed to process Movements into DB ", "err", err.Error())
+	}
+	err = ProcessAction(ctx, queries, monster, id)
+	if err != nil {
+		logger.Log.Error("Failed to Process Action ", "err", err.Error())
+	}
+	err = ProcessReaction(ctx, queries, monster, id)
+	if err != nil {
+		logger.Log.Error("Failed to process reaction ", "err", err.Error())
+	}
+	err = ProcessPassive(ctx, queries, monster, id)
+	if err != nil {
+		logger.Log.Error("Failed to Process Free Action ", "err", err.Error())
+	}
+	err = ProcessAttacks(ctx, queries, monster, id)
+	if err != nil {
+		logger.Log.Error("Failed to process Attack ", "err", err.Error())
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		logger.Log.Error("Failed to commit transaction close ", "err", err.Error())
+	}
 	return nil
 
 }
