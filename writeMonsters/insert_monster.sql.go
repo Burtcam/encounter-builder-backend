@@ -128,8 +128,8 @@ func (q *Queries) InsertItemTraits(ctx context.Context, arg InsertItemTraitsPara
 }
 
 const insertItems = `-- name: InsertItems :one
-INSERT INTO items (monster_id, id, name, category, description, level, rarity, bulk, quantity)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+INSERT INTO items (monster_id, id, name, category, description, level, rarity, bulk, quantity, price_per, price_cp, price_gp, price_sp, price_pp)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 RETURNING id
 `
 
@@ -143,6 +143,11 @@ type InsertItemsParams struct {
 	Rarity      pgtype.Text
 	Bulk        pgtype.Text
 	Quantity    pgtype.Text
+	PricePer    pgtype.Int4
+	PriceCp     pgtype.Int4
+	PriceGp     pgtype.Int4
+	PriceSp     pgtype.Int4
+	PricePp     pgtype.Int4
 }
 
 func (q *Queries) InsertItems(ctx context.Context, arg InsertItemsParams) (string, error) {
@@ -156,6 +161,11 @@ func (q *Queries) InsertItems(ctx context.Context, arg InsertItemsParams) (strin
 		arg.Rarity,
 		arg.Bulk,
 		arg.Quantity,
+		arg.PricePer,
+		arg.PriceCp,
+		arg.PriceGp,
+		arg.PriceSp,
+		arg.PricePp,
 	)
 	var id string
 	err := row.Scan(&id)

@@ -115,7 +115,7 @@ CREATE TABLE monster_attacks (
     attack_category VARCHAR(20) CHECK (attack_category IN ('melee', 'ranged')),
     name VARCHAR(100),
     attack_type VARCHAR(50),
-    to_hit_bonus VARCHAR(50)
+    to_hit_bonus VARCHAR(50),
     effects_custom_string TEXT,
     effects_values TEXT []
 );

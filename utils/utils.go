@@ -717,26 +717,26 @@ func ProcessMagic(ctx context.Context, queries *writeMonsters.Queries, monster s
 	return nil
 }
 
-func ProcessItems(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
+// func ProcessItems(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
 
-	for i := range len(monster.Inventory) {
-		itemId, err := queries.InsertItems(ctx, writeMonsters.InsertItemsParams{
-			MonsterID:   pgtype.Int4{Int32: id},
-			Name:        pgtype.Text{String: monster.Inventory[i].Name},
-			Category:    pgtype.Text{String: monster.Inventory[i].Category},
-			Description: pgtype.Text{String: monster.Inventory[i].Description},
-			Level:       pgtype.Text{String: monster.Inventory[i].Level},
-			Rarity:      pgtype.Text{String: monster.Inventory[i].Rarity},
-			Bulk:        pgtype.Text{String: monster.Inventory[i].Bulk},
-			Quantity:    pgtype.Text{String: monster.Inventory[i].Quantity},
-		})
-		if err != nil {
-			return fmt.Errorf("failed to write item %w", err)
-		}
-		for 
-	}
-	return nil
-}
+// 	for i := range len(monster.Inventory) {
+// 		itemId, err := queries.InsertItems(ctx, writeMonsters.InsertItemsParams{
+// 			MonsterID:   pgtype.Int4{Int32: id},
+// 			Name:        pgtype.Text{String: monster.Inventory[i].Name},
+// 			Category:    pgtype.Text{String: monster.Inventory[i].Category},
+// 			Description: pgtype.Text{String: monster.Inventory[i].Description},
+// 			Level:       pgtype.Text{String: monster.Inventory[i].Level},
+// 			Rarity:      pgtype.Text{String: monster.Inventory[i].Rarity},
+// 			Bulk:        pgtype.Text{String: monster.Inventory[i].Bulk},
+// 			Quantity:    pgtype.Text{String: monster.Inventory[i].Quantity},
+// 		})
+// 		if err != nil {
+// 			return fmt.Errorf("failed to write item %w", err)
+// 		}
+// 		for
+// 	}
+// 	return nil
+// }
 
 func WriteMonsterToDb(monster structs.Monster, cfg config.Config) error {
 	ctx := context.Background()

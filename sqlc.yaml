@@ -11,4 +11,4 @@ sql:
       out: "writeMonsters"
       sql_package: "pgx/v5"
   database:
-      uri: "postgres://user:password@localhost:5432/encounterBuilder?sslmode=disable"
+      uri: postgres://user:password@localhost:5432/encounterBuilder?sslmode=disable
