@@ -472,6 +472,268 @@ func ProcessAttacks(ctx context.Context, queries *writeMonsters.Queries, monster
 			EffectsCustomString: pgtype.Text{String: monster.Melees[i].Effects.CustomString},
 			EffectsValues:       monster.Melees[i].Effects.Value,
 		})
+		if err != nil {
+			return fmt.Errorf("unable to write attack ID %w", err)
+		}
+		for j := range len(monster.Melees[i].DamageBlocks) {
+			err = queries.InsertMonsterAttackDamageBlock(ctx, writeMonsters.InsertMonsterAttackDamageBlockParams{
+				AttackID:   pgtype.Int4{Int32: attackID},
+				DamageRoll: pgtype.Text{String: monster.Melees[i].DamageBlocks[j].DamageRoll},
+				DamageType: pgtype.Text{String: monster.Melees[i].DamageBlocks[j].DamageType},
+			})
+		}
+		if err != nil {
+			return fmt.Errorf("unable to write damageblock %w", err)
+		}
+	}
+	for i := range len(monster.Ranged) {
+		attackID, err := queries.InsertMonsterAttacks(ctx, writeMonsters.InsertMonsterAttacksParams{
+			MonsterID:           pgtype.Int4{Int32: id},
+			AttackCategory:      pgtype.Text{String: "ranged"},
+			Name:                pgtype.Text{String: monster.Ranged[i].Name},
+			AttackType:          pgtype.Text{String: monster.Ranged[i].Type},
+			ToHitBonus:          pgtype.Text{String: monster.Ranged[i].ToHitBonus},
+			EffectsCustomString: pgtype.Text{String: monster.Ranged[i].Effects.CustomString},
+			EffectsValues:       monster.Ranged[i].Effects.Value,
+		})
+		if err != nil {
+			return fmt.Errorf("unable to write attack ID %w", err)
+		}
+		for j := range len(monster.Ranged[i].DamageBlocks) {
+			err = queries.InsertMonsterAttackDamageBlock(ctx, writeMonsters.InsertMonsterAttackDamageBlockParams{
+				AttackID:   pgtype.Int4{Int32: attackID},
+				DamageRoll: pgtype.Text{String: monster.Ranged[i].DamageBlocks[j].DamageRoll},
+				DamageType: pgtype.Text{String: monster.Ranged[i].DamageBlocks[j].DamageType},
+			})
+		}
+		if err != nil {
+			return fmt.Errorf("unable to write damageblock %w", err)
+		}
+	}
+	return nil
+}
+
+func processSpellGeneric(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, spell structs.Spell) (string, error) {
+	spellId, err := queries.InsertSpell(ctx, writeMonsters.InsertSpellParams{
+		Name:                        pgtype.Text{String: spell.Name},
+		CastLevel:                   pgtype.Text{String: spell.CastLevel},
+		SpellBaseLevel:              pgtype.Text{String: spell.SpellBaseLevel},
+		Description:                 pgtype.Text{String: spell.Description},
+		Range:                       pgtype.Text{String: spell.Range},
+		CastTime:                    pgtype.Text{String: spell.CastTime},
+		CastRequirements:            pgtype.Text{String: spell.CastRequirements},
+		Rarity:                      pgtype.Text{String: spell.Rarity},
+		AtWill:                      pgtype.Bool{Bool: spell.AtWill},
+		SpellCastingBlockLocationID: pgtype.Text{String: spell.SpellCastingBlockLocationID},
+		Uses:                        pgtype.Text{String: spell.Uses},
+		Targets:                     pgtype.Text{String: spell.Targets},
+		Ritual:                      pgtype.Bool{Bool: spell.Ritual},
+	})
+	if err != nil {
+		return spellId, fmt.Errorf("unable to write spell %w", err)
+	}
+	err = queries.InsertSpellArea(ctx, writeMonsters.InsertSpellAreaParams{
+		SpellID:  pgtype.Text{String: spellId},
+		AreaType: pgtype.Text{String: spell.Area.Type},
+		Value:    pgtype.Text{String: spell.Area.Value},
+		Detail:   pgtype.Text{String: spell.Area.Detail},
+	})
+	if err != nil {
+		return spellId, fmt.Errorf("unable to write spell area %w", err)
+	}
+	err = queries.InsertSpellDuration(ctx, writeMonsters.InsertSpellDurationParams{
+		SpellID:   pgtype.Text{String: spellId},
+		Sustained: pgtype.Bool{Bool: spell.Duration.Sustained},
+		Duration:  pgtype.Text{String: spell.Duration.Duration},
+	})
+	if err != nil {
+		return spellId, fmt.Errorf("unable to write spell duration %w", err)
+	}
+	err = queries.InsertSpellDefences(ctx, writeMonsters.InsertSpellDefencesParams{
+		SpellID: pgtype.Text{String: spellId},
+		Save:    pgtype.Text{String: spell.Defense.Save},
+		Basic:   pgtype.Bool{Bool: spell.Defense.Basic},
+	})
+	return spellId, nil
+}
+
+func ProcessInnateMagic(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
+	// -- name: InsertInnateSpellCasting :one
+	for i := range len(monster.SpellCasting.InnateSpellCasting) {
+		castingId, err := queries.InsertInnateSpellCasting(ctx, writeMonsters.InsertInnateSpellCastingParams{
+			MonsterID:      pgtype.Int4{Int32: id},
+			Dc:             pgtype.Int4{Int32: int32(monster.SpellCasting.InnateSpellCasting[i].DC)},
+			Tradition:      pgtype.Text{String: monster.SpellCasting.InnateSpellCasting[i].Tradition},
+			Mod:            pgtype.Text{String: monster.SpellCasting.InnateSpellCasting[i].Mod},
+			SpellcastingID: pgtype.Text{String: monster.SpellCasting.InnateSpellCasting[i].ID},
+			Description:    pgtype.Text{String: monster.SpellCasting.InnateSpellCasting[i].Description},
+			Name:           pgtype.Text{String: monster.SpellCasting.InnateSpellCasting[i].Name},
+		})
+		if err != nil {
+			return fmt.Errorf("unable to write innatespellcasting %w", err)
+		}
+		for j := range len(monster.SpellCasting.InnateSpellCasting[i].SpellUses) {
+			//For each spell use theres a spell, write it to spell table AND write to spell use table.
+			spellId, err := processSpellGeneric(ctx, queries, monster, monster.SpellCasting.InnateSpellCasting[i].SpellUses[j].Spell)
+			if err != nil {
+				return fmt.Errorf("unable to process spell to db %w", err)
+			}
+			err = queries.InsertInnateSpellUse(ctx, writeMonsters.InsertInnateSpellUseParams{
+				InnateSpellCastingID: pgtype.Int4{Int32: int32(castingId)},
+				SpellID:              pgtype.Text{String: spellId},
+				Level:                pgtype.Int4{Int32: int32(monster.SpellCasting.InnateSpellCasting[i].SpellUses[j].Level)},
+				Uses:                 pgtype.Text{String: monster.SpellCasting.InnateSpellCasting[i].SpellUses[j].Uses},
+			})
+		}
+	}
+	return nil
+}
+
+func ProcessFocusMagic(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
+	// -- name: InsertFocusSpellCasting :one
+	for i := range len(monster.SpellCasting.FocusSpellCasting) {
+		castingId, err := queries.InsertFocusSpellCasting(ctx, writeMonsters.InsertFocusSpellCastingParams{
+			MonsterID:      pgtype.Int4{Int32: id},
+			Dc:             pgtype.Int4{Int32: int32(monster.SpellCasting.FocusSpellCasting[i].DC)},
+			Tradition:      pgtype.Text{String: monster.SpellCasting.FocusSpellCasting[i].Tradition},
+			Mod:            pgtype.Text{String: monster.SpellCasting.FocusSpellCasting[i].Mod},
+			SpellcastingID: pgtype.Text{String: monster.SpellCasting.FocusSpellCasting[i].ID},
+			Description:    pgtype.Text{String: monster.SpellCasting.FocusSpellCasting[i].Description},
+			Name:           pgtype.Text{String: monster.SpellCasting.FocusSpellCasting[i].Name},
+			CastLevel:      pgtype.Text{String: monster.SpellCasting.FocusSpellCasting[i].CastLevel},
+		})
+		if err != nil {
+			return fmt.Errorf("unable to write focus spellcasting %w", err)
+		}
+		for j := range len(monster.SpellCasting.FocusSpellCasting[i].FocusSpellList) {
+			spellId, err := processSpellGeneric(ctx, queries, monster, monster.SpellCasting.FocusSpellCasting[i].FocusSpellList[j])
+			if err != nil {
+				return fmt.Errorf("unable to write focus spell %w", err)
+			}
+			// Write each spell associatation.
+			err = queries.InsertFocusSpellsCasts(ctx, writeMonsters.InsertFocusSpellsCastsParams{
+				FocusSpellCastingID: pgtype.Int4{Int32: castingId},
+				SpellID:             pgtype.Text{String: spellId},
+			})
+		}
+	}
+	return nil
+}
+
+func ProcessPreparedMagic(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
+	// -- name: InsertPreparedSpellCasting :one
+	for i := range len(monster.SpellCasting.PreparedSpellCasting) {
+		castingId, err := queries.InsertPreparedSpellCasting(ctx, writeMonsters.InsertPreparedSpellCastingParams{
+			MonsterID:      pgtype.Int4{Int32: id},
+			Dc:             pgtype.Int4{Int32: int32(monster.SpellCasting.PreparedSpellCasting[i].DC)},
+			Tradition:      pgtype.Text{String: monster.SpellCasting.PreparedSpellCasting[i].Tradition},
+			Mod:            pgtype.Text{String: monster.SpellCasting.PreparedSpellCasting[i].Mod},
+			SpellcastingID: pgtype.Text{String: monster.SpellCasting.PreparedSpellCasting[i].ID},
+			Description:    pgtype.Text{String: monster.SpellCasting.PreparedSpellCasting[i].Description},
+		})
+		if err != nil {
+			return fmt.Errorf("unable to write prepared Spellcasting %w", err)
+		}
+		for j := range len(monster.SpellCasting.PreparedSpellCasting[i].Slots) {
+			//For each spell use theres a spell, write it to spell table AND write to spell use table.
+			spellId, err := processSpellGeneric(ctx, queries, monster, monster.SpellCasting.PreparedSpellCasting[i].Slots[j].Spell)
+			if err != nil {
+				return fmt.Errorf("unable to process spell to db %w", err)
+			}
+			err = queries.InsertPreparedSlots(ctx, writeMonsters.InsertPreparedSlotsParams{
+				PreparedSpellCastingID: pgtype.Int4{Int32: int32(castingId)},
+				SpellID:                pgtype.Text{String: spellId},
+				Level:                  pgtype.Text{String: monster.SpellCasting.PreparedSpellCasting[i].Slots[j].Level},
+			})
+		}
+	}
+	return nil
+}
+
+func ProcessSpontaneousMagic(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
+	// -- name: InsertSpontaneousSpellCasting :one
+	for i := range len(monster.SpellCasting.SpontaneousSpellCasting) {
+		spellCastingId, err := queries.InsertSpontaneousSpells(ctx, writeMonsters.InsertSpontaneousSpellsParams{
+			MonsterID: pgtype.Int4{Int32: id},
+			Dc:        pgtype.Int4{Int32: int32(monster.SpellCasting.SpontaneousSpellCasting[i].DC)},
+			IDString:  pgtype.Text{String: monster.SpellCasting.SpontaneousSpellCasting[i].ID},
+			Tradition: pgtype.Text{String: monster.SpellCasting.SpontaneousSpellCasting[i].Tradition},
+		})
+		if err != nil {
+			return fmt.Errorf("failed to insertSpontaneousSpells %w", err)
+		}
+		for j := range len(monster.SpellCasting.SpontaneousSpellCasting[i].SpellList) {
+			spellID, err := processSpellGeneric(ctx, queries, monster, monster.SpellCasting.SpontaneousSpellCasting[i].SpellList[j])
+			if err != nil {
+				return fmt.Errorf("failed to process generic spell %w", err)
+			}
+			err = queries.InsertSpontaneousSpellList(ctx, writeMonsters.InsertSpontaneousSpellListParams{
+				SpontaneousSpellCastingID: pgtype.Int4{Int32: spellCastingId},
+				SpellID:                   pgtype.Text{String: spellID},
+			})
+			if err != nil {
+				return fmt.Errorf("failed to insert spell List stuff %w", err)
+			}
+		}
+		for k := range len(monster.SpellCasting.SpontaneousSpellCasting[i].Slots) {
+			err := queries.InsertSpontaneousSpellSlots(ctx, writeMonsters.InsertSpontaneousSpellSlotsParams{
+				SpontaneousSpellCastingID: pgtype.Int4{Int32: spellCastingId},
+				Level:                     pgtype.Text{String: monster.SpellCasting.SpontaneousSpellCasting[i].Slots[k].Level},
+				Casts:                     pgtype.Text{String: monster.SpellCasting.SpontaneousSpellCasting[i].Slots[k].Casts},
+			})
+			if err != nil {
+				return fmt.Errorf("failed to assign spell slots in spontaneous block %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+func ProcessMagic(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
+	if monster.SpellCasting.InnateSpellCasting != nil {
+		err := ProcessInnateMagic(ctx, queries, monster, id)
+		if err != nil {
+			return fmt.Errorf("failed to parse an innate spellcasting Block %w", err)
+		}
+	}
+	if monster.SpellCasting.FocusSpellCasting != nil {
+		err := ProcessFocusMagic(ctx, queries, monster, id)
+		if err != nil {
+			return fmt.Errorf("failed to parse a focus spellcasting block %w", err)
+		}
+	}
+	if monster.SpellCasting.PreparedSpellCasting != nil {
+		err := ProcessPreparedMagic(ctx, queries, monster, id)
+		if err != nil {
+			return fmt.Errorf("failed to process a prepared spellcasting %w", err)
+		}
+	}
+	if monster.SpellCasting.SpontaneousSpellCasting != nil {
+		err := ProcessSpontaneousMagic(ctx, queries, monster, id)
+		if err != nil {
+			return fmt.Errorf("failed to process a spontaneous spellcasting block %w", err)
+		}
+	}
+	return nil
+}
+
+func ProcessItems(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
+
+	for i := range len(monster.Inventory) {
+		itemId, err := queries.InsertItems(ctx, writeMonsters.InsertItemsParams{
+			MonsterID:   pgtype.Int4{Int32: id},
+			Name:        pgtype.Text{String: monster.Inventory[i].Name},
+			Category:    pgtype.Text{String: monster.Inventory[i].Category},
+			Description: pgtype.Text{String: monster.Inventory[i].Description},
+			Level:       pgtype.Text{String: monster.Inventory[i].Level},
+			Rarity:      pgtype.Text{String: monster.Inventory[i].Rarity},
+			Bulk:        pgtype.Text{String: monster.Inventory[i].Bulk},
+			Quantity:    pgtype.Text{String: monster.Inventory[i].Quantity},
+		})
+		if err != nil {
+			return fmt.Errorf("failed to write item %w", err)
+		}
+		for 
 	}
 	return nil
 }
@@ -536,6 +798,15 @@ func WriteMonsterToDb(monster structs.Monster, cfg config.Config) error {
 	if err != nil {
 		logger.Log.Error("Failed to process Attack ", "err", err.Error())
 	}
+	err = ProcessMagic(ctx, queries, monster, id)
+	if err != nil {
+		logger.Log.Error("Failed to process spellcasting blocks ", "err", err.Error())
+	}
+
+	err = ProcessItems(ctx, queries, monster, id)
+	if err != nil {
+		logger.Log.Error(("failed to process Items"))
+	}
 
 	err = tx.Commit(ctx)
 	if err != nil {
@@ -567,7 +838,7 @@ func LoadEachJSON(cfg config.Config, path string) error {
 
 		err = WriteMonsterToDb(monster, cfg)
 		if err != nil {
-			logger.Log.Error(fmt.Sprintf("Unable to  write %s, to db %w", monster.Name, err))
+			logger.Log.Error(fmt.Sprintf("Unable to  write %s, to db %w", monster.Name, err.Error()))
 		}
 		// err = parseJSON(data)
 		// if err != nil {
