@@ -4199,6 +4199,22 @@ func TestParseCoreData(t *testing.T) {
 
 }
 
+func TestStringCleaner(t *testing.T) {
+	testCases := []string{
+		"<p>A vine appears from thin air, flicking from your hand and lashing itself to the target. Attempt a spell attack roll against the target.</p>\n<p>@UUID[Compendium.pf2e.spell-effects.Item.Spell Effect: Tangle Vine]</p>\n<hr />\n<p><strong>Critical Success</strong> The target gains the @UUID[Compendium.pf2e.conditionitems.Item.Immobilized] condition and takes a –10-foot circumstance penalty to its Speeds for 1 round. It can attempt to @UUID[Compendium.pf2e.actionspf2e.Item.Escape] against your spell DC to remove the penalty and the immobilized condition.</p>\n<p><strong>Success</strong> The target takes a –10-foot circumstance penalty to its Speeds for 1 round. It can attempt to Escape against your spell DC to remove the penalty.</p>\n<p><strong>Failure</strong> The target is unaffected.</p>\n<hr />\n<p><strong>Heightened (2nd)</strong> The effects last for 2 rounds.</p>\n<p><strong>Heightened (4th)</strong> The effects last for 1 minute.</p>",
+		"<p>30 feet.</p>\n<p>Plant objects and creatures in the emanation can't regain Hit Points unless the effect that attempts to heal them counteracts the aura, which has a counteract rank of 6 and a counteract DC of 32.</p>\n<p>A primal warden of Zibik can spend 1 action to reverse this aura; it becomes an aura of renewal with the healing trait, instead doubling the number of Hit Points of any healing effect received by a plant creature in the emanation.</p>"}
+	expected := []string{
+		"A vine appears from thin air, flicking from your hand and lashing itself to the target. Attempt a spell attack roll against the target.\nSpell Effect: Tangle Vine \n\nCritical Success The target gains the Immobilized condition and takes a –10-foot circumstance penalty to its Speeds for 1 round. It can attempt to Escape against your spell DC to remove the penalty and the immobilized condition.\nSuccess The target takes a –10-foot circumstance penalty to its Speeds for 1 round. It can attempt to Escape against your spell DC to remove the penalty.\nFailure The target is unaffected.\n\nHeightened (2nd) The effects last for 2 rounds.\nHeightened (4th) The effects last for 1 minute.",
+		"30 feet.\nPlant objects and creatures in the emanation can't regain Hit Points unless the effect that attempts to heal them counteracts the aura, which has a counteract rank of 6 and a counteract DC of 32.\nA primal warden of Zibik can spend 1 action to reverse this aura; it becomes an aura of renewal with the healing trait, instead doubling the number of Hit Points of any healing effect received by a plant creature in the emanation."}
+
+	for i := range len(testCases) {
+		result := StringCleaner(testCases[i])
+		if expected[i] != result {
+			t.Errorf("Expected: \n%s \n%s", expected[i], result)
+		}
+	}
+}
+
 // func TestLoadEachJson(t *testing.T) {
 // 	data, err := LoadJSON("forest-dragon-adult-spellcaster.json")
 // 	if err != nil {

@@ -179,7 +179,7 @@ func GetListofJSON(dir string) ([]string, error) {
 func ParseFoundJson(data string) structs.Monster {
 	monster := ParseCoreData(string(data))
 	//Parse items and pass it just the items list then attach the return values to monster.
-	ItemsList := gjson.Get(string(data), "items").String()
+	ItemsList := gjson.Get(string(data), "items")
 	var spells []structs.Spell
 	monster.FreeActions, monster.Actions, monster.Reactions, monster.Passives, monster.SpellCasting, spells, monster.Melees, monster.Ranged, monster.Inventory = ParseItems(ItemsList)
 
@@ -194,27 +194,27 @@ func PrepMonsterParams(monster structs.Monster) writeMonsters.InsertMonsterParam
 		Name:             monster.Name,
 		Level:            pgtype.Text{String: monster.Level, Valid: true},
 		FocusPoints:      pgtype.Int4{Int32: int32(monster.FocusPoints), Valid: true},
-		TraitsRarity:     pgtype.Text{String: monster.Traits.Rarity},
-		TraitsSize:       pgtype.Text{String: monster.Traits.Size},
-		AttrStr:          pgtype.Text{String: monster.Attributes.Str},
-		AttrDex:          pgtype.Text{String: monster.Attributes.Dex},
-		AttrCon:          pgtype.Text{String: monster.Attributes.Con},
-		AttrWis:          pgtype.Text{String: monster.Attributes.Wis},
-		AttrInt:          pgtype.Text{String: monster.Attributes.Int},
-		AttrCha:          pgtype.Text{String: monster.Attributes.Cha},
-		SavesFort:        pgtype.Text{String: monster.Saves.Fort},
-		SavesFortDetail:  pgtype.Text{String: monster.Saves.FortDetail},
-		SavesRef:         pgtype.Text{String: monster.Saves.Ref},
-		SavesRefDetail:   pgtype.Text{String: monster.Saves.RefDetail},
-		SavesWill:        pgtype.Text{String: monster.Saves.Will},
-		SavesWillDetail:  pgtype.Text{String: monster.Saves.WillDetail},
-		SavesException:   pgtype.Text{String: monster.Saves.Exception},
-		AcValue:          pgtype.Text{String: monster.AClass.Value},
-		AcDetail:         pgtype.Text{String: monster.AClass.Detail},
-		HpValue:          pgtype.Int4{Int32: int32(monster.HP.Value)},
-		HpDetail:         pgtype.Text{String: monster.HP.Detail},
-		PerceptionMod:    pgtype.Text{String: monster.Perception.Mod},
-		PerceptionDetail: pgtype.Text{String: monster.Perception.Detail},
+		TraitsRarity:     pgtype.Text{String: monster.Traits.Rarity, Valid: true},
+		TraitsSize:       pgtype.Text{String: monster.Traits.Size, Valid: true},
+		AttrStr:          pgtype.Text{String: monster.Attributes.Str, Valid: true},
+		AttrDex:          pgtype.Text{String: monster.Attributes.Dex, Valid: true},
+		AttrCon:          pgtype.Text{String: monster.Attributes.Con, Valid: true},
+		AttrWis:          pgtype.Text{String: monster.Attributes.Wis, Valid: true},
+		AttrInt:          pgtype.Text{String: monster.Attributes.Int, Valid: true},
+		AttrCha:          pgtype.Text{String: monster.Attributes.Cha, Valid: true},
+		SavesFort:        pgtype.Text{String: monster.Saves.Fort, Valid: true},
+		SavesFortDetail:  pgtype.Text{String: monster.Saves.FortDetail, Valid: true},
+		SavesRef:         pgtype.Text{String: monster.Saves.Ref, Valid: true},
+		SavesRefDetail:   pgtype.Text{String: monster.Saves.RefDetail, Valid: true},
+		SavesWill:        pgtype.Text{String: monster.Saves.Will, Valid: true},
+		SavesWillDetail:  pgtype.Text{String: monster.Saves.WillDetail, Valid: true},
+		SavesException:   pgtype.Text{String: monster.Saves.Exception, Valid: true},
+		AcValue:          pgtype.Text{String: monster.AClass.Value, Valid: true},
+		AcDetail:         pgtype.Text{String: monster.AClass.Detail, Valid: true},
+		HpValue:          pgtype.Int4{Int32: int32(monster.HP.Value), Valid: true},
+		HpDetail:         pgtype.Text{String: monster.HP.Detail, Valid: true},
+		PerceptionMod:    pgtype.Text{String: monster.Perception.Mod, Valid: true},
+		PerceptionDetail: pgtype.Text{String: monster.Perception.Detail, Valid: true},
 	}
 	return monsterParams
 }
@@ -239,10 +239,10 @@ func ProcessWeakAndResist(ctx context.Context, queries *writeMonsters.Queries, m
 
 	for i := 0; i < len(monster.Weaknesses); i++ {
 		DamageModifierID, err := queries.InsertMonsterDamageModifier(ctx, writeMonsters.InsertMonsterDamageModifierParams{
-			MonsterID:        pgtype.Int4{Int32: id},
-			ModifierCategory: pgtype.Text{String: "Weakness"},
+			MonsterID:        pgtype.Int4{Int32: id, Valid: true},
+			ModifierCategory: pgtype.Text{String: "weakness", Valid: true},
 			Value:            pgtype.Int4{Int32: int32(monster.Weaknesses[i].Value), Valid: true},
-			DamageType:       pgtype.Text{String: monster.Weaknesses[i].Type},
+			DamageType:       pgtype.Text{String: monster.Weaknesses[i].Type, Valid: true},
 		})
 		if err != nil {
 			return fmt.Errorf("failed to add damage modifier to DB %w", err)
@@ -251,8 +251,8 @@ func ProcessWeakAndResist(ctx context.Context, queries *writeMonsters.Queries, m
 		if len(monster.Weaknesses[i].Exceptions) > 0 {
 			for j := 0; j < len(monster.Weaknesses[i].Exceptions); j++ {
 				err = queries.InsertMonsterModifierExceptions(ctx, writeMonsters.InsertMonsterModifierExceptionsParams{
-					ModifierID: pgtype.Int4{Int32: DamageModifierID},
-					Exception:  pgtype.Text{String: monster.Weaknesses[i].Exceptions[j]},
+					ModifierID: pgtype.Int4{Int32: DamageModifierID, Valid: true},
+					Exception:  pgtype.Text{String: monster.Weaknesses[i].Exceptions[j], Valid: true},
 				})
 			}
 		}
@@ -263,8 +263,8 @@ func ProcessWeakAndResist(ctx context.Context, queries *writeMonsters.Queries, m
 		if len(monster.Weaknesses[i].Double) > 0 {
 			for k := 0; k < len(monster.Weaknesses[i].Double); k++ {
 				err = queries.InsertMonsterModifierExceptions(ctx, writeMonsters.InsertMonsterModifierExceptionsParams{
-					ModifierID: pgtype.Int4{Int32: DamageModifierID},
-					Exception:  pgtype.Text{String: monster.Weaknesses[i].Double[k]},
+					ModifierID: pgtype.Int4{Int32: DamageModifierID, Valid: true},
+					Exception:  pgtype.Text{String: monster.Weaknesses[i].Double[k], Valid: true},
 				})
 			}
 		}
@@ -274,32 +274,32 @@ func ProcessWeakAndResist(ctx context.Context, queries *writeMonsters.Queries, m
 	}
 	for i := 0; i < len(monster.Resistances); i++ {
 		DamageModifierID, err := queries.InsertMonsterDamageModifier(ctx, writeMonsters.InsertMonsterDamageModifierParams{
-			MonsterID:        pgtype.Int4{Int32: id},
-			ModifierCategory: pgtype.Text{String: "Resistance"},
-			Value:            pgtype.Int4{Int32: int32(monster.Resistances[i].Value)},
-			DamageType:       pgtype.Text{String: monster.Resistances[i].Type},
+			MonsterID:        pgtype.Int4{Int32: id, Valid: true},
+			ModifierCategory: pgtype.Text{String: "resistance", Valid: true},
+			Value:            pgtype.Int4{Int32: int32(monster.Resistances[i].Value), Valid: true},
+			DamageType:       pgtype.Text{String: monster.Resistances[i].Type, Valid: true},
 		})
 		if err != nil {
-			return fmt.Errorf("failed to add damage modifier to DB %w", err)
+			return fmt.Errorf("failed to add damage modifier to DB Resistances  %w", err)
 		}
 		// if exceptions len > 0
 		if len(monster.Resistances[i].Exceptions) > 0 {
 			for j := 0; j < len(monster.Resistances[i].Exceptions); j++ {
 				err = queries.InsertMonsterModifierExceptions(ctx, writeMonsters.InsertMonsterModifierExceptionsParams{
-					ModifierID: pgtype.Int4{Int32: DamageModifierID},
-					Exception:  pgtype.Text{String: monster.Resistances[i].Exceptions[j]},
+					ModifierID: pgtype.Int4{Int32: DamageModifierID, Valid: true},
+					Exception:  pgtype.Text{String: monster.Resistances[i].Exceptions[j], Valid: true},
 				})
 			}
 		}
 		if err != nil {
-			return fmt.Errorf("failed to add damage modifier to DB %w", err)
+			return fmt.Errorf("failed to add damage modifier to DB Exceptions %w", err)
 		}
 		// if exceptions len > 0
 		if len(monster.Resistances[i].Double) > 0 {
 			for k := 0; k < len(monster.Resistances[i].Double); k++ {
 				err = queries.InsertMonsterModifierExceptions(ctx, writeMonsters.InsertMonsterModifierExceptionsParams{
-					ModifierID: pgtype.Int4{Int32: DamageModifierID},
-					Exception:  pgtype.Text{String: monster.Resistances[i].Double[k]},
+					ModifierID: pgtype.Int4{Int32: DamageModifierID, Valid: true},
+					Exception:  pgtype.Text{String: monster.Resistances[i].Double[k], Valid: true},
 				})
 			}
 		}
@@ -313,8 +313,8 @@ func ProcessWeakAndResist(ctx context.Context, queries *writeMonsters.Queries, m
 func ProcessLanguages(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
 	for i := 0; i < len(monster.Languages); i++ {
 		err := queries.InsertMonsterLanguages(ctx, writeMonsters.InsertMonsterLanguagesParams{
-			MonsterID: pgtype.Int4{Int32: id},
-			Language:  pgtype.Text{String: monster.Languages[i]},
+			MonsterID: pgtype.Int4{Int32: id, Valid: true},
+			Language:  pgtype.Text{String: monster.Languages[i], Valid: true},
 		})
 		if err != nil {
 			return fmt.Errorf("failed to write language %w", err)
@@ -324,13 +324,13 @@ func ProcessLanguages(ctx context.Context, queries *writeMonsters.Queries, monst
 }
 
 func ProcessSenses(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
-	for i := 0; i < len(monster.Senses); i++ {
+	for i := range len(monster.Senses) {
 		err := queries.InsertMonsterSenses(ctx, writeMonsters.InsertMonsterSensesParams{
-			MonsterID: pgtype.Int4{Int32: id},
-			Name:      pgtype.Text{String: monster.Senses[i].Name},
-			Range:     pgtype.Text{String: monster.Senses[i].Range},
-			Acuity:    pgtype.Text{String: monster.Senses[i].Acuity},
-			Detail:    pgtype.Text{String: monster.Senses[i].Detail},
+			MonsterID: pgtype.Int4{Int32: id, Valid: true},
+			Name:      pgtype.Text{String: monster.Senses[i].Name, Valid: true},
+			Range:     pgtype.Text{String: monster.Senses[i].Range, Valid: true},
+			Acuity:    pgtype.Text{String: monster.Senses[i].Acuity, Valid: true},
+			Detail:    pgtype.Text{String: monster.Senses[i].Detail, Valid: true},
 		})
 		if err != nil {
 			return fmt.Errorf("unable to write sense to DB %w", err)
@@ -343,9 +343,9 @@ func ProcessMovements(ctx context.Context, queries *writeMonsters.Queries, monst
 	for i := 0; i < len(monster.Movements); i++ {
 		err := queries.InsertMonsterMovements(ctx, writeMonsters.InsertMonsterMovementsParams{
 			MonsterID:    pgtype.Int4{Int32: id},
-			MovementType: pgtype.Text{String: monster.Movements[i].Type},
-			Speed:        pgtype.Text{String: monster.Movements[i].Speed},
-			Notes:        pgtype.Text{String: monster.Movements[i].Notes},
+			MovementType: pgtype.Text{String: monster.Movements[i].Type, Valid: true},
+			Speed:        pgtype.Text{String: monster.Movements[i].Speed, Valid: true},
+			Notes:        pgtype.Text{String: monster.Movements[i].Notes, Valid: true},
 		})
 		if err != nil {
 			return fmt.Errorf("failed to write Movements to DB %w", err)
@@ -357,23 +357,23 @@ func ProcessMovements(ctx context.Context, queries *writeMonsters.Queries, monst
 func ProcessSkills(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
 	for i := 0; i < len(monster.Skills); i++ {
 		skillId, err := queries.InsertMonsterSkills(ctx, writeMonsters.InsertMonsterSkillsParams{
-			MonsterID: pgtype.Int4{Int32: id},
-			Name:      pgtype.Text{String: monster.Skills[i].Name},
-			Value:     pgtype.Int4{Int32: int32(monster.Skills[i].Value)},
+			MonsterID: pgtype.Int4{Int32: id, Valid: true},
+			Name:      pgtype.Text{String: monster.Skills[i].Name, Valid: true},
+			Value:     pgtype.Int4{Int32: int32(monster.Skills[i].Value), Valid: true},
 		})
 		if err != nil {
-			return fmt.Errorf("Unable to write skill %w", err)
+			return fmt.Errorf("unable to write skill %w", err)
 		}
 		if len(monster.Skills[i].Specials) > 0 {
 			for j := 0; j < len(monster.Skills[i].Specials); j++ {
 				err := queries.InsertMonsterSkillSpecials(ctx, writeMonsters.InsertMonsterSkillSpecialsParams{
-					SkillID:    pgtype.Int4{Int32: skillId},
-					Value:      pgtype.Int4{Int32: int32(monster.Skills[i].Specials[j].Value)},
-					Label:      pgtype.Text{String: monster.Skills[i].Specials[j].Label},
+					SkillID:    pgtype.Int4{Int32: skillId, Valid: true},
+					Value:      pgtype.Int4{Int32: int32(monster.Skills[i].Specials[j].Value), Valid: true},
+					Label:      pgtype.Text{String: monster.Skills[i].Specials[j].Label, Valid: true},
 					Predicates: monster.Skills[i].Specials[j].Predicates,
 				})
 				if err != nil {
-					return fmt.Errorf("Unable to write skill specials %w", err)
+					return fmt.Errorf("unable to write skill specials %w", err)
 				}
 			}
 		}
@@ -384,21 +384,21 @@ func ProcessSkills(ctx context.Context, queries *writeMonsters.Queries, monster 
 func ProcessAction(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
 	for i := 0; i < len(monster.Actions); i++ {
 		actionId, err := queries.InsertMonsterAction(ctx, writeMonsters.InsertMonsterActionParams{
-			MonsterID:  pgtype.Int4{Int32: id},
-			ActionType: pgtype.Text{String: "action"},
-			Name:       pgtype.Text{String: monster.Actions[i].Name},
-			Text:       pgtype.Text{String: monster.Actions[i].Text},
-			Actions:    pgtype.Text{String: monster.Actions[i].Actions},
-			Category:   pgtype.Text{String: monster.Actions[i].Category},
-			Rarity:     pgtype.Text{String: monster.Actions[i].Rarity},
+			MonsterID:  pgtype.Int4{Int32: id, Valid: true},
+			ActionType: pgtype.Text{String: "action", Valid: true},
+			Name:       pgtype.Text{String: monster.Actions[i].Name, Valid: true},
+			Text:       pgtype.Text{String: monster.Actions[i].Text, Valid: true},
+			Actions:    pgtype.Text{String: monster.Actions[i].Actions, Valid: true},
+			Category:   pgtype.Text{String: monster.Actions[i].Category, Valid: true},
+			Rarity:     pgtype.Text{String: monster.Actions[i].Rarity, Valid: true},
 		})
 		if err != nil {
 			return fmt.Errorf("unable to process Monster Action %w", err)
 		}
 		for j := 0; j < len(monster.Actions[i].Traits); j++ {
 			err := queries.InsertMonsterActionTraits(ctx, writeMonsters.InsertMonsterActionTraitsParams{
-				MonsterActionID: pgtype.Int4{Int32: actionId},
-				Trait:           pgtype.Text{String: monster.Actions[i].Traits[j]},
+				MonsterActionID: pgtype.Int4{Int32: actionId, Valid: true},
+				Trait:           pgtype.Text{String: monster.Actions[i].Traits[j], Valid: true},
 			})
 			if err != nil {
 				return fmt.Errorf("unable to Process Traits for Actions %w", err)
@@ -411,20 +411,20 @@ func ProcessAction(ctx context.Context, queries *writeMonsters.Queries, monster 
 func ProcessReaction(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
 	for i := 0; i < len(monster.Reactions); i++ {
 		actionId, err := queries.InsertMonsterAction(ctx, writeMonsters.InsertMonsterActionParams{
-			MonsterID:  pgtype.Int4{Int32: id},
-			ActionType: pgtype.Text{String: "Reaction"},
-			Name:       pgtype.Text{String: monster.Reactions[i].Name},
-			Text:       pgtype.Text{String: monster.Reactions[i].Text},
-			Category:   pgtype.Text{String: monster.Reactions[i].Category},
-			Rarity:     pgtype.Text{String: monster.Reactions[i].Rarity},
+			MonsterID:  pgtype.Int4{Int32: id, Valid: true},
+			ActionType: pgtype.Text{String: "reaction", Valid: true},
+			Name:       pgtype.Text{String: monster.Reactions[i].Name, Valid: true},
+			Text:       pgtype.Text{String: monster.Reactions[i].Text, Valid: true},
+			Category:   pgtype.Text{String: monster.Reactions[i].Category, Valid: true},
+			Rarity:     pgtype.Text{String: monster.Reactions[i].Rarity, Valid: true},
 		})
 		if err != nil {
 			return fmt.Errorf("unable to process Monster Reaction %w", err)
 		}
 		for j := 0; j < len(monster.Reactions[i].Traits); j++ {
 			err := queries.InsertMonsterActionTraits(ctx, writeMonsters.InsertMonsterActionTraitsParams{
-				MonsterActionID: pgtype.Int4{Int32: actionId},
-				Trait:           pgtype.Text{String: monster.Reactions[i].Traits[j]},
+				MonsterActionID: pgtype.Int4{Int32: actionId, Valid: true},
+				Trait:           pgtype.Text{String: monster.Reactions[i].Traits[j], Valid: true},
 			})
 			if err != nil {
 				return fmt.Errorf("unable to Process Traits for Reaction %w", err)
@@ -437,21 +437,21 @@ func ProcessReaction(ctx context.Context, queries *writeMonsters.Queries, monste
 func ProcessPassive(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
 	for i := 0; i < len(monster.Passives); i++ {
 		actionId, err := queries.InsertMonsterAction(ctx, writeMonsters.InsertMonsterActionParams{
-			MonsterID:  pgtype.Int4{Int32: id},
-			ActionType: pgtype.Text{String: "Passive"},
-			Name:       pgtype.Text{String: monster.Passives[i].Name},
-			Text:       pgtype.Text{String: monster.Passives[i].Text},
-			Category:   pgtype.Text{String: monster.Passives[i].Category},
-			Rarity:     pgtype.Text{String: monster.Passives[i].Rarity},
-			Dc:         pgtype.Text{String: monster.Passives[i].DC},
+			MonsterID:  pgtype.Int4{Int32: id, Valid: true},
+			ActionType: pgtype.Text{String: "passive", Valid: true},
+			Name:       pgtype.Text{String: monster.Passives[i].Name, Valid: true},
+			Text:       pgtype.Text{String: monster.Passives[i].Text, Valid: true},
+			Category:   pgtype.Text{String: monster.Passives[i].Category, Valid: true},
+			Rarity:     pgtype.Text{String: monster.Passives[i].Rarity, Valid: true},
+			Dc:         pgtype.Text{String: monster.Passives[i].DC, Valid: true},
 		})
 		if err != nil {
 			return fmt.Errorf("unable to process Monster Passive %w", err)
 		}
 		for j := 0; j < len(monster.Passives[i].Traits); j++ {
 			err := queries.InsertMonsterActionTraits(ctx, writeMonsters.InsertMonsterActionTraitsParams{
-				MonsterActionID: pgtype.Int4{Int32: actionId},
-				Trait:           pgtype.Text{String: monster.Passives[i].Traits[j]},
+				MonsterActionID: pgtype.Int4{Int32: actionId, Valid: true},
+				Trait:           pgtype.Text{String: monster.Passives[i].Traits[j], Valid: true},
 			})
 			if err != nil {
 				return fmt.Errorf("unable to Process Traits for Passive %w", err)
@@ -464,12 +464,12 @@ func ProcessPassive(ctx context.Context, queries *writeMonsters.Queries, monster
 func ProcessAttacks(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
 	for i := range len(monster.Melees) {
 		attackID, err := queries.InsertMonsterAttacks(ctx, writeMonsters.InsertMonsterAttacksParams{
-			MonsterID:           pgtype.Int4{Int32: id},
-			AttackCategory:      pgtype.Text{String: "melee"},
-			Name:                pgtype.Text{String: monster.Melees[i].Name},
-			AttackType:          pgtype.Text{String: monster.Melees[i].Type},
-			ToHitBonus:          pgtype.Text{String: monster.Melees[i].ToHitBonus},
-			EffectsCustomString: pgtype.Text{String: monster.Melees[i].Effects.CustomString},
+			MonsterID:           pgtype.Int4{Int32: id, Valid: true},
+			AttackCategory:      pgtype.Text{String: "melee", Valid: true},
+			Name:                pgtype.Text{String: monster.Melees[i].Name, Valid: true},
+			AttackType:          pgtype.Text{String: monster.Melees[i].Type, Valid: true},
+			ToHitBonus:          pgtype.Text{String: monster.Melees[i].ToHitBonus, Valid: true},
+			EffectsCustomString: pgtype.Text{String: monster.Melees[i].Effects.CustomString, Valid: true},
 			EffectsValues:       monster.Melees[i].Effects.Value,
 		})
 		if err != nil {
@@ -477,9 +477,9 @@ func ProcessAttacks(ctx context.Context, queries *writeMonsters.Queries, monster
 		}
 		for j := range len(monster.Melees[i].DamageBlocks) {
 			err = queries.InsertMonsterAttackDamageBlock(ctx, writeMonsters.InsertMonsterAttackDamageBlockParams{
-				AttackID:   pgtype.Int4{Int32: attackID},
-				DamageRoll: pgtype.Text{String: monster.Melees[i].DamageBlocks[j].DamageRoll},
-				DamageType: pgtype.Text{String: monster.Melees[i].DamageBlocks[j].DamageType},
+				AttackID:   pgtype.Int4{Int32: attackID, Valid: true},
+				DamageRoll: pgtype.Text{String: monster.Melees[i].DamageBlocks[j].DamageRoll, Valid: true},
+				DamageType: pgtype.Text{String: monster.Melees[i].DamageBlocks[j].DamageType, Valid: true},
 			})
 		}
 		if err != nil {
@@ -515,45 +515,49 @@ func ProcessAttacks(ctx context.Context, queries *writeMonsters.Queries, monster
 
 func processSpellGeneric(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, spell structs.Spell) (string, error) {
 	spellId, err := queries.InsertSpell(ctx, writeMonsters.InsertSpellParams{
-		Name:                        pgtype.Text{String: spell.Name},
-		CastLevel:                   pgtype.Text{String: spell.CastLevel},
-		SpellBaseLevel:              pgtype.Text{String: spell.SpellBaseLevel},
-		Description:                 pgtype.Text{String: spell.Description},
-		Range:                       pgtype.Text{String: spell.Range},
-		CastTime:                    pgtype.Text{String: spell.CastTime},
-		CastRequirements:            pgtype.Text{String: spell.CastRequirements},
-		Rarity:                      pgtype.Text{String: spell.Rarity},
-		AtWill:                      pgtype.Bool{Bool: spell.AtWill},
-		SpellCastingBlockLocationID: pgtype.Text{String: spell.SpellCastingBlockLocationID},
-		Uses:                        pgtype.Text{String: spell.Uses},
-		Targets:                     pgtype.Text{String: spell.Targets},
-		Ritual:                      pgtype.Bool{Bool: spell.Ritual},
+		Name:                        pgtype.Text{String: spell.Name, Valid: true},
+		CastLevel:                   pgtype.Text{String: spell.CastLevel, Valid: true},
+		SpellBaseLevel:              pgtype.Text{String: spell.SpellBaseLevel, Valid: true},
+		Description:                 pgtype.Text{String: spell.Description, Valid: true},
+		Range:                       pgtype.Text{String: spell.Range, Valid: true},
+		CastTime:                    pgtype.Text{String: spell.CastTime, Valid: true},
+		CastRequirements:            pgtype.Text{String: spell.CastRequirements, Valid: true},
+		Rarity:                      pgtype.Text{String: spell.Rarity, Valid: true},
+		AtWill:                      pgtype.Bool{Bool: spell.AtWill, Valid: true},
+		SpellCastingBlockLocationID: pgtype.Text{String: spell.SpellCastingBlockLocationID, Valid: true},
+		Uses:                        pgtype.Text{String: spell.Uses, Valid: true},
+		Targets:                     pgtype.Text{String: spell.Targets, Valid: true},
+		Ritual:                      pgtype.Bool{Bool: spell.Ritual, Valid: true},
 	})
 	if err != nil {
 		return spellId, fmt.Errorf("unable to write spell %w", err)
 	}
 	err = queries.InsertSpellArea(ctx, writeMonsters.InsertSpellAreaParams{
-		SpellID:  pgtype.Text{String: spellId},
-		AreaType: pgtype.Text{String: spell.Area.Type},
-		Value:    pgtype.Text{String: spell.Area.Value},
-		Detail:   pgtype.Text{String: spell.Area.Detail},
+		SpellID:  pgtype.Text{String: spellId, Valid: true},
+		AreaType: pgtype.Text{String: spell.Area.Type, Valid: true},
+		Value:    pgtype.Text{String: spell.Area.Value, Valid: true},
+		Detail:   pgtype.Text{String: spell.Area.Detail, Valid: true},
 	})
 	if err != nil {
 		return spellId, fmt.Errorf("unable to write spell area %w", err)
 	}
 	err = queries.InsertSpellDuration(ctx, writeMonsters.InsertSpellDurationParams{
-		SpellID:   pgtype.Text{String: spellId},
-		Sustained: pgtype.Bool{Bool: spell.Duration.Sustained},
-		Duration:  pgtype.Text{String: spell.Duration.Duration},
+		SpellID:   pgtype.Text{String: spellId, Valid: true},
+		Sustained: pgtype.Bool{Bool: spell.Duration.Sustained, Valid: true},
+		Duration:  pgtype.Text{String: spell.Duration.Duration, Valid: true},
 	})
 	if err != nil {
 		return spellId, fmt.Errorf("unable to write spell duration %w", err)
 	}
 	err = queries.InsertSpellDefences(ctx, writeMonsters.InsertSpellDefencesParams{
-		SpellID: pgtype.Text{String: spellId},
-		Save:    pgtype.Text{String: spell.Defense.Save},
-		Basic:   pgtype.Bool{Bool: spell.Defense.Basic},
+		SpellID: pgtype.Text{String: spellId, Valid: true},
+		Save:    pgtype.Text{String: spell.Defense.Save, Valid: true},
+		Basic:   pgtype.Bool{Bool: spell.Defense.Basic, Valid: true},
 	})
+	if err != nil {
+		return spellId, fmt.Errorf("failed to write spell defence block %w", err)
+	}
+
 	return spellId, nil
 }
 
@@ -561,13 +565,13 @@ func ProcessInnateMagic(ctx context.Context, queries *writeMonsters.Queries, mon
 	// -- name: InsertInnateSpellCasting :one
 	for i := range len(monster.SpellCasting.InnateSpellCasting) {
 		castingId, err := queries.InsertInnateSpellCasting(ctx, writeMonsters.InsertInnateSpellCastingParams{
-			MonsterID:      pgtype.Int4{Int32: id},
-			Dc:             pgtype.Int4{Int32: int32(monster.SpellCasting.InnateSpellCasting[i].DC)},
-			Tradition:      pgtype.Text{String: monster.SpellCasting.InnateSpellCasting[i].Tradition},
-			Mod:            pgtype.Text{String: monster.SpellCasting.InnateSpellCasting[i].Mod},
-			SpellcastingID: pgtype.Text{String: monster.SpellCasting.InnateSpellCasting[i].ID},
-			Description:    pgtype.Text{String: monster.SpellCasting.InnateSpellCasting[i].Description},
-			Name:           pgtype.Text{String: monster.SpellCasting.InnateSpellCasting[i].Name},
+			MonsterID:      pgtype.Int4{Int32: id, Valid: true},
+			Dc:             pgtype.Int4{Int32: int32(monster.SpellCasting.InnateSpellCasting[i].DC), Valid: true},
+			Tradition:      pgtype.Text{String: monster.SpellCasting.InnateSpellCasting[i].Tradition, Valid: true},
+			Mod:            pgtype.Text{String: monster.SpellCasting.InnateSpellCasting[i].Mod, Valid: true},
+			SpellcastingID: pgtype.Text{String: monster.SpellCasting.InnateSpellCasting[i].ID, Valid: true},
+			Description:    pgtype.Text{String: monster.SpellCasting.InnateSpellCasting[i].Description, Valid: true},
+			Name:           pgtype.Text{String: monster.SpellCasting.InnateSpellCasting[i].Name, Valid: true},
 		})
 		if err != nil {
 			return fmt.Errorf("unable to write innatespellcasting %w", err)
@@ -579,11 +583,14 @@ func ProcessInnateMagic(ctx context.Context, queries *writeMonsters.Queries, mon
 				return fmt.Errorf("unable to process spell to db %w", err)
 			}
 			err = queries.InsertInnateSpellUse(ctx, writeMonsters.InsertInnateSpellUseParams{
-				InnateSpellCastingID: pgtype.Int4{Int32: int32(castingId)},
-				SpellID:              pgtype.Text{String: spellId},
-				Level:                pgtype.Int4{Int32: int32(monster.SpellCasting.InnateSpellCasting[i].SpellUses[j].Level)},
-				Uses:                 pgtype.Text{String: monster.SpellCasting.InnateSpellCasting[i].SpellUses[j].Uses},
+				InnateSpellCastingID: pgtype.Int4{Int32: int32(castingId), Valid: true},
+				SpellID:              pgtype.Text{String: spellId, Valid: true},
+				Level:                pgtype.Int4{Int32: int32(monster.SpellCasting.InnateSpellCasting[i].SpellUses[j].Level), Valid: true},
+				Uses:                 pgtype.Text{String: monster.SpellCasting.InnateSpellCasting[i].SpellUses[j].Uses, Valid: true},
 			})
+			if err != nil {
+				return fmt.Errorf("unable to write innatespelluse %w", err)
+			}
 		}
 	}
 	return nil
@@ -593,14 +600,14 @@ func ProcessFocusMagic(ctx context.Context, queries *writeMonsters.Queries, mons
 	// -- name: InsertFocusSpellCasting :one
 	for i := range len(monster.SpellCasting.FocusSpellCasting) {
 		castingId, err := queries.InsertFocusSpellCasting(ctx, writeMonsters.InsertFocusSpellCastingParams{
-			MonsterID:      pgtype.Int4{Int32: id},
-			Dc:             pgtype.Int4{Int32: int32(monster.SpellCasting.FocusSpellCasting[i].DC)},
-			Tradition:      pgtype.Text{String: monster.SpellCasting.FocusSpellCasting[i].Tradition},
-			Mod:            pgtype.Text{String: monster.SpellCasting.FocusSpellCasting[i].Mod},
-			SpellcastingID: pgtype.Text{String: monster.SpellCasting.FocusSpellCasting[i].ID},
-			Description:    pgtype.Text{String: monster.SpellCasting.FocusSpellCasting[i].Description},
-			Name:           pgtype.Text{String: monster.SpellCasting.FocusSpellCasting[i].Name},
-			CastLevel:      pgtype.Text{String: monster.SpellCasting.FocusSpellCasting[i].CastLevel},
+			MonsterID:      pgtype.Int4{Int32: id, Valid: true},
+			Dc:             pgtype.Int4{Int32: int32(monster.SpellCasting.FocusSpellCasting[i].DC), Valid: true},
+			Tradition:      pgtype.Text{String: monster.SpellCasting.FocusSpellCasting[i].Tradition, Valid: true},
+			Mod:            pgtype.Text{String: monster.SpellCasting.FocusSpellCasting[i].Mod, Valid: true},
+			SpellcastingID: pgtype.Text{String: monster.SpellCasting.FocusSpellCasting[i].ID, Valid: true},
+			Description:    pgtype.Text{String: monster.SpellCasting.FocusSpellCasting[i].Description, Valid: true},
+			Name:           pgtype.Text{String: monster.SpellCasting.FocusSpellCasting[i].Name, Valid: true},
+			CastLevel:      pgtype.Text{String: monster.SpellCasting.FocusSpellCasting[i].CastLevel, Valid: true},
 		})
 		if err != nil {
 			return fmt.Errorf("unable to write focus spellcasting %w", err)
@@ -612,9 +619,12 @@ func ProcessFocusMagic(ctx context.Context, queries *writeMonsters.Queries, mons
 			}
 			// Write each spell associatation.
 			err = queries.InsertFocusSpellsCasts(ctx, writeMonsters.InsertFocusSpellsCastsParams{
-				FocusSpellCastingID: pgtype.Int4{Int32: castingId},
-				SpellID:             pgtype.Text{String: spellId},
+				FocusSpellCastingID: pgtype.Int4{Int32: castingId, Valid: true},
+				SpellID:             pgtype.Text{String: spellId, Valid: true},
 			})
+			if err != nil {
+				return fmt.Errorf("unable to write focus spell casts %w", err)
+			}
 		}
 	}
 	return nil
@@ -625,11 +635,11 @@ func ProcessPreparedMagic(ctx context.Context, queries *writeMonsters.Queries, m
 	for i := range len(monster.SpellCasting.PreparedSpellCasting) {
 		castingId, err := queries.InsertPreparedSpellCasting(ctx, writeMonsters.InsertPreparedSpellCastingParams{
 			MonsterID:      pgtype.Int4{Int32: id},
-			Dc:             pgtype.Int4{Int32: int32(monster.SpellCasting.PreparedSpellCasting[i].DC)},
-			Tradition:      pgtype.Text{String: monster.SpellCasting.PreparedSpellCasting[i].Tradition},
-			Mod:            pgtype.Text{String: monster.SpellCasting.PreparedSpellCasting[i].Mod},
-			SpellcastingID: pgtype.Text{String: monster.SpellCasting.PreparedSpellCasting[i].ID},
-			Description:    pgtype.Text{String: monster.SpellCasting.PreparedSpellCasting[i].Description},
+			Dc:             pgtype.Int4{Int32: int32(monster.SpellCasting.PreparedSpellCasting[i].DC), Valid: true},
+			Tradition:      pgtype.Text{String: monster.SpellCasting.PreparedSpellCasting[i].Tradition, Valid: true},
+			Mod:            pgtype.Text{String: monster.SpellCasting.PreparedSpellCasting[i].Mod, Valid: true},
+			SpellcastingID: pgtype.Text{String: monster.SpellCasting.PreparedSpellCasting[i].ID, Valid: true},
+			Description:    pgtype.Text{String: monster.SpellCasting.PreparedSpellCasting[i].Description, Valid: true},
 		})
 		if err != nil {
 			return fmt.Errorf("unable to write prepared Spellcasting %w", err)
@@ -641,10 +651,13 @@ func ProcessPreparedMagic(ctx context.Context, queries *writeMonsters.Queries, m
 				return fmt.Errorf("unable to process spell to db %w", err)
 			}
 			err = queries.InsertPreparedSlots(ctx, writeMonsters.InsertPreparedSlotsParams{
-				PreparedSpellCastingID: pgtype.Int4{Int32: int32(castingId)},
-				SpellID:                pgtype.Text{String: spellId},
-				Level:                  pgtype.Text{String: monster.SpellCasting.PreparedSpellCasting[i].Slots[j].Level},
+				PreparedSpellCastingID: pgtype.Int4{Int32: int32(castingId), Valid: true},
+				SpellID:                pgtype.Text{String: spellId, Valid: true},
+				Level:                  pgtype.Text{String: monster.SpellCasting.PreparedSpellCasting[i].Slots[j].Level, Valid: true},
 			})
+			if err != nil {
+				return fmt.Errorf("unable to insert prepared spell slots %w", err)
+			}
 		}
 	}
 	return nil
@@ -654,10 +667,10 @@ func ProcessSpontaneousMagic(ctx context.Context, queries *writeMonsters.Queries
 	// -- name: InsertSpontaneousSpellCasting :one
 	for i := range len(monster.SpellCasting.SpontaneousSpellCasting) {
 		spellCastingId, err := queries.InsertSpontaneousSpells(ctx, writeMonsters.InsertSpontaneousSpellsParams{
-			MonsterID: pgtype.Int4{Int32: id},
-			Dc:        pgtype.Int4{Int32: int32(monster.SpellCasting.SpontaneousSpellCasting[i].DC)},
-			IDString:  pgtype.Text{String: monster.SpellCasting.SpontaneousSpellCasting[i].ID},
-			Tradition: pgtype.Text{String: monster.SpellCasting.SpontaneousSpellCasting[i].Tradition},
+			MonsterID: pgtype.Int4{Int32: id, Valid: true},
+			Dc:        pgtype.Int4{Int32: int32(monster.SpellCasting.SpontaneousSpellCasting[i].DC), Valid: true},
+			IDString:  pgtype.Text{String: monster.SpellCasting.SpontaneousSpellCasting[i].ID, Valid: true},
+			Tradition: pgtype.Text{String: monster.SpellCasting.SpontaneousSpellCasting[i].Tradition, Valid: true},
 		})
 		if err != nil {
 			return fmt.Errorf("failed to insertSpontaneousSpells %w", err)
@@ -668,8 +681,8 @@ func ProcessSpontaneousMagic(ctx context.Context, queries *writeMonsters.Queries
 				return fmt.Errorf("failed to process generic spell %w", err)
 			}
 			err = queries.InsertSpontaneousSpellList(ctx, writeMonsters.InsertSpontaneousSpellListParams{
-				SpontaneousSpellCastingID: pgtype.Int4{Int32: spellCastingId},
-				SpellID:                   pgtype.Text{String: spellID},
+				SpontaneousSpellCastingID: pgtype.Int4{Int32: spellCastingId, Valid: true},
+				SpellID:                   pgtype.Text{String: spellID, Valid: true},
 			})
 			if err != nil {
 				return fmt.Errorf("failed to insert spell List stuff %w", err)
@@ -677,9 +690,9 @@ func ProcessSpontaneousMagic(ctx context.Context, queries *writeMonsters.Queries
 		}
 		for k := range len(monster.SpellCasting.SpontaneousSpellCasting[i].Slots) {
 			err := queries.InsertSpontaneousSpellSlots(ctx, writeMonsters.InsertSpontaneousSpellSlotsParams{
-				SpontaneousSpellCastingID: pgtype.Int4{Int32: spellCastingId},
-				Level:                     pgtype.Text{String: monster.SpellCasting.SpontaneousSpellCasting[i].Slots[k].Level},
-				Casts:                     pgtype.Text{String: monster.SpellCasting.SpontaneousSpellCasting[i].Slots[k].Casts},
+				SpontaneousSpellCastingID: pgtype.Int4{Int32: spellCastingId, Valid: true},
+				Level:                     pgtype.Text{String: monster.SpellCasting.SpontaneousSpellCasting[i].Slots[k].Level, Valid: true},
+				Casts:                     pgtype.Text{String: monster.SpellCasting.SpontaneousSpellCasting[i].Slots[k].Casts, Valid: true},
 			})
 			if err != nil {
 				return fmt.Errorf("failed to assign spell slots in spontaneous block %w", err)
@@ -717,28 +730,43 @@ func ProcessMagic(ctx context.Context, queries *writeMonsters.Queries, monster s
 	return nil
 }
 
-// func ProcessItems(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
+func ProcessItems(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
 
-// 	for i := range len(monster.Inventory) {
-// 		itemId, err := queries.InsertItems(ctx, writeMonsters.InsertItemsParams{
-// 			MonsterID:   pgtype.Int4{Int32: id},
-// 			Name:        pgtype.Text{String: monster.Inventory[i].Name},
-// 			Category:    pgtype.Text{String: monster.Inventory[i].Category},
-// 			Description: pgtype.Text{String: monster.Inventory[i].Description},
-// 			Level:       pgtype.Text{String: monster.Inventory[i].Level},
-// 			Rarity:      pgtype.Text{String: monster.Inventory[i].Rarity},
-// 			Bulk:        pgtype.Text{String: monster.Inventory[i].Bulk},
-// 			Quantity:    pgtype.Text{String: monster.Inventory[i].Quantity},
-// 		})
-// 		if err != nil {
-// 			return fmt.Errorf("failed to write item %w", err)
-// 		}
-// 		for
-// 	}
-// 	return nil
-// }
+	for i := range len(monster.Inventory) {
+		itemId, err := queries.InsertItems(ctx, writeMonsters.InsertItemsParams{
+			MonsterID:   pgtype.Int4{Int32: id, Valid: true},
+			Name:        pgtype.Text{String: monster.Inventory[i].Name, Valid: true},
+			Category:    pgtype.Text{String: monster.Inventory[i].Category, Valid: true},
+			Description: pgtype.Text{String: monster.Inventory[i].Description, Valid: true},
+			Level:       pgtype.Text{String: monster.Inventory[i].Level, Valid: true},
+			Rarity:      pgtype.Text{String: monster.Inventory[i].Rarity, Valid: true},
+			Bulk:        pgtype.Text{String: monster.Inventory[i].Bulk, Valid: true},
+			Quantity:    pgtype.Text{String: monster.Inventory[i].Quantity, Valid: true},
+			PricePer:    pgtype.Int4{Int32: int32(monster.Inventory[i].Price.Per), Valid: true},
+			PriceCp:     pgtype.Int4{Int32: int32(monster.Inventory[i].Price.CP), Valid: true},
+			PriceSp:     pgtype.Int4{Int32: int32(monster.Inventory[i].Price.SP), Valid: true},
+			PriceGp:     pgtype.Int4{Int32: int32(monster.Inventory[i].Price.GP), Valid: true},
+			PricePp:     pgtype.Int4{Int32: int32(monster.Inventory[i].Price.PP), Valid: true},
+		})
+		if err != nil {
+			return fmt.Errorf("failed to write item %w", err)
+		}
+		// write traits.
+		for j := range len(monster.Inventory[i].Traits) {
+			err := queries.InsertItemTraits(ctx, writeMonsters.InsertItemTraitsParams{
+				ItemID: pgtype.Text{String: itemId},
+				Trait:  pgtype.Text{String: monster.Inventory[i].Traits[j]},
+			})
+			if err != nil {
+				return fmt.Errorf("failed to write item traits %w", err)
+			}
+		}
+	}
+	return nil
+}
 
 func WriteMonsterToDb(monster structs.Monster, cfg config.Config) error {
+	logger.Log.Info(fmt.Sprintf("%+v", monster))
 	ctx := context.Background()
 	// ✅ 2. Begin a transaction
 	tx, err := cfg.DBPool.Begin(ctx)
@@ -828,9 +856,12 @@ func LoadEachJSON(cfg config.Config, path string) error {
 		fmt.Println("Found a monster")
 		monster := ParseCoreData(string(data))
 		//Parse items and pass it just the items list then attach the return values to monster.
-		ItemsList := gjson.Get(string(data), "items").String()
+		fmt.Println(gjson.Get(string(data), "items"))
+		itemsList := gjson.Get(string(data), "items")
+		// ItemsList := gjson.Get(string(data), "items").String()
+		// fmt.Println(ItemsList)
 		var spells []structs.Spell
-		monster.FreeActions, monster.Actions, monster.Reactions, monster.Passives, monster.SpellCasting, spells, monster.Melees, monster.Ranged, monster.Inventory = ParseItems(ItemsList)
+		monster.FreeActions, monster.Actions, monster.Reactions, monster.Passives, monster.SpellCasting, spells, monster.Melees, monster.Ranged, monster.Inventory = ParseItems(itemsList)
 
 		AssignSpell(&spells, &monster.SpellCasting)
 
@@ -838,7 +869,7 @@ func LoadEachJSON(cfg config.Config, path string) error {
 
 		err = WriteMonsterToDb(monster, cfg)
 		if err != nil {
-			logger.Log.Error(fmt.Sprintf("Unable to  write %s, to db %w", monster.Name, err.Error()))
+			logger.Log.Error(fmt.Sprintf("Unable to  write %s, to db %v", monster.Name, err))
 		}
 		// err = parseJSON(data)
 		// if err != nil {

@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Encounter Builder DB",
+      "Group": "Servers",
+      "Host": "db",
+      "Port": 5432,
+      "Username": "user",
+      "Password": "password",
+      "MaintenanceDB": "encounterBuilder",
+      "SSLMode": "prefer"
+    }
+  }
+}

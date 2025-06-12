@@ -2,7 +2,9 @@ package utils
 
 import (
 	"fmt"
+	"html"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -11,6 +13,36 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/tidwall/gjson"
 )
+
+func UuidRemover(input string) string {
+	// This regex finds any substring that starts with "@UUID[",
+	// then matches one or more characters that are not a ']', and ends with a "]".
+	re := regexp.MustCompile(`@UUID\[[^\]]+\]`)
+
+	// Replace each match using a function callback.
+	return re.ReplaceAllStringFunc(input, func(match string) string {
+		// Remove the "@UUID[" prefix and the trailing "]".
+		content := match[len("@UUID[") : len(match)-1]
+		// Find the last period in the content.
+		if idx := strings.LastIndex(content, "."); idx != -1 {
+			// Return the substring after the last '.'.
+			return content[idx+1:]
+		}
+		// If there is no period, return the full content.
+		return content
+	})
+
+}
+
+func StringCleaner(input string) string {
+	// Replace both opening and closing <p> tags
+	cleaned := stripHTMLUsingBluemonday(input)
+	cleaned = strings.ReplaceAll(cleaned, "<p>", "")
+	cleaned = strings.ReplaceAll(cleaned, "</p>", "")
+	cleaned = html.UnescapeString(cleaned)
+	cleaned = UuidRemover(cleaned)
+	return cleaned
+}
 
 func ParsePreparedSpellCasting(jsonData string) structs.PreparedSpellCasting {
 	// Initialize the result struct
@@ -141,7 +173,7 @@ func ParseFreeAction(jsonData string) structs.FreeAction {
 	fmt.Println("Found a free action")
 	freeAction := structs.FreeAction{
 		Name:     gjson.Get(jsonData, "name").String(),
-		Text:     stripHTMLUsingBluemonday(gjson.Get(jsonData, "system.description.value").String()),
+		Text:     StringCleaner(gjson.Get(jsonData, "system.description.value").String()),
 		Traits:   ingestJSONList(jsonData, "system.traits.value"),
 		Category: gjson.Get(jsonData, "system.category").String(),
 		Rarity:   gjson.Get(jsonData, "system.traits.rarity").String(),
@@ -151,7 +183,7 @@ func ParseFreeAction(jsonData string) structs.FreeAction {
 func ParseReaction(jsonData string) structs.Reaction {
 	reaction := structs.Reaction{
 		Name:     gjson.Get(jsonData, "name").String(),
-		Text:     stripHTMLUsingBluemonday(gjson.Get(jsonData, "system.description.value").String()),
+		Text:     StringCleaner(gjson.Get(jsonData, "system.description.value").String()),
 		Traits:   ingestJSONList(jsonData, "system.traits.value"),
 		Category: gjson.Get(jsonData, "system.category").String(),
 		Rarity:   gjson.Get(jsonData, "system.traits.rarity").String(),
@@ -298,9 +330,6 @@ func DetectRitual(jsonData string) (bool, structs.RitualData) {
 	}
 }
 
-// spell plan
-// 1. Go get all spells and spellcasting blocks
-// 2. For each spell, tie to spellcasting block
 func ParseSpell(jsonData string) structs.Spell {
 	ritualBool, ritualData := DetectRitual(jsonData)
 	var uses string
@@ -312,9 +341,9 @@ func ParseSpell(jsonData string) structs.Spell {
 	} else {
 		AtWill = false
 	}
-	if gjson.Get(jsonData, "system.location.uses.value").Exists() && AtWill == false {
+	if gjson.Get(jsonData, "system.location.uses.value").Exists() && !AtWill {
 		uses = gjson.Get(jsonData, "system.location.uses.value").String()
-	} else if !(gjson.Get(jsonData, "system.location.uses.value").Exists()) && AtWill == false {
+	} else if !(gjson.Get(jsonData, "system.location.uses.value").Exists()) && !AtWill {
 		uses = "1"
 	}
 	spell := structs.Spell{
