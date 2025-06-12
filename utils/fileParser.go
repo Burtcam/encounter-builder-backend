@@ -85,7 +85,7 @@ func ItemSwitch(item string, passiveList *[]structs.Passive, SpellCastingBlocks 
 	return nil
 }
 
-func ParseItems(data gjson.Result) ([]structs.FreeAction, []structs.Action, []structs.Reaction, []structs.Passive, structs.SpellCasting, []structs.Spell, []structs.Attack, []structs.Attack, []structs.Item) {
+func ParseItems(data gjson.Result) ([]structs.FreeAction, []structs.Action, []structs.Reaction, []structs.Passive, structs.SpellCasting, []structs.Spell, []structs.Attack, []structs.Attack, []structs.Item, error) {
 
 	var passiveList []structs.Passive
 	var SpellCastingBlocks structs.SpellCasting
@@ -98,8 +98,7 @@ func ParseItems(data gjson.Result) ([]structs.FreeAction, []structs.Action, []st
 	var inventory []structs.Item
 	arrayJson := data.Array()
 	for i := range len(arrayJson) {
-		fmt.Println(arrayJson[i])
-		ItemSwitch(arrayJson[i].String(),
+		err := ItemSwitch(arrayJson[i].String(),
 			&passiveList,
 			&SpellCastingBlocks,
 			&FreeActionList,
@@ -110,6 +109,19 @@ func ParseItems(data gjson.Result) ([]structs.FreeAction, []structs.Action, []st
 			&RangedList,
 			&inventory)
 
+		if err != nil {
+			return FreeActionList,
+				actionList,
+				ReactionList,
+				passiveList,
+				SpellCastingBlocks,
+				SpellMasterList,
+				MeleeList,
+				RangedList,
+				inventory,
+				err
+		}
+
 	}
 	return FreeActionList,
 		actionList,
@@ -119,5 +131,6 @@ func ParseItems(data gjson.Result) ([]structs.FreeAction, []structs.Action, []st
 		SpellMasterList,
 		MeleeList,
 		RangedList,
-		inventory
+		inventory,
+		nil
 }

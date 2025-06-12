@@ -724,7 +724,7 @@ func TestParseFocusSpellCasting(t *testing.T) {
 		Tradition:      "primal",
 		ID:             "EDPFYDhj0ZOTpRmX",
 		FocusSpellList: []structs.Spell{},
-		Description:    stripHTMLUsingBluemonday(""),
+		Description:    StringCleaner(""),
 		Name:           "Animal Order Spells",
 		CastLevel:      "",
 	}
@@ -800,7 +800,7 @@ func TestParseInnateSpellCasting(t *testing.T) {
 		SpellUses:   []structs.SpellUse{},
 		Tradition:   "occult",
 		ID:          "yI8fil9Hp8Ob0BcY",
-		Description: stripHTMLUsingBluemonday(""),
+		Description: StringCleaner(""),
 		Name:        "Occult Innate Spells",
 	}
 
@@ -1139,7 +1139,7 @@ func TestParseFreeAction(t *testing.T) {
         },`
 	expected := structs.FreeAction{
 		Name: "Consume Light",
-		Text: stripHTMLUsingBluemonday("<p><strong>Trigger</strong> The voidglutton casts @UUID[Compendium.pf2e.spells-srd.Item.Darkness]</p>\n<hr />\n<p><strong>Effect</strong> The voidglutton extinguishes its Glow as part of Casting the Spell. It becomes @UUID[Compendium.pf2e.conditionitems.Item.Invisible] as long as it remains in the area of darkness. If the voidglutton uses a hostile action, its invisibility ends as soon as the hostile action is completed.</p>"),
+		Text: StringCleaner("<p><strong>Trigger</strong> The voidglutton casts @UUID[Compendium.pf2e.spells-srd.Item.Darkness]</p>\n<hr />\n<p><strong>Effect</strong> The voidglutton extinguishes its Glow as part of Casting the Spell. It becomes @UUID[Compendium.pf2e.conditionitems.Item.Invisible] as long as it remains in the area of darkness. If the voidglutton uses a hostile action, its invisibility ends as soon as the hostile action is completed.</p>"),
 
 		Traits:   []string{"darkness", "occult"},
 		Category: "offensive",
@@ -1210,7 +1210,7 @@ func TestParseReaction(t *testing.T) {
         },`
 	expected := structs.Reaction{
 		Name: "Fed by Water",
-		Text: stripHTMLUsingBluemonday("<p><strong>Frequency</strong> once per hour</p>\n<p><strong>Trigger</strong> The forest dragon is targeted with a water spell or effect</p>\n<hr />\n<p><strong>Effect</strong> The forest dragon gains [[/r 35 #Temporary Hit Points]]{35 temporary Hit Points}.</p>"),
+		Text: StringCleaner("<p><strong>Frequency</strong> once per hour</p>\n<p><strong>Trigger</strong> The forest dragon is targeted with a water spell or effect</p>\n<hr />\n<p><strong>Effect</strong> The forest dragon gains [[/r 35 #Temporary Hit Points]]{35 temporary Hit Points}.</p>"),
 
 		Traits:   []string{"healing", "primal"},
 		Category: "defensive",
@@ -1276,7 +1276,7 @@ func TestParseAction(t *testing.T) {
         },`
 	expected := structs.Action{
 		Name:     "Breath Weapon",
-		Text:     stripHTMLUsingBluemonday("<p>The dragon unleashes a swarm of insects that deals @Damage[14d6[piercing]|options:area-damage] damage in a @Template[cone|distance:40] (@Check[reflex|dc:34|basic|options:area-effect] save) before dispersing.</p>\n<p>A creature that critically fails is @UUID[Compendium.pf2e.conditionitems.Item.Stunned]{Stunned 2} from the insects' venom; this is a poison effect.</p>\n<p>The dragon can't use Breath Weapon again for [[/gmr 1d4 #Recharge Breath Weapon]]{1d4 rounds}.</p>"),
+		Text:     StringCleaner("<p>The dragon unleashes a swarm of insects that deals @Damage[14d6[piercing]|options:area-damage] damage in a @Template[cone|distance:40] (@Check[reflex|dc:34|basic|options:area-effect] save) before dispersing.</p>\n<p>A creature that critically fails is @UUID[Compendium.pf2e.conditionitems.Item.Stunned]{Stunned 2} from the insects' venom; this is a poison effect.</p>\n<p>The dragon can't use Breath Weapon again for [[/gmr 1d4 #Recharge Breath Weapon]]{1d4 rounds}.</p>"),
 		Traits:   []string{"primal"},
 		Actions:  "2",
 		Category: "offensive",
@@ -1405,7 +1405,7 @@ func TestIngestSpontaneousSpell(t *testing.T) {
 		ID:             "N5cIxpCa1E4SqZi7",
 		CastLevel:      "5",
 		SpellBaseLevel: "3",
-		Description:    stripHTMLUsingBluemonday("<p>A bolt of lightning strikes outward from your hand, dealing 4d12 electricity damage.</p>\n<hr />\n<p><strong>Heightened (+1)</strong> The damage increases by 1d12.</p>"),
+		Description:    StringCleaner("<p>A bolt of lightning strikes outward from your hand, dealing 4d12 electricity damage.</p>\n<hr />\n<p><strong>Heightened (+1)</strong> The damage increases by 1d12.</p>"),
 		Range:          "",
 		Duration: structs.DurationBlock{
 			Sustained: false,
@@ -1591,7 +1591,7 @@ func TestIngestRitualInnateSpell(t *testing.T) {
 		ID:             "fts4AdQANVel1VuJ",
 		CastLevel:      "1",
 		SpellBaseLevel: "1",
-		Description:    stripHTMLUsingBluemonday("<p>You call in a favor from another demon whose level is no more than double <em>Abyssal pact's</em> spell rank, two demons whose levels are each at least 2 less than double the spell rank, or three demons whose levels are each at least 3 less than double the spell rank.</p>\n<hr />\n<p><strong>Critical Success</strong> You conjure the demon or demons. They are eager to pursue the task, so they don't ask for a favor.</p>\n<p><strong>Success</strong> You conjure the demon or demons. They are not eager to pursue the task, so they require a favor in return.</p>\n<p><strong>Failure</strong> You don't conjure any demons.</p>\n<p><strong>Critical Failure</strong> The demon or demons are angry that you disturbed them. They appear before you, but they immediately attack you.</p>"),
+		Description:    StringCleaner("<p>You call in a favor from another demon whose level is no more than double <em>Abyssal pact's</em> spell rank, two demons whose levels are each at least 2 less than double the spell rank, or three demons whose levels are each at least 3 less than double the spell rank.</p>\n<hr />\n<p><strong>Critical Success</strong> You conjure the demon or demons. They are eager to pursue the task, so they don't ask for a favor.</p>\n<p><strong>Success</strong> You conjure the demon or demons. They are not eager to pursue the task, so they require a favor in return.</p>\n<p><strong>Failure</strong> You don't conjure any demons.</p>\n<p><strong>Critical Failure</strong> The demon or demons are angry that you disturbed them. They appear before you, but they immediately attack you.</p>"),
 		Range:          "",
 		Duration: structs.DurationBlock{
 			Sustained: false,
@@ -1872,7 +1872,7 @@ func TestIngestPreparedSpell(t *testing.T) {
 		ID:             "cgw07bSj0UprtiUE",
 		CastLevel:      "1",
 		SpellBaseLevel: "1",
-		Description:    stripHTMLUsingBluemonday("<p>You splash a glob of acid that splatters your target and nearby creatures. Make a spell attack. If you hit, you deal 1d6 acid damage plus 1 splash acid damage. On a critical success, the target also takes @Damage[(ceil(@item.level/2))[persistent,acid]] damage.</p><hr /><p><strong>Heightened (3rd)</strong> The initial damage increases to 2d6, and the persistent damage increases to 2.</p>\n<p><strong>Heightened (5th)</strong> The initial damage increases to 3d6, the persistent damage increases to 3, and the splash damage increases to 2.</p>\n<p><strong>Heightened (7th)</strong> The initial damage increases to 4d6, the persistent damage increases to 4, and the splash damage increases to 3.</p>\n<p><strong>Heightened (9th)</strong> The initial damage increases to 5d6, the persistent damage increases to 5, and the splash damage increases to 4.</p>"),
+		Description:    StringCleaner("<p>You splash a glob of acid that splatters your target and nearby creatures. Make a spell attack. If you hit, you deal 1d6 acid damage plus 1 splash acid damage. On a critical success, the target also takes @Damage[(ceil(@item.level/2))[persistent,acid]] damage.</p><hr /><p><strong>Heightened (3rd)</strong> The initial damage increases to 2d6, and the persistent damage increases to 2.</p>\n<p><strong>Heightened (5th)</strong> The initial damage increases to 3d6, the persistent damage increases to 3, and the splash damage increases to 2.</p>\n<p><strong>Heightened (7th)</strong> The initial damage increases to 4d6, the persistent damage increases to 4, and the splash damage increases to 3.</p>\n<p><strong>Heightened (9th)</strong> The initial damage increases to 5d6, the persistent damage increases to 5, and the splash damage increases to 4.</p>"),
 		Range:          "30 feet",
 		Duration: structs.DurationBlock{
 			Sustained: false,
@@ -2081,7 +2081,7 @@ func TestIngestInnateSpell(t *testing.T) {
 		ID:             "kBj0RqQnEELUYiNC",
 		CastLevel:      "2",
 		SpellBaseLevel: "1",
-		Description:    stripHTMLUsingBluemonday("<p>You plant fear in the target; it must attempt a Will save.</p>\n<hr />\n<p><strong>Critical Success</strong> The target is unaffected.</p>\n<p><strong>Success</strong> The target is @UUID[Compendium.pf2e.conditionitems.Item.Frightened]{Frightened 1}.</p>\n<p><strong>Failure</strong> The target is @UUID[Compendium.pf2e.conditionitems.Item.Frightened]{Frightened 2}.</p>\n<p><strong>Critical Failure</strong> The target is @UUID[Compendium.pf2e.conditionitems.Item.Frightened]{Frightened 3} and @UUID[Compendium.pf2e.conditionitems.Item.Fleeing] for 1 round.</p>\n<hr />\n<p><strong>Heightened (3rd)</strong> You can target up to five creatures.</p>"),
+		Description:    StringCleaner("<p>You plant fear in the target; it must attempt a Will save.</p>\n<hr />\n<p><strong>Critical Success</strong> The target is unaffected.</p>\n<p><strong>Success</strong> The target is @UUID[Compendium.pf2e.conditionitems.Item.Frightened]{Frightened 1}.</p>\n<p><strong>Failure</strong> The target is @UUID[Compendium.pf2e.conditionitems.Item.Frightened]{Frightened 2}.</p>\n<p><strong>Critical Failure</strong> The target is @UUID[Compendium.pf2e.conditionitems.Item.Frightened]{Frightened 3} and @UUID[Compendium.pf2e.conditionitems.Item.Fleeing] for 1 round.</p>\n<hr />\n<p><strong>Heightened (3rd)</strong> You can target up to five creatures.</p>"),
 		Range:          "30 feet",
 		Duration: structs.DurationBlock{
 			Sustained: false,
@@ -2288,7 +2288,7 @@ func TestIngestInnateSpell1Use(t *testing.T) {
 		ID:             "6Dv8wIStddSP0cLP",
 		CastLevel:      "4",
 		SpellBaseLevel: "3",
-		Description:    stripHTMLUsingBluemonday("<p>You assault the target's faith, riddling the creature with doubt and mental turmoil that deal 6d6 mental damage, or 6d8 mental damage if it can cast divine spells. The effects are determined by its Will save.</p>\n<p>To many deities, casting this spell on a follower of your own deity without significant cause is anathema.</p>\n<hr />\n<p><strong>Critical Success</strong> The target is unaffected.</p>\n<p><strong>Success</strong> The target takes half damage.</p>\n<p><strong>Failure</strong> The target takes full damage; if the target can cast divine spells, it's @UUID[Compendium.pf2e.conditionitems.Item.Stupefied]{Stupefied 1} for 1 round.</p>\n<p><strong>Critical Failure</strong> The target takes double damage, is @UUID[Compendium.pf2e.conditionitems.Item.Stupefied]{Stupefied 1} for 1 round, and can't cast divine spells for 1 round.</p>\n<hr />\n<p><strong>Heightened (+1)</strong> The damage increases by 2d6 (or by 2d8 if the target is a divine spellcaster).</p>"),
+		Description:    StringCleaner("<p>You assault the target's faith, riddling the creature with doubt and mental turmoil that deal 6d6 mental damage, or 6d8 mental damage if it can cast divine spells. The effects are determined by its Will save.</p>\n<p>To many deities, casting this spell on a follower of your own deity without significant cause is anathema.</p>\n<hr />\n<p><strong>Critical Success</strong> The target is unaffected.</p>\n<p><strong>Success</strong> The target takes half damage.</p>\n<p><strong>Failure</strong> The target takes full damage; if the target can cast divine spells, it's @UUID[Compendium.pf2e.conditionitems.Item.Stupefied]{Stupefied 1} for 1 round.</p>\n<p><strong>Critical Failure</strong> The target takes double damage, is @UUID[Compendium.pf2e.conditionitems.Item.Stupefied]{Stupefied 1} for 1 round, and can't cast divine spells for 1 round.</p>\n<hr />\n<p><strong>Heightened (+1)</strong> The damage increases by 2d6 (or by 2d8 if the target is a divine spellcaster).</p>"),
 		Range:          "30 feet",
 		Duration: structs.DurationBlock{
 			Sustained: false,
@@ -2471,7 +2471,7 @@ func TestIngestAtWillInnateSpellUse(t *testing.T) {
 		Name:           "Dispel Magic (At Will)",
 		CastLevel:      "8",
 		SpellBaseLevel: "2",
-		Description:    stripHTMLUsingBluemonday("<p>You unravel the magic behind a spell or effect. Attempt a counteract check against the target. If you successfully counteract a magic item, the item becomes a mundane item of its type for 10 minutes. This doesn't change the item's non-magical properties. If the target is an artifact or similar item, you automatically fail.</p>"),
+		Description:    StringCleaner("<p>You unravel the magic behind a spell or effect. Attempt a counteract check against the target. If you successfully counteract a magic item, the item becomes a mundane item of its type for 10 minutes. This doesn't change the item's non-magical properties. If the target is an artifact or similar item, you automatically fail.</p>"),
 		Range:          "120 feet",
 		Duration: structs.DurationBlock{
 			Sustained: false,
@@ -3125,7 +3125,7 @@ func TestParseItemShield(t *testing.T) {
 		ID:          "pU3Y57Kf8Ys0wWfG",
 		Category:    "",
 		Level:       "0",
-		Description: stripHTMLUsingBluemonday("<p>Though they come in a variety of shapes and sizes, the protection offered by wooden shields comes from the stoutness of their materials. While wooden shields are less expensive than steel shields, they break more easily.</p>\n<table class=\"pf2e\">\n<thead>\n<tr>\n<th>Hardness</th>\n<th>HP</th>\n<th>BT</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>3</td>\n<td>12</td>\n<td>6</td>\n</tr>\n</tbody>\n</table>"),
+		Description: StringCleaner("<p>Though they come in a variety of shapes and sizes, the protection offered by wooden shields comes from the stoutness of their materials. While wooden shields are less expensive than steel shields, they break more easily.</p>\n<table class=\"pf2e\">\n<thead>\n<tr>\n<th>Hardness</th>\n<th>HP</th>\n<th>BT</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>3</td>\n<td>12</td>\n<td>6</td>\n</tr>\n</tbody>\n</table>"),
 		Price: structs.PriceBlock{
 			GP: 1,
 		},
@@ -3277,7 +3277,7 @@ func TestParseItemWeapon(t *testing.T) {
 		ID:          "CvqNMEeYJFk8B5Uf",
 		Category:    "martial",
 		Level:       "0",
-		Description: stripHTMLUsingBluemonday("<p>The rapier is a long and thin piercing blade with a basket hilt. It is prized among many as a dueling weapon.</p>"),
+		Description: StringCleaner("<p>The rapier is a long and thin piercing blade with a basket hilt. It is prized among many as a dueling weapon.</p>"),
 		Price: structs.PriceBlock{
 			GP: 2,
 		},
@@ -3430,7 +3430,7 @@ func TestParseItemArmor(t *testing.T) {
 		ID:          "CvqNMEeYJFk8B5Uf",
 		Category:    "martial",
 		Level:       "0",
-		Description: stripHTMLUsingBluemonday("<p>The rapier is a long and thin piercing blade with a basket hilt. It is prized among many as a dueling weapon.</p>"),
+		Description: StringCleaner("<p>The rapier is a long and thin piercing blade with a basket hilt. It is prized among many as a dueling weapon.</p>"),
 		Price: structs.PriceBlock{
 			GP: 2,
 		},
@@ -3545,7 +3545,7 @@ func TestParseItemTreasure(t *testing.T) {
 		ID:          "txASc5iIQvLV4Nxv",
 		Category:    "",
 		Level:       "0",
-		Description: stripHTMLUsingBluemonday("<p>Ayla, My Beloved</p>"),
+		Description: StringCleaner("<p>Ayla, My Beloved</p>"),
 		Price: structs.PriceBlock{
 			GP: 10,
 		},
@@ -3676,7 +3676,7 @@ func TestParseItemConsumable(t *testing.T) {
 		ID:          "DSpF3QNsGXCQO5Re",
 		Category:    "ammo",
 		Level:       "0",
-		Description: stripHTMLUsingBluemonday("<p>These projectiles are the ammunition for bows. The shaft of an arrow is made of wood. It is stabilized in flight by fletching at one end and bears a metal head on the other.</p>"),
+		Description: StringCleaner("<p>These projectiles are the ammunition for bows. The shaft of an arrow is made of wood. It is stabilized in flight by fletching at one end and bears a metal head on the other.</p>"),
 		Price: structs.PriceBlock{
 			SP:  1,
 			Per: 10,
@@ -3813,7 +3813,7 @@ func TestParseItemBackPack(t *testing.T) {
 		ID:          "hetb6HQzsfpikrYo",
 		Category:    "",
 		Level:       "4",
-		Description: stripHTMLUsingBluemonday("<p>Though it appears to be a cloth sack decorated with panels of richly colored silk or stylish embroidery, a <em>bag of holding</em> opens into an extradimensional space larger than its outside dimensions. The Bulk held inside the bag doesn't change the Bulk of the <em>bag of holding</em> itself. The amount of Bulk the bag's extradimensional space can hold depends on its type.</p>\n<p>You can Interact with the <em>bag of holding</em> to put items in or remove them just like a mundane sack. Though the bag can hold a great amount of material, an object still needs to be able to fit through the opening of the sack to be stored inside.</p>\n<p>If the bag is overloaded or broken, it ruptures and is ruined, causing the items inside to be lost forever. If it's turned inside out, the items inside spill out unharmed, but the bag must be put right before it can be used again. A living creature placed inside the bag has enough air for 10 minutes before it begins to suffocate, and it can attempt to Escape against a DC of 13. An item inside the bag provides no benefits unless it's retrieved first. An item in the bag can't be detected by magic that detects only things on the same plane.</p>\n<p><strong>Capacity</strong> 25 Bulk</p>"),
+		Description: StringCleaner("<p>Though it appears to be a cloth sack decorated with panels of richly colored silk or stylish embroidery, a <em>bag of holding</em> opens into an extradimensional space larger than its outside dimensions. The Bulk held inside the bag doesn't change the Bulk of the <em>bag of holding</em> itself. The amount of Bulk the bag's extradimensional space can hold depends on its type.</p>\n<p>You can Interact with the <em>bag of holding</em> to put items in or remove them just like a mundane sack. Though the bag can hold a great amount of material, an object still needs to be able to fit through the opening of the sack to be stored inside.</p>\n<p>If the bag is overloaded or broken, it ruptures and is ruined, causing the items inside to be lost forever. If it's turned inside out, the items inside spill out unharmed, but the bag must be put right before it can be used again. A living creature placed inside the bag has enough air for 10 minutes before it begins to suffocate, and it can attempt to Escape against a DC of 13. An item inside the bag provides no benefits unless it's retrieved first. An item in the bag can't be detected by magic that detects only things on the same plane.</p>\n<p><strong>Capacity</strong> 25 Bulk</p>"),
 		Price: structs.PriceBlock{
 			GP: 75,
 		},
@@ -4204,13 +4204,14 @@ func TestStringCleaner(t *testing.T) {
 		"<p>A vine appears from thin air, flicking from your hand and lashing itself to the target. Attempt a spell attack roll against the target.</p>\n<p>@UUID[Compendium.pf2e.spell-effects.Item.Spell Effect: Tangle Vine]</p>\n<hr />\n<p><strong>Critical Success</strong> The target gains the @UUID[Compendium.pf2e.conditionitems.Item.Immobilized] condition and takes a –10-foot circumstance penalty to its Speeds for 1 round. It can attempt to @UUID[Compendium.pf2e.actionspf2e.Item.Escape] against your spell DC to remove the penalty and the immobilized condition.</p>\n<p><strong>Success</strong> The target takes a –10-foot circumstance penalty to its Speeds for 1 round. It can attempt to Escape against your spell DC to remove the penalty.</p>\n<p><strong>Failure</strong> The target is unaffected.</p>\n<hr />\n<p><strong>Heightened (2nd)</strong> The effects last for 2 rounds.</p>\n<p><strong>Heightened (4th)</strong> The effects last for 1 minute.</p>",
 		"<p>30 feet.</p>\n<p>Plant objects and creatures in the emanation can't regain Hit Points unless the effect that attempts to heal them counteracts the aura, which has a counteract rank of 6 and a counteract DC of 32.</p>\n<p>A primal warden of Zibik can spend 1 action to reverse this aura; it becomes an aura of renewal with the healing trait, instead doubling the number of Hit Points of any healing effect received by a plant creature in the emanation.</p>"}
 	expected := []string{
-		"A vine appears from thin air, flicking from your hand and lashing itself to the target. Attempt a spell attack roll against the target.\nSpell Effect: Tangle Vine \n\nCritical Success The target gains the Immobilized condition and takes a –10-foot circumstance penalty to its Speeds for 1 round. It can attempt to Escape against your spell DC to remove the penalty and the immobilized condition.\nSuccess The target takes a –10-foot circumstance penalty to its Speeds for 1 round. It can attempt to Escape against your spell DC to remove the penalty.\nFailure The target is unaffected.\n\nHeightened (2nd) The effects last for 2 rounds.\nHeightened (4th) The effects last for 1 minute.",
+		"A vine appears from thin air, flicking from your hand and lashing itself to the target. Attempt a spell attack roll against the target.\nSpell Effect: Tangle Vine\n\nCritical Success The target gains the Immobilized condition and takes a –10-foot circumstance penalty to its Speeds for 1 round. It can attempt to Escape against your spell DC to remove the penalty and the immobilized condition.\nSuccess The target takes a –10-foot circumstance penalty to its Speeds for 1 round. It can attempt to Escape against your spell DC to remove the penalty.\nFailure The target is unaffected.\n\nHeightened (2nd) The effects last for 2 rounds.\nHeightened (4th) The effects last for 1 minute.",
 		"30 feet.\nPlant objects and creatures in the emanation can't regain Hit Points unless the effect that attempts to heal them counteracts the aura, which has a counteract rank of 6 and a counteract DC of 32.\nA primal warden of Zibik can spend 1 action to reverse this aura; it becomes an aura of renewal with the healing trait, instead doubling the number of Hit Points of any healing effect received by a plant creature in the emanation."}
 
 	for i := range len(testCases) {
 		result := StringCleaner(testCases[i])
 		if expected[i] != result {
 			t.Errorf("Expected: \n%s \n%s", expected[i], result)
+			fmt.Printf("result length: %d, expectedLength: %d", len(result), len(expected[i]))
 		}
 	}
 }
@@ -4343,7 +4344,7 @@ func TestStringCleaner(t *testing.T) {
 // 		Actions: []structs.Action{
 // 			{
 // 				Name: "Breath Weapon",
-// 				Text: stripHTMLUsingBluemonday("<p>The dragon unleashes a swarm of insects that deals @Damage[14d6[piercing]|options:area-damage] damage in a @Template[cone|distance:40] (@Check[reflex|dc:34|basic|options:area-effect] save) before dispersing.</p>\n<p>A creature that critically fails is @UUID[Compendium.pf2e.conditionitems.Item.Stunned]{Stunned 2} from the insects' venom; this is a poison effect.</p>\n<p>The dragon can't use Breath Weapon again for [[/gmr 1d4 #Recharge Breath Weapon]]{1d4 rounds}.</p>"),
+// 				Text: StringCleaner("<p>The dragon unleashes a swarm of insects that deals @Damage[14d6[piercing]|options:area-damage] damage in a @Template[cone|distance:40] (@Check[reflex|dc:34|basic|options:area-effect] save) before dispersing.</p>\n<p>A creature that critically fails is @UUID[Compendium.pf2e.conditionitems.Item.Stunned]{Stunned 2} from the insects' venom; this is a poison effect.</p>\n<p>The dragon can't use Breath Weapon again for [[/gmr 1d4 #Recharge Breath Weapon]]{1d4 rounds}.</p>"),
 // 				Traits: []string{
 // 					"primal",
 // 				},
@@ -4354,7 +4355,7 @@ func TestStringCleaner(t *testing.T) {
 // 		},
 // 		FreeActions: []structs.FreeAction{{
 // 			Name: "Fed by Water",
-// 			Text: stripHTMLUsingBluemonday("<p><strong>Frequency</strong> once per hour</p>\n<p><strong>Trigger</strong> The forest dragon is targeted with a water spell or effect</p>\n<hr />\n<p><strong>Effect</strong> The forest dragon gains [[/r 35 #Temporary Hit Points]]{35 temporary Hit Points}.</p>"),
+// 			Text: StringCleaner("<p><strong>Frequency</strong> once per hour</p>\n<p><strong>Trigger</strong> The forest dragon is targeted with a water spell or effect</p>\n<hr />\n<p><strong>Effect</strong> The forest dragon gains [[/r 35 #Temporary Hit Points]]{35 temporary Hit Points}.</p>"),
 // 			Traits: []string{
 // 				"healing",
 // 				"primal",
@@ -4366,7 +4367,7 @@ func TestStringCleaner(t *testing.T) {
 // 		Passives: []structs.Passive{
 // 			{
 // 				Name:     "Constant Spells",
-// 				Text:     stripHTMLUsingBluemonday("<p>@Localize[PF2E.NPC.Abilities.Glossary.ConstantSpells]</p>"),
+// 				Text:     StringCleaner("<p>@Localize[PF2E.NPC.Abilities.Glossary.ConstantSpells]</p>"),
 // 				Traits:   []string{},
 // 				Category: "interaction",
 // 				Rarity:   "common",
@@ -4380,14 +4381,14 @@ func TestStringCleaner(t *testing.T) {
 // 			},
 // 			{
 // 				Name:     "Countered by Metal",
-// 				Text:     stripHTMLUsingBluemonday("<p>If the forest dragon takes damage from a metal item, they lose woodland stride and @UUID[Compendium.pf2e.spells-srd.Item.Vanishing Tracks] until the end of their next turn.</p>"),
+// 				Text:     StringCleaner("<p>If the forest dragon takes damage from a metal item, they lose woodland stride and @UUID[Compendium.pf2e.spells-srd.Item.Vanishing Tracks] until the end of their next turn.</p>"),
 // 				Traits:   []string{},
 // 				Category: "Defensive",
 // 				Rarity:   "common",
 // 			},
 // 			{
 // 				Name: "Frightful Presence",
-// 				Text: stripHTMLUsingBluemonday("<p>90 feet. @Check[will|dc:32]</p>\n<p>Animals, fungi, and plants take a -2 circumstance penalty to the save.</p>\n<hr />\n<p>@Localize[PF2E.NPC.Abilities.Glossary.FrightfulPresence]</p>"),
+// 				Text: StringCleaner("<p>90 feet. @Check[will|dc:32]</p>\n<p>Animals, fungi, and plants take a -2 circumstance penalty to the save.</p>\n<hr />\n<p>@Localize[PF2E.NPC.Abilities.Glossary.FrightfulPresence]</p>"),
 // 				Traits: []string{
 // 					"emotion",
 // 					"fear",
@@ -4398,14 +4399,14 @@ func TestStringCleaner(t *testing.T) {
 // 			},
 // 			{
 // 				Name:     "Forest Shape",
-// 				Text:     stripHTMLUsingBluemonday("<p>When casting @UUID[Compendium.pf2e.spells-srd.Item.One with Plants], a forest dragon can become a tree of the same size and age as themself.</p>"),
+// 				Text:     StringCleaner("<p>When casting @UUID[Compendium.pf2e.spells-srd.Item.One with Plants], a forest dragon can become a tree of the same size and age as themself.</p>"),
 // 				Traits:   []string{},
 // 				Category: "Offensive",
 // 				Rarity:   "common",
 // 			},
 // 			{
 // 				Name:     "Woodland Stride",
-// 				Text:     stripHTMLUsingBluemonday("<p>The forest dragon ignores difficult terrain and greater difficult terrain from non-magical foliage.</p>"),
+// 				Text:     StringCleaner("<p>The forest dragon ignores difficult terrain and greater difficult terrain from non-magical foliage.</p>"),
 // 				Traits:   []string{},
 // 				Category: "Offensive",
 // 				Rarity:   "common",
@@ -4494,7 +4495,7 @@ func TestStringCleaner(t *testing.T) {
 // 							Name:           "Acid Splash",
 // 							CastLevel:      "1",
 // 							SpellBaseLevel: "1",
-// 							Description:    stripHTMLUsingBluemonday("<p>You splash a glob of acid that splatters your target and nearby creatures. Make a spell attack. If you hit, you deal 1d6 acid damage plus 1 splash acid damage. On a critical success, the target also takes @Damage[(ceil(@item.level/2))[persistent,acid]] damage.</p><hr /><p><strong>Heightened (3rd)</strong> The initial damage increases to 2d6, and the persistent damage increases to 2.</p>\n<p><strong>Heightened (5th)</strong> The initial damage increases to 3d6, the persistent damage increases to 3, and the splash damage increases to 2.</p>\n<p><strong>Heightened (7th)</strong> The initial damage increases to 4d6, the persistent damage increases to 4, and the splash damage increases to 3.</p>\n<p><strong>Heightened (9th)</strong> The initial damage increases to 5d6, the persistent damage increases to 5, and the splash damage increases to 4.</p>"),
+// 							Description:    StringCleaner("<p>You splash a glob of acid that splatters your target and nearby creatures. Make a spell attack. If you hit, you deal 1d6 acid damage plus 1 splash acid damage. On a critical success, the target also takes @Damage[(ceil(@item.level/2))[persistent,acid]] damage.</p><hr /><p><strong>Heightened (3rd)</strong> The initial damage increases to 2d6, and the persistent damage increases to 2.</p>\n<p><strong>Heightened (5th)</strong> The initial damage increases to 3d6, the persistent damage increases to 3, and the splash damage increases to 2.</p>\n<p><strong>Heightened (7th)</strong> The initial damage increases to 4d6, the persistent damage increases to 4, and the splash damage increases to 3.</p>\n<p><strong>Heightened (9th)</strong> The initial damage increases to 5d6, the persistent damage increases to 5, and the splash damage increases to 4.</p>"),
 // 							Range:          "30 feet",
 // 							Area:           structs.SpellArea{},
 // 							Duration: structs.DurationBlock{

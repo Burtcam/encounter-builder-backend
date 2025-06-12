@@ -17,6 +17,7 @@ import (
 	"github.com/Burtcam/encounter-builder-backend/logger"
 	"github.com/Burtcam/encounter-builder-backend/structs"
 	"github.com/Burtcam/encounter-builder-backend/writeMonsters"
+	"github.com/google/uuid"
 
 	//"github.com/jackc/pgx/pgtype"
 
@@ -25,6 +26,14 @@ import (
 	"github.com/robfig/cron/v3"
 	"github.com/tidwall/gjson"
 )
+
+func NewText(value string) pgtype.Text {
+	return pgtype.Text{String: value, Valid: value != ""}
+}
+
+func NewInt4(value int) pgtype.Int4 {
+	return pgtype.Int4{Int32: int32(value), Valid: true}
+}
 
 func GetXpBudget(difficulty string, pSize int) (int, error) {
 	difficultyMap := make(map[string]int)
@@ -176,15 +185,18 @@ func GetListofJSON(dir string) ([]string, error) {
 	return fileList, err
 }
 
-func ParseFoundJson(data string) structs.Monster {
+func ParseFoundJson(data string) (structs.Monster, error) {
 	monster := ParseCoreData(string(data))
 	//Parse items and pass it just the items list then attach the return values to monster.
 	ItemsList := gjson.Get(string(data), "items")
 	var spells []structs.Spell
-	monster.FreeActions, monster.Actions, monster.Reactions, monster.Passives, monster.SpellCasting, spells, monster.Melees, monster.Ranged, monster.Inventory = ParseItems(ItemsList)
-
+	var err error
+	monster.FreeActions, monster.Actions, monster.Reactions, monster.Passives, monster.SpellCasting, spells, monster.Melees, monster.Ranged, monster.Inventory, err = ParseItems(ItemsList)
+	if err != nil {
+		return monster, err
+	}
 	AssignSpell(&spells, &monster.SpellCasting)
-	return monster
+	return monster, err
 }
 
 func PrepMonsterParams(monster structs.Monster) writeMonsters.InsertMonsterParams {
@@ -733,7 +745,9 @@ func ProcessMagic(ctx context.Context, queries *writeMonsters.Queries, monster s
 func ProcessItems(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
 
 	for i := range len(monster.Inventory) {
+		dbID := uuid.New().String()
 		itemId, err := queries.InsertItems(ctx, writeMonsters.InsertItemsParams{
+			ID:          dbID,
 			MonsterID:   pgtype.Int4{Int32: id, Valid: true},
 			Name:        pgtype.Text{String: monster.Inventory[i].Name, Valid: true},
 			Category:    pgtype.Text{String: monster.Inventory[i].Category, Valid: true},
@@ -749,7 +763,7 @@ func ProcessItems(ctx context.Context, queries *writeMonsters.Queries, monster s
 			PricePp:     pgtype.Int4{Int32: int32(monster.Inventory[i].Price.PP), Valid: true},
 		})
 		if err != nil {
-			return fmt.Errorf("failed to write item %w", err)
+			return fmt.Errorf("failed to write item %s, %w", monster.Inventory[i].Name, err)
 		}
 		// write traits.
 		for j := range len(monster.Inventory[i].Traits) {
@@ -771,7 +785,7 @@ func WriteMonsterToDb(monster structs.Monster, cfg config.Config) error {
 	// ✅ 2. Begin a transaction
 	tx, err := cfg.DBPool.Begin(ctx)
 	if err != nil {
-		logger.Log.Error("failed to start transaction", "err", err.Error())
+		return fmt.Errorf("failed to start transaction %w", err)
 	}
 
 	//prep main params
@@ -781,64 +795,63 @@ func WriteMonsterToDb(monster structs.Monster, cfg config.Config) error {
 
 	id, err := queries.InsertMonster(ctx, monsterParams)
 	if err != nil {
-		logger.Log.Error("Failed to insert monster", "err", err.Error())
+		return fmt.Errorf("failed to insert Monster %w", err)
 	}
 	logger.Log.Info(fmt.Sprintf("Succesfully started the transaction for ID %d", id))
 	//for each immunities
 	err = writeImmunites(ctx, queries, monster, id)
 	if err != nil {
-		logger.Log.Error("Failed to process immunities: ", "err", err.Error())
+		return fmt.Errorf("failed to write immunites to db %w", err)
 	}
 	err = ProcessWeakAndResist(ctx, queries, monster, id)
 	if err != nil {
-		logger.Log.Error("Failed to process weaknesses and resistances: ", "err", err.Error())
+		return fmt.Errorf("failed to process weaknesses and resistances: %w", err)
 	}
 	err = ProcessLanguages(ctx, queries, monster, id)
 	if err != nil {
-		logger.Log.Error("Failed to process languages ", "err", err.Error())
+		return fmt.Errorf("failed to write languages to db %w", err)
 	}
 	err = ProcessSenses(ctx, queries, monster, id)
 	if err != nil {
-		logger.Log.Error("failed to process sense ", "err", err.Error())
+		return fmt.Errorf("failed to write senses to db %w", err)
 	}
 	err = ProcessSkills(ctx, queries, monster, id)
 	if err != nil {
-		logger.Log.Error("Failed to process Skills ", "err", err.Error())
+		return fmt.Errorf("failed to process skills to db %w", err)
 	}
-
 	err = ProcessMovements(ctx, queries, monster, id)
 	if err != nil {
-		logger.Log.Error("Failed to process Movements into DB ", "err", err.Error())
+		return fmt.Errorf("failed to process movements into db %w", err)
 	}
 	err = ProcessAction(ctx, queries, monster, id)
 	if err != nil {
-		logger.Log.Error("Failed to Process Action ", "err", err.Error())
+		return fmt.Errorf("failed to process action to db %w", err)
 	}
 	err = ProcessReaction(ctx, queries, monster, id)
 	if err != nil {
-		logger.Log.Error("Failed to process reaction ", "err", err.Error())
+		return fmt.Errorf("failed to process reaction to db %w", err)
 	}
 	err = ProcessPassive(ctx, queries, monster, id)
 	if err != nil {
-		logger.Log.Error("Failed to Process Free Action ", "err", err.Error())
+		return fmt.Errorf("failed to process free action to db %w", err)
 	}
 	err = ProcessAttacks(ctx, queries, monster, id)
 	if err != nil {
-		logger.Log.Error("Failed to process Attack ", "err", err.Error())
+		return fmt.Errorf("failed to process attack to db %w", err)
 	}
 	err = ProcessMagic(ctx, queries, monster, id)
 	if err != nil {
-		logger.Log.Error("Failed to process spellcasting blocks ", "err", err.Error())
+		return fmt.Errorf("failed to process spellcasting blocks %w", err)
 	}
 
 	err = ProcessItems(ctx, queries, monster, id)
 	if err != nil {
-		logger.Log.Error(("failed to process Items"))
+		return fmt.Errorf("failed to process items into db, %w", err)
 	}
 
 	err = tx.Commit(ctx)
 	if err != nil {
-		logger.Log.Error("Failed to commit transaction close ", "err", err.Error())
+		return fmt.Errorf("failed to commit transaction close %w", err)
 	}
 	return nil
 
@@ -856,20 +869,19 @@ func LoadEachJSON(cfg config.Config, path string) error {
 		fmt.Println("Found a monster")
 		monster := ParseCoreData(string(data))
 		//Parse items and pass it just the items list then attach the return values to monster.
-		fmt.Println(gjson.Get(string(data), "items"))
 		itemsList := gjson.Get(string(data), "items")
 		// ItemsList := gjson.Get(string(data), "items").String()
 		// fmt.Println(ItemsList)
 		var spells []structs.Spell
-		monster.FreeActions, monster.Actions, monster.Reactions, monster.Passives, monster.SpellCasting, spells, monster.Melees, monster.Ranged, monster.Inventory = ParseItems(itemsList)
-
+		monster.FreeActions, monster.Actions, monster.Reactions, monster.Passives, monster.SpellCasting, spells, monster.Melees, monster.Ranged, monster.Inventory, err = ParseItems(itemsList)
+		if err != nil {
+			return err
+		}
 		AssignSpell(&spells, &monster.SpellCasting)
-
-		fmt.Println(monster)
 
 		err = WriteMonsterToDb(monster, cfg)
 		if err != nil {
-			logger.Log.Error(fmt.Sprintf("Unable to  write %s, to db %v", monster.Name, err))
+			return (err)
 		}
 		// err = parseJSON(data)
 		// if err != nil {

@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"fmt"
 	"io"
 	"log/slog"
 	"os"
@@ -14,7 +15,21 @@ func init() {
 	//    os.O_CREATE: creates the file if it doesn't exist.
 	//    os.O_WRONLY: open the file write-only.
 	//    os.O_APPEND: append new log entries to the end of the file.
-	logFile, err := os.OpenFile("app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	filePath := "/home/cburt/encounter-builder/encounter-builder-backend/app.log"
+	_, err := os.Stat(filePath)
+	if os.IsNotExist(err) {
+		fmt.Println("File already deleted.")
+	}
+
+	// Attempt to remove the file
+	err = os.Remove(filePath)
+	if err != nil {
+		fmt.Println("File already deleted.")
+	}
+
+	fmt.Println("File deleted successfully.")
+
+	logFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		// If the log file can't be opened, panic because logging is critical.
 		panic("failed to open log file: " + err.Error())

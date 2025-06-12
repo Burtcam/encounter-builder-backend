@@ -103,7 +103,7 @@ func ParseFocusSpellCasting(jsonData string) structs.FocusSpellCasting {
 		ID:             gjson.Get(jsonData, "_id").String(),
 		FocusSpellList: []structs.Spell{},
 		Name:           gjson.Get(jsonData, "name").String(),
-		Description:    stripHTMLUsingBluemonday(gjson.Get(jsonData, "system.description.value").String()),
+		Description:    StringCleaner(gjson.Get(jsonData, "system.description.value").String()),
 		CastLevel:      "",
 	}
 	return entry
@@ -117,7 +117,7 @@ func ParseInnateSpellCasting(jsonData string) structs.InnateSpellCasting {
 		ID:          gjson.Get(jsonData, "_id").String(),
 		SpellUses:   []structs.SpellUse{},
 		Name:        gjson.Get(jsonData, "name").String(),
-		Description: stripHTMLUsingBluemonday(gjson.Get(jsonData, "system.description.value").String()),
+		Description: StringCleaner(gjson.Get(jsonData, "system.description.value").String()),
 	}
 	return entry
 }
@@ -270,7 +270,7 @@ func ParsePassive(value string) structs.Passive {
 
 	passive := structs.Passive{
 		Name:     gjson.Get(value, "name").String(),
-		Text:     gjson.Get(value, "system.description.value").String(),
+		Text:     StringCleaner(gjson.Get(value, "system.description.value").String()),
 		Traits:   ingestJSONList(value, "system.traits.value"),
 		Category: gjson.Get(value, "system.category").String(),
 	}
@@ -279,7 +279,7 @@ func ParsePassive(value string) structs.Passive {
 func ParseAction(jsonData string) structs.Action {
 	action := structs.Action{
 		Name:     gjson.Get(jsonData, ("name")).String(),
-		Text:     stripHTMLUsingBluemonday(gjson.Get(jsonData, "system.description.value").String()),
+		Text:     StringCleaner(gjson.Get(jsonData, "system.description.value").String()),
 		Traits:   ingestJSONList(jsonData, "system.traits.value"),
 		Category: gjson.Get(jsonData, "system.category").String(),
 		Actions:  gjson.Get(jsonData, "system.actions.value").String(),
@@ -351,7 +351,7 @@ func ParseSpell(jsonData string) structs.Spell {
 		Name:                        gjson.Get(jsonData, "name").String(),
 		CastLevel:                   SpellLevelParser(jsonData),
 		SpellBaseLevel:              gjson.Get(jsonData, "system.level.value").String(),
-		Description:                 stripHTMLUsingBluemonday(gjson.Get(jsonData, "system.description.value").String()),
+		Description:                 StringCleaner(gjson.Get(jsonData, "system.description.value").String()),
 		Range:                       gjson.Get(jsonData, "system.range.value").String(),
 		Area:                        ParseSpellArea(jsonData),
 		Duration:                    ParseDurationBlock(jsonData),
@@ -474,7 +474,7 @@ func ParseItem(jsonData string) structs.Item {
 		Name:        gjson.Get(jsonData, "name").String(),
 		ID:          gjson.Get(jsonData, "_id").String(),
 		Category:    gjson.Get(jsonData, "system.category").String(),
-		Description: stripHTMLUsingBluemonday(gjson.Get(jsonData, "system.description.value").String()),
+		Description: StringCleaner(gjson.Get(jsonData, "system.description.value").String()),
 		Level:       gjson.Get(jsonData, "system.level.value").String(),
 		Price:       ParsePrice(jsonData),
 		Type:        gjson.Get(jsonData, "type").String(),
