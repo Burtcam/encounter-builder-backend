@@ -96,7 +96,7 @@ CREATE TABLE monster_actions (
     id SERIAL PRIMARY KEY,
     monster_id INTEGER REFERENCES monsters(id) ON DELETE CASCADE,
     action_type VARCHAR(20) CHECK (action_type IN ('action', 'free_action', 'reaction', 'passive')),
-    name VARCHAR(100),
+    name VARCHAR(250),
     text TEXT,
     actions VARCHAR(100),  -- used for standard "actions"; leave NULL if not applicable
     category VARCHAR(50),

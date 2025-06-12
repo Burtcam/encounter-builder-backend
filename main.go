@@ -5,7 +5,6 @@ import (
 	"log/slog"
 
 	"github.com/Burtcam/encounter-builder-backend/config"
-	localonlyutils "github.com/Burtcam/encounter-builder-backend/local"
 	"github.com/Burtcam/encounter-builder-backend/logger"
 	"github.com/Burtcam/encounter-builder-backend/utils"
 )
@@ -34,15 +33,15 @@ func main() {
 	if err != nil {
 		logger.Log.Error(err.Error())
 	}
-	// //TODO Remove this else everytime the ap starts it'll rebuild the db.
-	// err = utils.KickOffSync(*cfg)
-	// if err != nil {
-	// 	logger.Log.Error(err.Error())
-	// }
-
-	err = localonlyutils.LocalDataLoad(*cfg)
+	//TODO Remove this else everytime the ap starts it'll rebuild the db.
+	err = utils.KickOffSync(*cfg)
 	if err != nil {
 		logger.Log.Error(err.Error())
 	}
+
+	// err = localonlyutils.LocalDataLoad(*cfg)
+	// if err != nil {
+	// 	logger.Log.Error(err.Error())
+	// }
 
 }
