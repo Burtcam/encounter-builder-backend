@@ -3,7 +3,9 @@ cloud:
   project: "encounter-builder"
 sql:
 - schema: "schema/schema.sql"
-  queries: "queries/insert_monster.sql"
+  queries: 
+      - "queries/insert_monster.sql"
+      - "queries/retrieve_monster.sql"
   engine: "postgresql"
   gen:
     go: 

@@ -527,6 +527,21 @@ func (q *Queries) InsertMonsterSkills(ctx context.Context, arg InsertMonsterSkil
 	return id, err
 }
 
+const insertMonsterTraits = `-- name: InsertMonsterTraits :exec
+INSERT INTO monster_traits (monster_id, trait)
+VALUES ($1, $2)
+`
+
+type InsertMonsterTraitsParams struct {
+	MonsterID pgtype.Int4
+	Trait     pgtype.Text
+}
+
+func (q *Queries) InsertMonsterTraits(ctx context.Context, arg InsertMonsterTraitsParams) error {
+	_, err := q.db.Exec(ctx, insertMonsterTraits, arg.MonsterID, arg.Trait)
+	return err
+}
+
 const insertPreparedSlots = `-- name: InsertPreparedSlots :exec
 INSERT INTO prepared_slots (prepared_spell_casting_id, level, spell_id)
 VALUES ($1, $2, $3)

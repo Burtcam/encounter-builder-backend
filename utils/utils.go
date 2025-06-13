@@ -779,6 +779,19 @@ func ProcessItems(ctx context.Context, queries *writeMonsters.Queries, monster s
 	return nil
 }
 
+func writeTraits(ctx context.Context, queries *writeMonsters.Queries, monster structs.Monster, id int32) error {
+	for i := range len(monster.Traits.TraitList) {
+		err := queries.InsertMonsterTraits(ctx, writeMonsters.InsertMonsterTraitsParams{
+			MonsterID: NewInt4(int(id)),
+			Trait:     NewText(monster.Traits.TraitList[i]),
+		})
+		if err != nil {
+			return fmt.Errorf("unable to write traits to trait table %w", err)
+		}
+	}
+	return nil
+}
+
 func WriteMonsterToDb(monster structs.Monster, cfg config.Config) error {
 	logger.Log.Info(fmt.Sprintf("%+v", monster))
 	ctx := context.Background()
@@ -798,6 +811,10 @@ func WriteMonsterToDb(monster structs.Monster, cfg config.Config) error {
 		return fmt.Errorf("failed to insert Monster %w", err)
 	}
 	logger.Log.Info(fmt.Sprintf("Succesfully started the transaction for ID %d", id))
+	err = writeTraits(ctx, queries, monster, id)
+	if err != nil {
+		return fmt.Errorf("failed to write traits %w", err)
+	}
 	//for each immunities
 	err = writeImmunites(ctx, queries, monster, id)
 	if err != nil {

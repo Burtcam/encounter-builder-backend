@@ -30,6 +30,12 @@ CREATE TABLE monsters (
     perception_mod VARCHAR(50),
     perception_detail TEXT
 );
+
+CREATE TABLE monster_traits (
+    id SERIAL PRIMARY KEY, 
+    monster_id INTEGER REFERENCES monsters(id) ON DELETE CASCADE,
+    trait VARCHAR (50)
+);
 CREATE TABLE monster_immunities (
     id SERIAL PRIMARY KEY,
     monster_id INTEGER REFERENCES monsters(id) ON DELETE CASCADE,

@@ -200,6 +200,12 @@ type MonsterSkillSpecial struct {
 	Predicates []string
 }
 
+type MonsterTrait struct {
+	ID        int32
+	MonsterID pgtype.Int4
+	Trait     pgtype.Text
+}
+
 type PreparedSlot struct {
 	ID                     int32
 	PreparedSpellCastingID pgtype.Int4

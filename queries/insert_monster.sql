@@ -26,6 +26,10 @@ INSERT INTO monsters (name,
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
 RETURNING id;
 
+-- name: InsertMonsterTraits :exec
+INSERT INTO monster_traits (monster_id, trait)
+VALUES ($1, $2);
+
 -- name: InsertMonsterImmunities :exec
 INSERT INTO monster_immunities (monster_id, immunity)
 VALUES ($1, $2);
