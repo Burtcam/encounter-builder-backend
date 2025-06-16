@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   db:
@@ -20,14 +19,10 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@pgadmin.com
       PGADMIN_DEFAULT_PASSWORD: password
-      PGADMIN_CONFIG_FILE: "/var/lib/pgadmin/servers.json"
     ports:
       - "8080:80"
     volumes:
       - pgadmin_data:/pgadmin_data
-      - ./postgres-config/servers.json:/var/lib/pgadmin/servers.json
-      - ./postgres-config/pgadmin-entrypoint.sh:/pgadmin-entrypoint.sh
-    command: chmod 777 /var/lib/pgadmin/servers.json
     depends_on:
       - db
 
