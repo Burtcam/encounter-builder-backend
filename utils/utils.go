@@ -36,6 +36,7 @@ func NewInt4(value int) pgtype.Int4 {
 }
 
 func GetXpBudget(difficulty string, pSize int) (int, error) {
+	difficulty = strings.ToLower(difficulty)
 	difficultyMap := make(map[string]int)
 	difficultyMap["trivial"] = 40
 	difficultyMap["low"] = 60
@@ -73,6 +74,14 @@ func GetXpBudget(difficulty string, pSize int) (int, error) {
 	}
 	return 0, errors.New("unspecfied Error")
 }
+
+func GetMonstersInLevelRange(min int, max int) error {
+	// If
+	monsters := queries.GetMonstersByLevelRange
+
+	return nil
+}
+
 func GetRepoArchive(cfg config.Config) error {
 	client := &http.Client{}
 	// call to the repoUrl and get the archive downloaded.

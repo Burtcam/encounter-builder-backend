@@ -1,3 +1,6 @@
-time=2025-06-15T21:44:16.666-04:00 level=INFO msg="Configuration succesfully Loaded"
-time=2025-06-15T21:44:16.666-04:00 level=INFO msg="Configuration succesfully Loaded"
-time=2025-06-15T21:44:16.666-04:00 level=INFO msg="Backend Initializing" version=1.0.0 env=development
+time=2025-06-16T20:46:43.713-04:00 level=INFO msg="Configuration succesfully Loaded"
+time=2025-06-16T20:46:43.713-04:00 level=INFO msg="Configuration succesfully Loaded"
+time=2025-06-16T20:46:43.713-04:00 level=INFO msg="Backend Initializing" version=1.0.0 env=development
+time=2025-06-16T20:46:43.713-04:00 level=INFO msg="listening on :5000"
+time=2025-06-16T20:46:46.531-04:00 level=INFO msg=32
+time=2025-06-16T20:46:52.599-04:00 level=INFO msg=5

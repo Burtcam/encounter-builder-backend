@@ -1,37 +1,57 @@
 package main
 
 import (
-	"embed"
-	"encoding/json"
-	"log"
+	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
-	"sync"
+
+	"strconv"
 
 	"github.com/Burtcam/encounter-builder-backend/config"
 	"github.com/Burtcam/encounter-builder-backend/logger"
 	"github.com/Burtcam/encounter-builder-backend/utils"
+	"github.com/Burtcam/encounter-builder-backend/writeMonsters"
 )
 
-// struct encounter {
-// 	difficulty string
-// 	pSize      int
-// 	level      int
-// }
+func CalculatexpBudget(w http.ResponseWriter, r *http.Request) {
+	psizeStr := r.URL.Query().Get("psize")
+	Psize, err := strconv.Atoi(psizeStr)
+	if err != nil {
+		http.Error(w, "Invalid psize parameter", http.StatusBadRequest)
+		return
+	}
+	difficulty := r.URL.Query().Get("difficulty")
 
-//go:embed static
-var staticFS embed.FS
+	xpBudget, err := utils.GetXpBudget(difficulty, Psize)
 
-type Todo struct {
-	ID   int    `json:"id"`
-	Text string `json:"text"`
+	if err != nil {
+		logger.Log.Error("unable to calculate xp budget %w", err)
+	}
+	fmt.Fprintf(w, "XP budget is %d", xpBudget)
 }
 
-var (
-	todos   = []Todo{}
-	nextID  = 1
-	todosMu sync.Mutex
-)
+func getMonstersbyLevel(cfg config.Config, ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	queries := writeMonsters.New(cfg.DBPool)
+	minStr := r.URL.Query().Get("min")
+	maxStr := r.URL.Query().Get("max")
+	//
+	monsters, err := queries.GetMonstersByLevelRange(ctx, writeMonsters.GetMonstersByLevelRangeParams{
+		Level:   utils.NewText(minStr),
+		Level_2: utils.NewText(maxStr),
+	})
+	if err != nil {
+
+	}
+}
+
+func api(ctx context.Context, cfg config.Config) error {
+	http.HandleFunc("/calculatebudget", CalculatexpBudget)
+	http.HandleFunc("/MonstersInLevelRange", getMonstersbyLevel(cfg, ctx))
+	logger.Log.Info("listening on :5000")
+	http.ListenAndServe(":5000", nil)
+	return nil
+}
 
 func main() {
 	cfg := config.Load()
@@ -46,39 +66,10 @@ func main() {
 	// err := utils.KickOffSync(*cfg)
 	// if err != nil {
 	// 	logger.Log.Error(err.Error())
-	// }
-	// setup the UI
-	// serve /api/todos
-	http.HandleFunc("/api/todos", todosHandler)
+	//}
 
-	// serve all static files under / (index.html, alpine.js via CDN in HTML)
-	fs := http.FileServer(http.FS(staticFS))
-	http.Handle("/", fs)
-
-	log.Println("listening on :3000")
-	log.Fatal(http.ListenAndServe(":3000", nil))
-}
-
-func todosHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	todosMu.Lock()
-	defer todosMu.Unlock()
-
-	switch r.Method {
-	case http.MethodGet:
-		json.NewEncoder(w).Encode(todos)
-	case http.MethodPost:
-		var t struct{ Text string }
-		if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
-			http.Error(w, "bad payload", http.StatusBadRequest)
-			return
-		}
-		newTodo := Todo{ID: nextID, Text: t.Text}
-		nextID++
-		todos = append(todos, newTodo)
-		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(newTodo)
-	default:
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	err := api()
+	if err != nil {
+		logger.Log.Error("Unable to initialize APIS %w", err)
 	}
 }
